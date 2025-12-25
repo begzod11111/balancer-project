@@ -3,6 +3,8 @@ packages/shift-service/.idea
 packages/analytics-service/.idea
 packages/analytics-service/node_modules
 packages/analytics-service/.env
+packages/guard-auth/.idea
+packages/guard-auth/node_modules
 packages/shift-service/.env
 .idea
 
