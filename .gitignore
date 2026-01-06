@@ -10,3 +10,5 @@ packages/shift-service/.env
 packages/crm/node_modules
 packages/crm/.idea
 packages/crm/.env
+shared/node_modules
+shared/.idea
