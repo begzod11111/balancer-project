@@ -7,4 +7,6 @@ packages/guard-auth/.idea
 packages/guard-auth/node_modules
 packages/shift-service/.env
 .idea
-
+packages/crm//node_modules
+packages/crm/.idea
+packages/crm/.env
