@@ -1,0 +1,25 @@
+{
+  "intlAcquiringDomesticEpos": {
+    "recurringPayment": true,
+    "non3ds": true,
+    "holdEnable": true,
+    "advancedHold": true
+  },
+  "intlAcquiringEpos": {
+    "recurringPayment": true,
+    "non3ds": true,
+    "holdEnable": true,
+    "advancedHold": true
+  },
+  "intlAcquiringOnUsEpos": {
+    "holdEnable": true,
+    "recurringPayment": true,
+    "non3ds": true,
+    "advancedHold": true
+  },
+  "amount": {
+    "max": 99999999900,
+    "min": 0,
+    "round": false
+  }
+}

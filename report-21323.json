@@ -1,0 +1,46 @@
+[
+  {
+    "type": "request",
+    "level": "INFO",
+    "request_id": "a8ed665da4688558975f",
+    "pid": 205552,
+    "merchant_id": "5ec51db56420f3660dc93ba0",
+    "time": "2025-12-26T09:34:55.249Z",
+    "body": {
+      "url": "http://proxy-tnet/paycom_uz.php",
+      "requestBody": {
+        "jsonrpc": "2.0",
+        "id": 989932852,
+        "method": "CheckPerformTransaction",
+        "params": {
+          "amount": 10000,
+          "account": {
+            "login": "tnet0001322"
+          }
+        }
+      },
+      "method": "CheckPerformTransaction",
+      "timeout": 10000
+    }
+  },
+  {
+    "type": "response",
+    "level": "ERROR",
+    "request_id": "a8ed665da4688558975f",
+    "pid": 205552,
+    "merchant_id": "5ec51db56420f3660dc93ba0",
+    "time": "2025-12-26T09:34:55.252Z",
+    "body": {
+      "data": {
+        "error": {
+          "errno": -111,
+          "code": "ECONNREFUSED",
+          "syscall": "connect",
+          "address": "172.17.9.198",
+          "port": 80
+        },
+        "url": "http://proxy-tnet/paycom_uz.php"
+      }
+    }
+  }
+]
