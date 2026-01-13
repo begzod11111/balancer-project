@@ -1,0 +1,138 @@
+/* LoginPage.module.css */
+.loginPage {
+  min-height: 100vh;
+    width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 20px;
+}
+
+.loginCard {
+  background: var(--bg-primary);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 24px;
+  padding: 48px 40px;
+  width: 100%;
+  max-width: 420px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+}
+
+.logoWrapper {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 32px;
+}
+
+.logo {
+  width: 64px;
+  height: 64px;
+  filter: drop-shadow(0 4px 12px rgba(99, 102, 241, 0.4));
+}
+
+.title {
+  text-align: center;
+  font-size: 28px;
+  font-weight: 700;
+  background: var(--bg-primary);
+  margin: 0 0 8px 0;
+}
+
+.subtitle {
+  text-align: center;
+  font-size: 15px;
+   background: var(--bg-primary);
+  margin: 0 0 32px 0;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.options {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+/* Стили для кнопки "Забыли пароль?" */
+.forgotLink {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  font-size: 14px !important;
+  color: #6366f1 !important;
+  cursor: pointer;
+}
+
+.forgotLink:hover:not(:disabled) {
+  color: #818cf8 !important;
+  text-decoration: underline;
+  background: transparent !important;
+  transform: none !important;
+}
+
+/* Стили для кнопки входа */
+.loginButton {
+  width: 100%;
+  margin-top: 8px;
+  padding: 14px 24px !important;
+  font-size: 16px !important;
+  font-weight: 600 !important;
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%) !important;
+  border: none !important;
+  border-radius: 12px !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 14px rgba(99, 102, 241, 0.4) !important;
+}
+
+.loginButton:hover:not(:disabled) {
+  background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%) !important;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(99, 102, 241, 0.5) !important;
+}
+
+.loginButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+.register {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 28px;
+  padding-top: 24px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.register span {
+  font-size: 14px;
+  color: #94a3b8;
+}
+
+/* Стили для кнопки регистрации */
+.registerLink {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  color: #6366f1 !important;
+}
+
+.registerLink:hover:not(:disabled) {
+  color: #818cf8 !important;
+  text-decoration: underline;
+  background: transparent !important;
+  transform: none !important;
+}

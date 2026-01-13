@@ -1,0 +1,68 @@
+.group {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.column { flex-direction: column; }
+.row { flex-direction: row; }
+
+.item {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  user-select: none;
+  color: var(--text-primary);
+}
+.input {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+  pointer-events: none;
+}
+.control {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 2px solid var(--border-color);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: border-color .15s ease, background .15s ease;
+  background: var(--bg-secondary);
+}
+.dot {
+  width: 10px;
+  height: 10px;
+  background: var(--accent-color);
+  border-radius: 50%;
+  transform: scale(0);
+  transition: transform .15s ease;
+}
+.checked {
+  border-color: var(--accent-color);
+}
+.input:checked + .control .dot {
+  transform: scale(1);
+}
+
+.input:focus-visible + .control {
+  box-shadow: 0 0 0 3px rgba(139,92,246,.25);
+}
+
+.label {
+  font-size: 14px;
+}
+
+.sm .control { width: 14px; height: 14px; }
+.sm .dot { width: 8px; height: 8px; }
+.md .control { width: 18px; height: 18px; }
+.md .dot { width: 10px; height: 10px; }
+.lg .control { width: 22px; height: 22px; }
+.lg .dot { width: 12px; height: 12px; }
+
+.disabled {
+  opacity: .6;
+  cursor: not-allowed;
+}

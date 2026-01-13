@@ -1,5 +1,5 @@
 // models/Shift.js
-import mongoose, { Schema } from 'mongoose';
+import mongoose, {Schema} from "mongoose";
 
 // В схеме Shift измените определение shifts
 const Shift = new Schema({
@@ -21,7 +21,6 @@ const Shift = new Schema({
     accountId: {
         type: String,
         required: true,
-        index: true
     },
     userId: {
         type: Schema.Types.ObjectId,
@@ -35,6 +34,14 @@ const Shift = new Schema({
     isActive: {
         type: Boolean,
         default: true
+    },
+    deletedAt: {
+        type: Date,
+        default: null
+    },
+    deleted: {
+        type: Boolean,
+        default: false
     },
     limits: {
         maxDailyIssues: {type: Number, default: 30},

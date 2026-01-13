@@ -1,6 +1,8 @@
 // shared/db.js
 // Единый модуль подключения к MongoDB для всех сервисов
-import mongoose from 'mongoose';
+import mongoose, { Schema } from 'mongoose';
+
+export { mongoose, Schema };
 
 /**
  * Подключение к MongoDB с повтором при ошибке

@@ -3,10 +3,25 @@
   "version": "1.0.0",
   "main": "config.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "nodemon ./gateway/index.js"
   },
+  "type": "module",
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "description": ""
+  "description": "",
+  "dependencies": {
+    "mongoose": "^9.1.2",
+    "axios": "^1.13.2",
+    "dotenv": "^17.2.3",
+    "jsonwebtoken": "^9.0.3",
+    "http-proxy-middleware": "^2.0.6",
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "body-parser": "^1.20.2"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.0"
+  }
 }

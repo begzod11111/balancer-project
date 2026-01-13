@@ -9,7 +9,6 @@ const router = express.Router();
 router.post('/login', async (req, res) => {
   try {
     const { login, password } = req.body;
-    console.log(login, password);
     if (!login || !password) {
       return res.status(400).json({ error: 'Логин и пароль обязательны' });
     }
@@ -34,8 +33,24 @@ router.post('/refresh-token', async (req, res) => {
   }
 });
 
+// Проверка токена
+router.post('/verify-token', async (req, res) => {
+    try {
+        const { token } = req.body;
+        if (!token) {
+            return res.status(401).json({ tokenValid: false });
+        }
+        const result = await authService.verifyAccessToken(token);
+        console.log(result)
+        res.json({ tokenValid: result });
+    } catch (error) {
+        res.status(401).json({ tokenValid: false });
+        console.log(error)
+    }
+})
+
 // проверка токена
-router.post('/verify-token', authenticateToken, (req, res) => {
+router.post('/verify-auth', authenticateToken, (req, res) => {
   if (req.user) {
     return res.json({ tokenValid: true });
   } else {

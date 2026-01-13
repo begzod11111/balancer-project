@@ -1,8 +1,11 @@
 // routes/workScheduleRoutes.js
 import express from 'express';
 import WorkScheduleService from '../services/workScheduleService.js';
-import {models} from "../models/db.js";
-import {Types} from "mongoose";
+import {connectDB, models} from "../models/db.js";
+import mongoose from 'mongoose';
+import jira from "../services/jiraService.js";
+
+
 const router = express.Router();
 
 // Применяем аутентификацию ко всем маршрутам
@@ -19,6 +22,7 @@ router.get('/', async (req, res) => {
             isActive,
             assigneeId,
             accountId,
+            deleted,
             departmentId,
             assigneeEmail,
             limit = 0,
@@ -32,12 +36,14 @@ router.get('/', async (req, res) => {
         if (isActive !== undefined) {
             filter.isActive = isActive === 'true';
         }
-
+        if (deleted !== undefined) {
+            filter.deleted = deleted === 'true';
+        }
         if (assigneeId) {
             filter.assigneeId = assigneeId;
         }
-        if (departmentId && Types.ObjectId.isValid(departmentId)) {
-            filter.department = new Types.ObjectId(departmentId);
+        if (departmentId && mongoose.Types.ObjectId.isValid(departmentId)) {
+            filter.department = new mongoose.Types.ObjectId(departmentId);
         }
         if (accountId) {
             filter.accountId = accountId;
@@ -123,6 +129,26 @@ router.get('/account/:accountId', async (req, res) => {
   }
 });
 
+/** GET /api/work-schedules/department/:departmentId
+ * @desc Получить расписания по ID отдела
+ * @access Private
+ */
+router.get('/department/:departmentId', async (req, res) => {
+  try {
+    const { departmentId } = req.params;
+    const schedules = await workScheduleService.getWorkSchedulesByDepartmentId(departmentId);
+    return res.json(schedules);
+  } catch (error) {
+    console.error(`Ошибка при получении расписаний для отдела ${req.params.departmentId}:`, error);
+
+    if (error.message.includes('не найдено')) {
+      return res.status(404).json({ message: error.message });
+    }
+
+    return res.status(500).json({ message: 'Ошибка сервера', error: error.message });
+  }
+});
+
 /**
  * @route GET /api/work-schedules/day/:dayOfWeek
  * @desc Получить сотрудников, работающих в указанный день недели
@@ -155,14 +181,155 @@ router.get('/day/:dayOfWeek', async (req, res) => {
  */
 router.post('/', async (req, res) => {
   try {
-    const scheduleData = req.body;
+    const { email, departmentId, shifts, limits, isActive } = req.body;
+
+    // Валидация обязательных полей
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email сотрудника обязателен'
+      });
+    }
+
+    if (!departmentId) {
+      return res.status(400).json({
+        success: false,
+        message: 'ID отдела обязателен'
+      });
+    }
+
+    if (!shifts || Object.keys(shifts).length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Необходимо указать хотя бы одну смену'
+      });
+    }
+
+    // Валидация формата email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Некорректный формат email'
+      });
+    }
+
+    // Валидация департамента
+    if (!mongoose.Types.ObjectId.isValid(departmentId)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Некорректный ID отдела'
+      });
+    }
+
+    // Проверка существования отдела
+    const department = await models.Department.findOne({
+      _id: departmentId,
+      delete: false,
+      active: true
+    });
+
+    if (!department) {
+      return res.status(404).json({
+        success: false,
+        message: 'Активный отдел не найден'
+      });
+    }
+
+    // Проверка существования расписания для этого email
+    const existingSchedule = await models.Shift.findOne({
+      assigneeEmail: email.toLowerCase().trim(),
+      deleted: false
+    });
+
+    if (existingSchedule) {
+      return res.status(409).json({
+        success: false,
+        message: `Расписание для сотрудника с email ${email} уже существует`
+      });
+    }
+
+    // Получение данных из Jira
+    console.log(`[POST /work-schedules] Поиск сотрудника в Jira: ${email}`);
+    const jiraData = await jira.findAssigneeByEmail(email);
+
+    if (!jiraData || jiraData.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: `Сотрудник с email ${email} не найден в Jira`
+      });
+    }
+
+    const jiraUser = jiraData[0];
+
+    // Проверка существования расписания для accountId
+    const existingByAccountId = await models.Shift.findOne({
+      accountId: jiraUser.accountId,
+      deleted: false
+    });
+
+    if (existingByAccountId) {
+      return res.status(409).json({
+        success: false,
+        message: `Расписание для сотрудника с accountId ${jiraUser.accountId} уже существует`
+      });
+    }
+
+    // Формирование данных для создания
+    const scheduleData = {
+      accountId: jiraUser.accountId,
+      assigneeEmail: email.toLowerCase().trim(),
+      assigneeName: jiraUser.displayName || 'Неизвестный сотрудник',
+      department: departmentId,
+      shifts,
+      limits: limits || {},
+      isActive: isActive !== undefined ? isActive : true
+    };
+
+    console.log(`[POST /work-schedules] Создание расписания для ${scheduleData.assigneeName}`);
     const newSchedule = await workScheduleService.createWorkSchedule(scheduleData);
-    return res.status(201).json(newSchedule);
+
+    return res.status(201).json({
+      success: true,
+      message: 'Расписание успешно создано',
+      data: newSchedule
+    });
+
   } catch (error) {
-    console.error('Ошибка при создании расписания:', error);
-    return res.status(500).json({ message: 'Ошибка сервера', error: error.message });
+    console.error('[POST /work-schedules] Ошибка при создании расписания:', error);
+
+    // Обработка специфичных ошибок
+    if (error.message.includes('уже существует')) {
+      return res.status(409).json({
+        success: false,
+        message: error.message
+      });
+    }
+
+    if (error.message.includes('не найден')) {
+      return res.status(404).json({
+        success: false,
+        message: error.message
+      });
+    }
+
+    if (error.message.includes('Некорректный') ||
+        error.message.includes('должен') ||
+        error.message.includes('Обязательные')) {
+      return res.status(400).json({
+        success: false,
+        message: error.message
+      });
+    }
+
+    return res.status(500).json({
+      success: false,
+      message: 'Ошибка при создании расписания',
+      error: error.message
+    });
   }
 });
+
 
 /**
  * @route PUT /api/work-schedules/:id

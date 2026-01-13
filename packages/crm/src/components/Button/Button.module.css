@@ -1,0 +1,256 @@
+/* Button.module.css */
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  outline: none;
+}
+
+.button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Варианты кнопок */
+.primary {
+  background: var(--accent-color);
+  color: #fff;
+}
+
+.primary:hover:not(:disabled) {
+  background: var(--accent-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+}
+
+.secondary {
+  background: var(--bg-tertiary);
+  border: 2px solid var(--border-color);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1); /* Тень вокруг */
+}
+
+.secondary:hover:not(:disabled) {
+  background: var(--bg-hover);
+  border-color: var(--accent-color);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3); /* Тень вокруг */
+}
+
+.round-button {
+            width: 120px;              /* Ширина кнопки */
+            height: 120px;             /* Высота (равна ширине для круга) */
+            border-radius: 50%;        /* Делает кнопку полностью круглой */
+            background-color: #4CAF50; /* Цвет фона */
+            color: white;              /* Цвет текста */
+            font-size: 18px;
+            font-family: Arial, sans-serif;
+            border: none;              /* Убираем стандартную рамку */
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3); /* Тень вокруг */
+            transition: all 0.3s ease; /* Плавный переход */
+        }
+
+        .round-button:hover {
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4); /* Усиливаем тень при наведении */
+            transform: translateY(-3px); /* Лёгкий "подъём" кнопки */
+        }
+
+        .round-button:active {
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3); /* Тень слабее при нажатии */
+            transform: translateY(2px); /* Кнопка "вдавливается" */
+        }
+
+.danger {
+  background: #ef4444;
+  color: #fff;
+}
+
+.danger:hover:not(:disabled) {
+  background: #dc2626;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+}
+
+.success {
+  background: #10b981;
+  color: #fff;
+}
+
+.success:hover:not(:disabled) {
+  background: #059669;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+.ghost {
+  background: transparent;
+  color: var(--text-secondary);
+}
+
+.ghost:hover:not(:disabled) {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+/* Иконка */
+.icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+}
+.secondary .icon {
+    color: var(--text-primary);
+}
+
+.label {
+  display: inline-block;
+}
+.secondary .label {
+    color: var(--text-primary);
+}
+
+/* Полная ширина */
+.fullWidth {
+  width: 100%;
+}
+
+/* Активное состояние */
+.button:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-weight: 500;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  outline: none;
+  white-space: nowrap;
+}
+
+/* Variants */
+.primary {
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  color: #ffffff;
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
+}
+
+.primary:hover:not(.disabled) {
+  background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+  transform: translateY(-1px);
+}
+
+.primary:active:not(.disabled) {
+  transform: translateY(0);
+  box-shadow: 0 2px 4px rgba(99, 102, 241, 0.3);
+}
+
+.secondary {
+  background: rgba(255, 255, 255, 0.1);
+  color: #e2e8f0;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(8px);
+}
+
+.secondary:hover:not(.disabled) {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.outline {
+  background: transparent;
+  color: #6366f1;
+  border: 2px solid #6366f1;
+}
+
+.outline:hover:not(.disabled) {
+  background: rgba(99, 102, 241, 0.1);
+}
+
+.ghost {
+  background: transparent;
+  color: #94a3b8;
+}
+
+.ghost:hover:not(.disabled) {
+  background: rgba(255, 255, 255, 0.05);
+  color: #e2e8f0;
+}
+
+.danger {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  color: #ffffff;
+  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3);
+}
+
+.danger:hover:not(.disabled) {
+  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+}
+
+.success {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: #ffffff;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+}
+
+.success:hover:not(.disabled) {
+  background: linear-gradient(135deg, #059669 0%, #047857 100%);
+}
+
+/* Sizes */
+.small {
+  padding: 8px 16px;
+  font-size: 13px;
+  border-radius: 6px;
+}
+
+.medium {
+  padding: 12px 24px;
+  font-size: 14px;
+}
+
+.large {
+  padding: 16px 32px;
+  font-size: 16px;
+  border-radius: 10px;
+}
+
+/* States */
+.fullWidth {
+  width: 100%;
+}
+
+.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+/* Focus state */
+.btn:focus-visible {
+  outline: 2px solid #6366f1;
+  outline-offset: 2px;
+}
+

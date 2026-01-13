@@ -19,7 +19,6 @@ export const authenticateToken = async (req, res, next) => {
 
     // Получаем актуальные данные пользователя из БД
     const user = await models.User.findById(decoded.userId)
-      .populate('assigneeData')
       .lean();
 
     if (!user) {

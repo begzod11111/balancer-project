@@ -1,11 +1,12 @@
 import express from "express";
 import cors from "cors";
-import {models} from "./models/user.js";
+import {connectDB, models} from "./models/db.js";
 // import {connectRedis} from "./models/redisClient.js";
+import authRoutes from "./routes/authRoute.js";
 
 
 const app = express();
-const PORT = 4040;
+const PORT = 9000;
 
 
 app.use(cors({
@@ -16,8 +17,7 @@ app.use(cors({
 }));
 
 app.use(express.json());
-
-app.use('/tbc-balancer/api/', shiftRouter)
+app.use('/api/auth', authRoutes)
 
 
 
@@ -29,8 +29,7 @@ app.listen(PORT, 'localhost', () => {
 
 async function startScheduler() {
   try {
-    await connectRedis()
-    await models.connectDB();
+    await connectDB()
   } catch (error) {
     console.error('Ошибка при запуске планировщика:', {
       message: error.message,

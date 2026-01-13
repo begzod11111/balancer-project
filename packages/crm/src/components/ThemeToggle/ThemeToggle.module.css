@@ -1,0 +1,113 @@
+/* components/ThemeToggle/ThemeToggle.module.css */
+.toggle {
+  width: 30px;
+  height: 30px;
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-secondary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.toggle:hover {
+  background: var(--bg-tertiary);
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.toggle:active {
+  transform: scale(0.95);
+}
+
+.icon {
+  font-size: 20px;
+  line-height: 1;
+}
+
+
+
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 70px;
+  height: 34px;
+}
+
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+  transition: 0.4s ease;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 26px;
+  width: 26px;
+  left: 4px;
+  bottom: 4px;
+  background-color: #f1f5f9;
+  transition: 0.4s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+input:checked + .slider {
+  background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+}
+
+input:checked + .slider:before {
+  transform: translateX(36px);
+  background-color: #fff;
+}
+
+.slider.round {
+  border-radius: 34px;
+}
+
+.slider.round:before {
+  border-radius: 50%;
+}
+
+.iconMoon,
+.iconSun {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 14px;
+  transition: opacity 0.3s ease;
+}
+
+.iconMoon {
+  left: 8px;
+  opacity: 1;
+}
+
+.iconSun {
+  right: 8px;
+  opacity: 0.5;
+}
+
+input:checked + .slider .iconMoon {
+  opacity: 0.5;
+}
+
+input:checked + .slider .iconSun {
+  opacity: 1;
+}
+
+

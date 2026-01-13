@@ -1,6 +1,7 @@
 // models/user.js
-import mongoose, { Schema } from 'mongoose';
 import bcrypt from 'bcrypt';
+import mongoose, {Schema} from "mongoose";
+
 
 const userSchema = new Schema({
   username: {
@@ -32,11 +33,6 @@ const userSchema = new Schema({
     required: true,
     enum: ['customer', 'senior', 'lead', 'moderator', 'owner'],
     default: 'customer'
-  },
-  assigneeId: {
-    type: Schema.Types.ObjectId,
-    ref: 'Assignee',
-    default: null // Может быть null если это не сотрудник поддержки
   },
   department: {
     type: String,
@@ -108,12 +104,12 @@ userSchema.index({ assigneeId: 1 });
 /**
  * Hash password before saving
  */
-userSchema.pre('save', async function (next) {
-  if (this.isModified('password')) {
-    this.password = await bcrypt.hash(this.password, 10);
-  }
-  next();
-});
+// userSchema.pre('save', async function (next) {
+//   if (this.isModified('password')) {
+//     this.password = await bcrypt.hash(this.password, 10);
+//   }
+//   next();
+// });
 
 /**
  * Compare provided password with stored hash
