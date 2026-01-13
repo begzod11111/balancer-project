@@ -12,5 +12,5 @@ packages/crm/.idea
 packages/crm/.env
 shared/node_modules
 shared/.idea
-shared/.env
+shared/gateway/.env
 packages/guard-auth/.env
