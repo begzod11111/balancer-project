@@ -14,3 +14,11 @@ shared/node_modules
 shared/.idea
 shared/gateway/.env
 packages/guard-auth/.env
+packages/assigner/node_modules
+packages/assigner/.idea
+packages/assigner/.env
+packages/gateway/node_modules
+packages/gateway/.idea
+packages/gateway/.env
+dist
+.env
