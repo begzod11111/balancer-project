@@ -9,4 +9,4 @@ COPY . .
 
 EXPOSE 9000
 
-CMD ["node", "src/index.js"]
+CMD ["nodemon", "src/index.js"]
