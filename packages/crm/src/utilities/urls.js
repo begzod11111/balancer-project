@@ -1,4 +1,7 @@
-const BASE_URL = 'http://localhost:8000';
+const BASE_URL = process.env.REACT_APP_GATEWAY_URL ||
+                     (window.location.hostname === 'tamada.monitoring-jira.uz'
+                       ? 'https://tamada.monitoring-jira.uz/api'
+                       : 'http://localhost:8000/api');
 
 export const URLS = {
     // ========== AUTH SERVICE ==========
