@@ -9,4 +9,4 @@ COPY . .
 
 EXPOSE 9001
 
-CMD ["npm", "start-analytics-service"]
+CMD ["npm", "start"]

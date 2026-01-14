@@ -9,4 +9,4 @@ COPY . .
 
 EXPOSE 9002
 
-CMD ["npm", "start-shift-service"]
+CMD ["npm", "start"]
