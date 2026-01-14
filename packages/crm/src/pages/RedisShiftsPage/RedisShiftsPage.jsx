@@ -402,6 +402,15 @@ const RedisShiftsPage = () => {
     }
   };
 
+  const getFilteredAssignees = () => {
+    return assignees.filter(a => {
+      const shiftExists = shifts.some(s =>
+        s.departmentObjectId === newShift.departmentObjectId && s.accountId === a.value
+      );
+      return !shiftExists;
+    });
+  }
+
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleString('ru-RU');
   };
@@ -574,7 +583,7 @@ const RedisShiftsPage = () => {
                     {newShift.departmentId && (
                         <Select
                             label={'Сотрудник *'}
-                            options={assignees}
+                            options={getFilteredAssignees()}
                             value={newShift.accountId}
                             onChange={(e) => handleAssigneeChange(e)}
                             placeholder="Выберите сотрудника"
@@ -607,55 +616,58 @@ const RedisShiftsPage = () => {
                     </div>
 
                     <div className={classes.timeRow}>
-                      <label>
-                        <span>Начало смены *</span>
-                        <input
+
+
+                        <Input
+                            label={'Начало смены *'}
                           type="datetime-local"
                           value={newShift.shiftStartTime}
                           onChange={(e) => setNewShift({ ...newShift, shiftStartTime: e.target.value })}
                         />
-                      </label>
-                      <label>
-                        <span>Конец смены *</span>
-                        <input
+
+
+                        <Input
+                            label={'Конец смены *'}
                           type="datetime-local"
                           value={newShift.shiftEndTime}
                           onChange={(e) => setNewShift({ ...newShift, shiftEndTime: e.target.value })}
                         />
-                      </label>
+
                     </div>
 
                     <div className={classes.numberRow}>
-                      <label>
-                        <span>Макс. нагрузка</span>
-                        <input
+
+                        <Input
+                            label={'Макс. нагрузка'}
                           type="number"
                           min="10"
                           max="500"
                           value={newShift.defaultMaxLoad}
                           onChange={(e) => setNewShift({ ...newShift, defaultMaxLoad: e.target.value })}
                         />
-                      </label>
-                      <label>
-                        <span>Множитель приоритета</span>
-                        <input
+
+
+
+                        <Input
+                            label={'Множитель приоритета'}
                           type="number"
                           step="0.1"
                           min="0.1"
                           max="5"
                           value={newShift.priorityMultiplier}
-                          onChange={(e) => setNewShift({ ...newShift, priorityMultiplier: e.target.value })}
+                          onChange={(e) => setNewShift({ ...newShift, priorityMultiplier: e })}
                         />
-                      </label>
-                      <label>
-                        <span>TTL (секунды)</span>
-                        <input
+
+
+                        <Input
+                            label={'TTL (секунды)'}
+                            disabled={true}
                           type="number"
                           min="3600"
                           value={newShift.ttl}
-                          onChange={(e) => setNewShift({ ...newShift, ttl: e.target.value })}
+                          onChange={(e) => setNewShift({ ...newShift, ttl: e })}
                         />
-                      </label>
+
                     </div>
                   </>
                 )}

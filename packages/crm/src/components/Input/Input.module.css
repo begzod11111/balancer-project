@@ -251,3 +251,49 @@
 .fileContainer:active .fileBtn {
   transform: scale(0.95);
 }
+
+/* Добавьте в конец файла */
+
+.required {
+  color: #ef4444;
+  margin-left: 4px;
+}
+
+/* DateTime input styles */
+.dateTimeContainer .input {
+  cursor: pointer;
+  color-scheme: dark;
+}
+
+.dateTimeContainer .input::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  filter: invert(0.8) brightness(1.2);
+  padding: 4px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.dateTimeContainer .input::-webkit-calendar-picker-indicator:hover {
+  background: rgba(99, 102, 241, 0.2);
+  transform: scale(1.1);
+}
+
+/* Number input arrows styling */
+.input[type="number"]::-webkit-inner-spin-button,
+.input[type="number"]::-webkit-outer-spin-button {
+  opacity: 0.6;
+  height: 30px;
+  margin-left: 8px;
+}
+
+.input[type="number"]:hover::-webkit-inner-spin-button,
+.input[type="number"]:hover::-webkit-outer-spin-button {
+  opacity: 1;
+}
+
+/* Firefox number input */
+.input[type="number"] {
+  -moz-appearance: textfield;
+}
+
+

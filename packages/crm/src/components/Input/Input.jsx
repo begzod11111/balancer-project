@@ -1,3 +1,4 @@
+// packages/crm/src/components/Input/Input.jsx
 import React, { useState, useRef } from 'react';
 import styles from './Input.module.css';
 
@@ -13,8 +14,12 @@ const Input = ({
   error,
   clearable = false,
   accept,
-    height,
-    width = '100%',
+  height,
+  width = '100%',
+  min,
+  max,
+  step,
+  required = false,
   ...props
 }) => {
   const [isFocused, setIsFocused] = useState(false);
@@ -46,13 +51,19 @@ const Input = ({
     isFocused && styles.focused,
     disabled && styles.disabled,
     error && styles.error,
-    type === 'file' && styles.fileContainer
+    type === 'file' && styles.fileContainer,
+    (type === 'datetime-local' || type === 'date' || type === 'time') && styles.dateTimeContainer
   ].filter(Boolean).join(' ');
 
   if (type === 'file') {
     return (
-      <div className={styles.wrapper}>
-        {label && <label className={styles.label}>{label}</label>}
+      <div className={styles.wrapper} style={{ width, height: height || 'auto' }}>
+        {label && (
+          <label className={styles.label}>
+            {label}
+            {required && <span className={styles.required}>*</span>}
+          </label>
+        )}
         <div className={containerClasses} onClick={handleFileClick}>
           <input
             ref={fileInputRef}
@@ -84,11 +95,13 @@ const Input = ({
   }
 
   return (
-    <div className={styles.wrapper} style={{
-        width,
-        height: height || 'auto'
-    }}>
-      {label && <label className={styles.label}>{label}</label>}
+    <div className={styles.wrapper} style={{ width, height: height || 'auto' }}>
+      {label && (
+        <label className={styles.label}>
+          {label}
+          {required && <span className={styles.required}>*</span>}
+        </label>
+      )}
       <div className={containerClasses}>
         <input
           type={type}
@@ -97,11 +110,14 @@ const Input = ({
           value={value}
           onChange={onChange}
           disabled={disabled}
+          min={min}
+          max={max}
+          step={step}
           onFocus={() => setIsFocused(true)}
           onBlur={() => setIsFocused(false)}
           {...props}
         />
-        {clearable && value && (
+        {clearable && value && type !== 'datetime-local' && type !== 'date' && type !== 'time' && (
           <button type="button" className={styles.clearBtn} onClick={handleClear}>
             ✕
           </button>
