@@ -9,4 +9,4 @@ COPY . .
 
 EXPOSE 8000
 
-CMD ["node", "index.js"]
+CMD ["nodemon", "./gateway/index.js"]
