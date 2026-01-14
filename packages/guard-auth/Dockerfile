@@ -9,4 +9,4 @@ COPY . .
 
 EXPOSE 9000
 
-CMD ["nodemon", "src/index.js"]
+CMD ["npm", "start"]

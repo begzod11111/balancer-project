@@ -9,4 +9,4 @@ COPY . .
 
 EXPOSE 9002
 
-CMD ["nodemon", "src/index.js"]
+CMD ["npm", "start-shift-service"]

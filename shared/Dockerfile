@@ -9,4 +9,4 @@ COPY . .
 
 EXPOSE 8000
 
-CMD ["nodemon", "./gateway/index.js"]
+CMD ["npm", "start"]
