@@ -9,13 +9,6 @@ const app = express();
 const PORT = 9003;
 
 
-app.use(cors({
-  origin: ["http://localhost:5000", "https://monitoring-jira.uz/", "http://localhost:3000", "http://192.168.200.77:3000"],
-  methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-CSRF-Token'],
-  credentials: true,
-}));
-
 app.use(express.json());
 
 
