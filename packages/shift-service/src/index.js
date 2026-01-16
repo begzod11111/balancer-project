@@ -15,7 +15,7 @@ const PORT = 9002;
 
 
 app.use(cors({
-  origin: ['https://tamada.monitoring-jira.uz/', 'http://localhost:8000'],
+  origin: ['https://tamada.monitoring-jira.uz', 'http://localhost:8000'],
   methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
   allowedHeaders: ['Content-Type', 'Authorization', 'X-CSRF-Token'],
   credentials: true,
