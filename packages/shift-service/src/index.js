@@ -32,8 +32,8 @@ app.use('/api/pool', redisShiftRoutes)
 
 
 // Запуск сервера
-app.listen(PORT, 'localhost', () => {
-  console.log(`Server listening on http://localhost:${PORT}`);
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`Server listening on http://0.0.0.0:${PORT}`);
 });
 
 
