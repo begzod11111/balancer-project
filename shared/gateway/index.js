@@ -9,18 +9,19 @@ const app = express();
 // Конфигурация сервисов
 const SERVICES = {
   shift: {
-    url: 'http://0.0.0.0:9002',
+    url: 'http://crm_shift:9002',
     prefix: '/api/shift'
   },
   auth: {
-    url: 'http://0.0.0.0:9000',
+    url: 'http://crm_auth:9000',
     prefix: '/api/auth'
   },
   analytics: {
-    url: 'http://0.0.0.0:9001',
+    url: 'http://crm_analytics:9001',
     prefix: '/api/analytics'
   }
 };
+
 
 // ВАЖНО: Middleware для парсинга body ПЕРЕД прокси
 app.use(cors());
