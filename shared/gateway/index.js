@@ -9,15 +9,15 @@ const app = express();
 // Конфигурация сервисов
 const SERVICES = {
   shift: {
-    url: 'http://localhost:9002',
+    url: 'http://0.0.0.0:9002',
     prefix: '/api/shift'
   },
   auth: {
-    url: 'http://localhost:9000',
+    url: 'http://0.0.0.0:9000',
     prefix: '/api/auth'
   },
   analytics: {
-    url: 'http://localhost:9001',
+    url: 'http://0.0.0.0:9001',
     prefix: '/api/analytics'
   }
 };
