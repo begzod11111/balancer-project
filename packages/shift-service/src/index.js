@@ -3,7 +3,6 @@ import cors from "cors";
 import * as cron from "node-cron";
 import shiftRouter from "./routes/workScheduleRoutes.js"
 import {connectDB, models} from "./models/db.js";
-import {connectRedis} from "./models/redisClient.js";
 import departmentRoutes from "./routes/departmentRoutes.js";
 import departmentService from "./services/departmentService.js";
 import redisShiftRoutes from "./routes/redisShiftRoutes.js";
@@ -41,7 +40,6 @@ app.listen(PORT, '0.0.0.0', () => {
 
 async function startScheduler() {
   try {
-    await connectRedis()
     await connectDB();
   } catch (error) {
     console.error('Ошибка при запуске планировщика:', {
