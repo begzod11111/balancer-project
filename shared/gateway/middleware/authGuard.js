@@ -1,8 +1,11 @@
 import jwt from 'jsonwebtoken';
 import axios from 'axios';
+import dotenv from "dotenv";
+
+dotenv.config();
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
-const AUTH_SERVICE_URL = 'http://localhost:9000';
+const AUTH_SERVICE_URL = 'http://0.0.0.0:9000';
 
 const authGuard = async (req, res, next) => {
   try {
