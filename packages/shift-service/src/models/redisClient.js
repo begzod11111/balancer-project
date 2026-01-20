@@ -1,14 +1,9 @@
 // redisClient.js
 import Redis from 'ioredis';
 import dotenv from 'dotenv';
-import {pathEnv} from "../../config.js";
 
 
-dotenv.config({
-    path: pathEnv.__dirname + "\\.env",
-});
-
-
+dotenv.config()
 
 
 const redis = new Redis({

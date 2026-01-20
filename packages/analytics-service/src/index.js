@@ -4,6 +4,7 @@ import cors from "cors";
 import * as cron from "node-cron";
 import typeRoutes from './routes/typeRoutes.js';
 import {connectDB} from "./models/db.js";
+import {connectRedis} from "./services/redisService.js";
 
 
 const app = express();
@@ -28,6 +29,7 @@ app.use('/api/type', typeRoutes);
 
 async function startScheduler() {
   try {
+    await connectRedis()
     await connectDB()
   } catch (error) {
     console.error('Ошибка при запуске планировщика:', {
