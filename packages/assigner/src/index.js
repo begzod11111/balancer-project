@@ -10,7 +10,12 @@ const PORT = 9003;
 
 
 app.use(express.json());
-
+app.use(cors({
+  origin: ['https://tamada.monitoring-jira.uz', 'http://0.0.0.0:9000'],
+  methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-CSRF-Token'],
+  credentials: true,
+}));
 
 
 // Запуск сервера
