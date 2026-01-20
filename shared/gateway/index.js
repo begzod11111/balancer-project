@@ -207,8 +207,8 @@ app.use((err, req, res, next) => {
 });
 
 const PORT = process.env.PORT || 8000;
-app.listen(PORT, () => {
-  console.log(`🚀 Gateway запущен на http://localhost:${PORT}`);
+app.listen(PORT, '0.0.0.0',() => {
+  console.log(`🚀 Gateway запущен на http://0.0.0.0:${PORT}`);
   console.log('Подключенные сервисы:');
   Object.entries(SERVICES).forEach(([name, config]) => {
     console.log(`  - ${name}: ${config.url} -> ${config.prefix}`);
