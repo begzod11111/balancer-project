@@ -18,6 +18,8 @@ const jiraAxios = axios.create({
 });
 
 
+
+
 const jira = {
     async findIssue(issueKey, options = {}) {
         try {
@@ -33,6 +35,14 @@ const jira = {
             throw new Error(`Failed to fetch issue ${issueKey}: ${error.response?.data?.errorMessages?.join(', ') || error.message}`);
         }
     },
+
+    // getJQLForIssues({
+    //     projectKey = 'UAS',
+    //     department = null,
+    //                 }) {
+    //     const jqlParts = issueKeys.map(key => `key = "${key}"`);
+    //     return jqlParts.join(' OR ');
+    // }
 
     async searchAssignee(assigneeKey, options = {}) {
         try {

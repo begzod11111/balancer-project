@@ -77,6 +77,13 @@ class RedisService {
 
       await redis.setex(key, ttl, JSON.stringify(data));
 
+      await this.publishShiftCreated({
+            departmentId,
+            departmentObjectId,
+            accountId,
+            assigneeEmail,
+      });
+
       console.log(`[Redis] Добавлена смена: ${key}`);
       return { success: true, key };
     } catch (error) {
@@ -84,6 +91,39 @@ class RedisService {
       throw error;
     }
   }
+
+    /**
+     * Публикация события создания смены в Kafka
+     */
+    async publishShiftCreated(shiftData) {
+        try {
+            const {kafka} = await import('../config/kafka.js');
+            const producer = kafka.producer();
+
+            await producer.connect();
+
+            await producer.send({
+                topic: 'shift.created',
+                messages: [
+                    {
+                        key: shiftData.assigneeEmail,
+                        value: JSON.stringify({
+                            event: 'SHIFT_CREATED',
+                            timestamp: new Date().toISOString(),
+                            data: shiftData
+                        })
+                    }
+                ]
+            });
+
+            await producer.disconnect();
+
+            console.log(`[Kafka] Опубликовано событие shift.created для ${shiftData.assigneeEmail}`);
+        } catch (error) {
+            console.error('[Kafka] Ошибка публикации события:', error);
+            // Не бросаем ошибку, чтобы не прерывать создание смены
+        }
+    }
 
   /**
    * Получение смены по ключу

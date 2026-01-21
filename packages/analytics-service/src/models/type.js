@@ -30,6 +30,12 @@ const TypeSchema = new mongoose.Schema({
         type: String,
         default: '#4CAF50'
     },
+    statuses: [{
+        name: String,
+        untranslatedName: String,
+        id: String,
+
+    }],
     defaultWeight: {
         type: Number,
         default: 1.0,

@@ -1,0 +1,469 @@
+[
+    {
+        "self": "https://spaceneobank.atlassian.net/rest/api/3/issuetype/10153",
+        "id": "10153",
+        "name": "[System] Service request",
+        "subtask": false,
+        "statuses": [
+            {
+                "self": "https://spaceneobank.atlassian.net/rest/api/3/status/10228",
+                "description": "",
+                "iconUrl": "https://spaceneobank.atlassian.net/images/icons/statuses/generic.png",
+                "name": "Отменено",
+                "untranslatedName": "CANCELED",
+                "id": "10228",
+                "statusCategory": {
+                    "self": "https://spaceneobank.atlassian.net/rest/api/3/statuscategory/3",
+                    "id": 3,
+                    "key": "done",
+                    "colorName": "green",
+                    "name": "Готово"
+                }
+            },
+            {
+                "self": "https://spaceneobank.atlassian.net/rest/api/3/status/10004",
+                "description": "В данный момент по этой проблеме ведется активная работа назначенным лицом.",
+                "iconUrl": "https://spaceneobank.atlassian.net/",
+                "name": "В работе",
+                "untranslatedName": "In Progress",
+                "id": "10004",
+                "statusCategory": {
+                    "self": "https://spaceneobank.atlassian.net/rest/api/3/statuscategory/4",
+                    "id": 4,
+                    "key": "indeterminate",
+                    "colorName": "yellow",
+                    "name": "В работе"
+                }
+            },
+            {
+                "self": "https://spaceneobank.atlassian.net/rest/api/3/status/1",
+                "description": "открыто",
+                "iconUrl": "https://spaceneobank.atlassian.net/images/icons/statuses/open.png",
+                "name": "открыто",
+                "untranslatedName": "Open",
+                "id": "1",
+                "statusCategory": {
+                    "self": "https://spaceneobank.atlassian.net/rest/api/3/statuscategory/2",
+                    "id": 2,
+                    "key": "new",
+                    "colorName": "blue-gray",
+                    "name": "К выполнению"
+                }
+            },
+            {
+                "self": "https://spaceneobank.atlassian.net/rest/api/3/status/16433",
+                "description": "",
+                "iconUrl": "https://spaceneobank.atlassian.net/images/icons/statuses/generic.png",
+                "name": "Delegated to App Support",
+                "untranslatedName": "Delegated to App Support",
+                "id": "16433",
+                "statusCategory": {
+                    "self": "https://spaceneobank.atlassian.net/rest/api/3/statuscategory/2",
+                    "id": 2,
+                    "key": "new",
+                    "colorName": "blue-gray",
+                    "name": "К выполнению"
+                }
+            },
+            {
+                "self": "https://spaceneobank.atlassian.net/rest/api/3/status/10209",
+                "description": "This status is managed internally by Jira Software",
+                "iconUrl": "https://spaceneobank.atlassian.net/",
+                "name": "Pending",
+                "untranslatedName": "Pending",
+                "id": "10209",
+                "statusCategory": {
+                    "self": "https://spaceneobank.atlassian.net/rest/api/3/statuscategory/4",
+                    "id": 4,
+                    "key": "indeterminate",
+                    "colorName": "yellow",
+                    "name": "В работе"
+                }
+            },
+            {
+                "self": "https://spaceneobank.atlassian.net/rest/api/3/status/6",
+                "description": "Закрыто",
+                "iconUrl": "https://spaceneobank.atlassian.net/images/icons/statuses/closed.png",
+                "name": "Закрыто",
+                "untranslatedName": "Closed",
+                "id": "6",
+                "statusCategory": {
+                    "self": "https://spaceneobank.atlassian.net/rest/api/3/statuscategory/3",
+                    "id": 3,
+                    "key": "done",
+                    "colorName": "green",
+                    "name": "Готово"
+                }
+            },
+            {
+                "self": "https://spaceneobank.atlassian.net/rest/api/3/status/5",
+                "description": "Резолюция выбрана и ожидает подтверждения автора. Здесь проблемы либо открываются вновь, либо закрываются.",
+                "iconUrl": "https://spaceneobank.atlassian.net/images/icons/statuses/resolved.png",
+                "name": "Обработано",
+                "untranslatedName": "Resolved",
+                "id": "5",
+                "statusCategory": {
+                    "self": "https://spaceneobank.atlassian.net/rest/api/3/statuscategory/3",
+                    "id": 3,
+                    "key": "done",
+                    "colorName": "green",
+                    "name": "Готово"
+                }
+            }
+        ]
+    },
+    {
+        "self": "https://spaceneobank.atlassian.net/rest/api/3/issuetype/10152",
+        "id": "10152",
+        "name": "[System] Incident",
+        "subtask": false,
+        "statuses": [
+            {
+                "self": "https://spaceneobank.atlassian.net/rest/api/3/status/10269",
+                "description": "",
+                "iconUrl": "https://spaceneobank.atlassian.net/images/icons/status_generic.gif",
+                "name": "Under investigation",
+                "untranslatedName": "Under investigation",
+                "id": "10269",
+                "statusCategory": {
+                    "self": "https://spaceneobank.atlassian.net/rest/api/3/statuscategory/4",
+                    "id": 4,
+                    "key": "indeterminate",
+                    "colorName": "yellow",
+                    "name": "В работе"
+                }
+            },
+            {
+                "self": "https://spaceneobank.atlassian.net/rest/api/3/status/10228",
+                "description": "",
+                "iconUrl": "https://spaceneobank.atlassian.net/images/icons/statuses/generic.png",
+                "name": "Отменено",
+                "untranslatedName": "CANCELED",
+                "id": "10228",
+                "statusCategory": {
+                    "self": "https://spaceneobank.atlassian.net/rest/api/3/statuscategory/3",
+                    "id": 3,
+                    "key": "done",
+                    "colorName": "green",
+                    "name": "Готово"
+                }
+            },
+            {
+                "self": "https://spaceneobank.atlassian.net/rest/api/3/status/10004",
+                "description": "В данный момент по этой проблеме ведется активная работа назначенным лицом.",
+                "iconUrl": "https://spaceneobank.atlassian.net/",
+                "name": "В работе",
+                "untranslatedName": "In Progress",
+                "id": "10004",
+                "statusCategory": {
+                    "self": "https://spaceneobank.atlassian.net/rest/api/3/statuscategory/4",
+                    "id": 4,
+                    "key": "indeterminate",
+                    "colorName": "yellow",
+                    "name": "В работе"
+                }
+            },
+            {
+                "self": "https://spaceneobank.atlassian.net/rest/api/3/status/1",
+                "description": "открыто",
+                "iconUrl": "https://spaceneobank.atlassian.net/images/icons/statuses/open.png",
+                "name": "открыто",
+                "untranslatedName": "Open",
+                "id": "1",
+                "statusCategory": {
+                    "self": "https://spaceneobank.atlassian.net/rest/api/3/statuscategory/2",
+                    "id": 2,
+                    "key": "new",
+                    "colorName": "blue-gray",
+                    "name": "К выполнению"
+                }
+            },
+            {
+                "self": "https://spaceneobank.atlassian.net/rest/api/3/status/10209",
+                "description": "This status is managed internally by Jira Software",
+                "iconUrl": "https://spaceneobank.atlassian.net/",
+                "name": "Pending",
+                "untranslatedName": "Pending",
+                "id": "10209",
+                "statusCategory": {
+                    "self": "https://spaceneobank.atlassian.net/rest/api/3/statuscategory/4",
+                    "id": 4,
+                    "key": "indeterminate",
+                    "colorName": "yellow",
+                    "name": "В работе"
+                }
+            },
+            {
+                "self": "https://spaceneobank.atlassian.net/rest/api/3/status/6",
+                "description": "Закрыто",
+                "iconUrl": "https://spaceneobank.atlassian.net/images/icons/statuses/closed.png",
+                "name": "Закрыто",
+                "untranslatedName": "Closed",
+                "id": "6",
+                "statusCategory": {
+                    "self": "https://spaceneobank.atlassian.net/rest/api/3/statuscategory/3",
+                    "id": 3,
+                    "key": "done",
+                    "colorName": "green",
+                    "name": "Готово"
+                }
+            },
+            {
+                "self": "https://spaceneobank.atlassian.net/rest/api/3/status/5",
+                "description": "Резолюция выбрана и ожидает подтверждения автора. Здесь проблемы либо открываются вновь, либо закрываются.",
+                "iconUrl": "https://spaceneobank.atlassian.net/images/icons/statuses/resolved.png",
+                "name": "Обработано",
+                "untranslatedName": "Resolved",
+                "id": "5",
+                "statusCategory": {
+                    "self": "https://spaceneobank.atlassian.net/rest/api/3/statuscategory/3",
+                    "id": 3,
+                    "key": "done",
+                    "colorName": "green",
+                    "name": "Готово"
+                }
+            }
+        ]
+    },
+    {
+        "self": "https://spaceneobank.atlassian.net/rest/api/3/issuetype/10156",
+        "id": "10156",
+        "name": "[System] Problem",
+        "subtask": false,
+        "statuses": [
+            {
+                "self": "https://spaceneobank.atlassian.net/rest/api/3/status/10269",
+                "description": "",
+                "iconUrl": "https://spaceneobank.atlassian.net/images/icons/status_generic.gif",
+                "name": "Under investigation",
+                "untranslatedName": "Under investigation",
+                "id": "10269",
+                "statusCategory": {
+                    "self": "https://spaceneobank.atlassian.net/rest/api/3/statuscategory/4",
+                    "id": 4,
+                    "key": "indeterminate",
+                    "colorName": "yellow",
+                    "name": "В работе"
+                }
+            },
+            {
+                "self": "https://spaceneobank.atlassian.net/rest/api/3/status/16400",
+                "description": "",
+                "iconUrl": "https://spaceneobank.atlassian.net/images/icons/statuses/generic.png",
+                "name": "Known Error",
+                "untranslatedName": "Known Error",
+                "id": "16400",
+                "statusCategory": {
+                    "self": "https://spaceneobank.atlassian.net/rest/api/3/statuscategory/4",
+                    "id": 4,
+                    "key": "indeterminate",
+                    "colorName": "yellow",
+                    "name": "В работе"
+                }
+            },
+            {
+                "self": "https://spaceneobank.atlassian.net/rest/api/3/status/10228",
+                "description": "",
+                "iconUrl": "https://spaceneobank.atlassian.net/images/icons/statuses/generic.png",
+                "name": "Отменено",
+                "untranslatedName": "CANCELED",
+                "id": "10228",
+                "statusCategory": {
+                    "self": "https://spaceneobank.atlassian.net/rest/api/3/statuscategory/3",
+                    "id": 3,
+                    "key": "done",
+                    "colorName": "green",
+                    "name": "Готово"
+                }
+            },
+            {
+                "self": "https://spaceneobank.atlassian.net/rest/api/3/status/10004",
+                "description": "В данный момент по этой проблеме ведется активная работа назначенным лицом.",
+                "iconUrl": "https://spaceneobank.atlassian.net/",
+                "name": "В работе",
+                "untranslatedName": "In Progress",
+                "id": "10004",
+                "statusCategory": {
+                    "self": "https://spaceneobank.atlassian.net/rest/api/3/statuscategory/4",
+                    "id": 4,
+                    "key": "indeterminate",
+                    "colorName": "yellow",
+                    "name": "В работе"
+                }
+            },
+            {
+                "self": "https://spaceneobank.atlassian.net/rest/api/3/status/1",
+                "description": "открыто",
+                "iconUrl": "https://spaceneobank.atlassian.net/images/icons/statuses/open.png",
+                "name": "открыто",
+                "untranslatedName": "Open",
+                "id": "1",
+                "statusCategory": {
+                    "self": "https://spaceneobank.atlassian.net/rest/api/3/statuscategory/2",
+                    "id": 2,
+                    "key": "new",
+                    "colorName": "blue-gray",
+                    "name": "К выполнению"
+                }
+            },
+            {
+                "self": "https://spaceneobank.atlassian.net/rest/api/3/status/10209",
+                "description": "This status is managed internally by Jira Software",
+                "iconUrl": "https://spaceneobank.atlassian.net/",
+                "name": "Pending",
+                "untranslatedName": "Pending",
+                "id": "10209",
+                "statusCategory": {
+                    "self": "https://spaceneobank.atlassian.net/rest/api/3/statuscategory/4",
+                    "id": 4,
+                    "key": "indeterminate",
+                    "colorName": "yellow",
+                    "name": "В работе"
+                }
+            },
+            {
+                "self": "https://spaceneobank.atlassian.net/rest/api/3/status/6",
+                "description": "Закрыто",
+                "iconUrl": "https://spaceneobank.atlassian.net/images/icons/statuses/closed.png",
+                "name": "Закрыто",
+                "untranslatedName": "Closed",
+                "id": "6",
+                "statusCategory": {
+                    "self": "https://spaceneobank.atlassian.net/rest/api/3/statuscategory/3",
+                    "id": 3,
+                    "key": "done",
+                    "colorName": "green",
+                    "name": "Готово"
+                }
+            },
+            {
+                "self": "https://spaceneobank.atlassian.net/rest/api/3/status/5",
+                "description": "Резолюция выбрана и ожидает подтверждения автора. Здесь проблемы либо открываются вновь, либо закрываются.",
+                "iconUrl": "https://spaceneobank.atlassian.net/images/icons/statuses/resolved.png",
+                "name": "Обработано",
+                "untranslatedName": "Resolved",
+                "id": "5",
+                "statusCategory": {
+                    "self": "https://spaceneobank.atlassian.net/rest/api/3/statuscategory/3",
+                    "id": 3,
+                    "key": "done",
+                    "colorName": "green",
+                    "name": "Готово"
+                }
+            }
+        ]
+    },
+    {
+        "self": "https://spaceneobank.atlassian.net/rest/api/3/issuetype/10255",
+        "id": "10255",
+        "name": "[System] Post-incident review",
+        "subtask": false,
+        "statuses": [
+            {
+                "self": "https://spaceneobank.atlassian.net/rest/api/3/status/10715",
+                "description": "",
+                "iconUrl": "https://spaceneobank.atlassian.net/",
+                "name": "Additional Details Required",
+                "untranslatedName": "Additional Details Required",
+                "id": "10715",
+                "statusCategory": {
+                    "self": "https://spaceneobank.atlassian.net/rest/api/3/statuscategory/2",
+                    "id": 2,
+                    "key": "new",
+                    "colorName": "blue-gray",
+                    "name": "К выполнению"
+                }
+            },
+            {
+                "self": "https://spaceneobank.atlassian.net/rest/api/3/status/10269",
+                "description": "",
+                "iconUrl": "https://spaceneobank.atlassian.net/images/icons/status_generic.gif",
+                "name": "Under investigation",
+                "untranslatedName": "Under investigation",
+                "id": "10269",
+                "statusCategory": {
+                    "self": "https://spaceneobank.atlassian.net/rest/api/3/statuscategory/4",
+                    "id": 4,
+                    "key": "indeterminate",
+                    "colorName": "yellow",
+                    "name": "В работе"
+                }
+            },
+            {
+                "self": "https://spaceneobank.atlassian.net/rest/api/3/status/10228",
+                "description": "",
+                "iconUrl": "https://spaceneobank.atlassian.net/images/icons/statuses/generic.png",
+                "name": "Отменено",
+                "untranslatedName": "CANCELED",
+                "id": "10228",
+                "statusCategory": {
+                    "self": "https://spaceneobank.atlassian.net/rest/api/3/statuscategory/3",
+                    "id": 3,
+                    "key": "done",
+                    "colorName": "green",
+                    "name": "Готово"
+                }
+            },
+            {
+                "self": "https://spaceneobank.atlassian.net/rest/api/3/status/10004",
+                "description": "В данный момент по этой проблеме ведется активная работа назначенным лицом.",
+                "iconUrl": "https://spaceneobank.atlassian.net/",
+                "name": "В работе",
+                "untranslatedName": "In Progress",
+                "id": "10004",
+                "statusCategory": {
+                    "self": "https://spaceneobank.atlassian.net/rest/api/3/statuscategory/4",
+                    "id": 4,
+                    "key": "indeterminate",
+                    "colorName": "yellow",
+                    "name": "В работе"
+                }
+            },
+            {
+                "self": "https://spaceneobank.atlassian.net/rest/api/3/status/1",
+                "description": "открыто",
+                "iconUrl": "https://spaceneobank.atlassian.net/images/icons/statuses/open.png",
+                "name": "открыто",
+                "untranslatedName": "Open",
+                "id": "1",
+                "statusCategory": {
+                    "self": "https://spaceneobank.atlassian.net/rest/api/3/statuscategory/2",
+                    "id": 2,
+                    "key": "new",
+                    "colorName": "blue-gray",
+                    "name": "К выполнению"
+                }
+            },
+            {
+                "self": "https://spaceneobank.atlassian.net/rest/api/3/status/5",
+                "description": "Резолюция выбрана и ожидает подтверждения автора. Здесь проблемы либо открываются вновь, либо закрываются.",
+                "iconUrl": "https://spaceneobank.atlassian.net/images/icons/statuses/resolved.png",
+                "name": "Обработано",
+                "untranslatedName": "Resolved",
+                "id": "5",
+                "statusCategory": {
+                    "self": "https://spaceneobank.atlassian.net/rest/api/3/statuscategory/3",
+                    "id": 3,
+                    "key": "done",
+                    "colorName": "green",
+                    "name": "Готово"
+                }
+            },
+            {
+                "self": "https://spaceneobank.atlassian.net/rest/api/3/status/6",
+                "description": "Закрыто",
+                "iconUrl": "https://spaceneobank.atlassian.net/images/icons/statuses/closed.png",
+                "name": "Закрыто",
+                "untranslatedName": "Closed",
+                "id": "6",
+                "statusCategory": {
+                    "self": "https://spaceneobank.atlassian.net/rest/api/3/statuscategory/3",
+                    "id": 3,
+                    "key": "done",
+                    "colorName": "green",
+                    "name": "Готово"
+                }
+            }
+        ]
+    }
+]

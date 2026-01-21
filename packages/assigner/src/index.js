@@ -1,12 +1,13 @@
 import express from "express";
 import cors from "cors";
 import {connectDB} from "./models/db.js";
-
+import webhookRoutes from "./webhook/createdIssue.js";
 
 
 
 const app = express();
 const PORT = 9003;
+
 
 
 app.use(express.json());
@@ -16,6 +17,8 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization', 'X-CSRF-Token'],
   credentials: true,
 }));
+
+app.use('/api/webhook', webhookRoutes);
 
 
 // Запуск сервера

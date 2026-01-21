@@ -8,18 +8,22 @@ const app = express();
 
 // Конфигурация сервисов
 const SERVICES = {
-  shift: {
-    url: 'http://crm_shift:9002',
-    prefix: '/api/shift'
-  },
-  auth: {
-    url: 'http://crm_auth:9000',
-    prefix: '/api/auth'
-  },
-  analytics: {
-    url: 'http://crm_analytics:9001',
-    prefix: '/api/analytics'
-  }
+    shift: {
+        url: 'http://crm_shift:9002',
+        prefix: '/api/shift'
+    },
+    auth: {
+        url: 'http://crm_auth:9000',
+        prefix: '/api/auth'
+    },
+    analytics: {
+        url: 'http://crm_analytics:9001',
+        prefix: '/api/analytics'
+    },
+    assigner: {
+        url: 'http://crm_assigner:9003',
+        prefix: '/api/assigner'
+    }
 };
 
 
@@ -178,6 +182,44 @@ app.use('/api/analytics/type', authGuard, createProxyMiddleware({
       message: 'Analytics service unavailable'
     });
   }
+}));
+// ========== WEBHOOKS ==========
+app.use('/api/analytics/webhook/change-status', createProxyMiddleware({
+  target: SERVICES.analytics.url,
+  changeOrigin: true,
+  pathRewrite: {
+    '^/api/analytics/webhook/change-status': '/api/webhook/change-status'
+  },
+  onProxyReq: (proxyReq, req, res) => {
+    console.log(`[Gateway -> Shift Webhook] ${req.method} ${req.path}`);
+    rewriteBody(proxyReq, req);
+  },
+  onError: (err, req, res) => {
+    console.error(`[Gateway] Shift webhook error:`, err.message);
+    res.status(502).json({
+      success: false,
+      message: 'Shift service unavailable'
+    });
+  }
+}));
+
+app.use('/api/assigner/webhook/created-issue', createProxyMiddleware({
+    target: SERVICES.assigner.url,
+    changeOrigin: true,
+    pathRewrite: {
+      '^/api/assigner/webhook/created-issue': '/api/webhook/created-issue'
+    },
+    onProxyReq: (proxyReq, req, res) => {
+      console.log(`[Gateway -> Assigner Webhook] ${req.method} ${req.path}`);
+      rewriteBody(proxyReq, req);
+    },
+    onError: (err, req, res) => {
+      console.error(`[Gateway] Assigner webhook error:`, err.message);
+      res.status(502).json({
+        success: false,
+        message: 'Assigner service unavailable'
+      });
+    }
 }));
 
 // ========== HEALTH CHECK ==========

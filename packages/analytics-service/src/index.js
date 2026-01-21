@@ -5,6 +5,7 @@ import * as cron from "node-cron";
 import typeRoutes from './routes/typeRoutes.js';
 import {connectDB} from "./models/db.js";
 import {connectRedis} from "./services/redisService.js";
+import webhookRoutes from "./webhook/changeStatus.js";
 
 
 const app = express();
@@ -26,6 +27,7 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
 app.use('/api/type', typeRoutes);
+app.use('/api/webhook', webhookRoutes);
 
 async function startScheduler() {
   try {
