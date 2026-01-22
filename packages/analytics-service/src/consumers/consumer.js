@@ -20,6 +20,7 @@ export async function runShiftCreatedConsumer() {
         }
       }
     });
+    console.log('[Kafka Consumer] Consumer запущен и слушает topic "shift.created"');
 
     // graceful shutdown
     const shutdown = async () => {
@@ -39,5 +40,3 @@ export async function runShiftCreatedConsumer() {
   }
 }
 
-// Если нужно автозапускать при импорте, раскомментируйте следующую строку:
-runShiftCreatedConsumer().catch(err => console.error(err));

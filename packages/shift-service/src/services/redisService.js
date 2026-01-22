@@ -77,12 +77,12 @@ class RedisService {
 
       await redis.setex(key, ttl, JSON.stringify(data));
 
-      await this.publishShiftCreated({
+      this.publishShiftCreated({
             departmentId,
             departmentObjectId,
             accountId,
             assigneeEmail,
-      });
+      }).then(r => console.log('Успешно записан в топик')).catch(e => console.error(e));
 
       console.log(`[Redis] Добавлена смена: ${key}`);
       return { success: true, key };

@@ -6,6 +6,7 @@ import typeRoutes from './routes/typeRoutes.js';
 import {connectDB} from "./models/db.js";
 import {connectRedis} from "./services/redisService.js";
 import webhookRoutes from "./webhook/changeStatus.js";
+import {runShiftCreatedConsumer} from "./consumers/consumer.js";
 
 
 const app = express();
@@ -31,8 +32,9 @@ app.use('/api/webhook', webhookRoutes);
 
 async function startScheduler() {
   try {
-    await connectRedis()
-    await connectDB()
+      await runShiftCreatedConsumer()
+      await connectRedis()
+      await connectDB()
   } catch (error) {
     console.error('Ошибка при запуске планировщика:', {
       message: error.message,
