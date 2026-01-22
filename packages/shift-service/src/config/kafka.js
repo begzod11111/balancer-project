@@ -1,9 +1,6 @@
-// packages/shift-service/src/config/kafka.js
 import { Kafka } from 'kafkajs';
 
-const kafka = new Kafka({
+export const kafka = new Kafka({
   clientId: 'shift-service',
-  brokers: [process.env.KAFKA_BROKER || 'localhost:9092']
+  brokers: [process.env.KAFKA_BROKERS || 'kafka:29092']
 });
-
-export { kafka };

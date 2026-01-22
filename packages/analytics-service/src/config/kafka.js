@@ -1,8 +1,6 @@
 import { Kafka } from 'kafkajs';
 
-const kafka = new Kafka({
-  clientId: 'shift-service',
-  brokers: [process.env.KAFKA_BROKER || 'localhost:9092']
+export const kafka = new Kafka({
+  clientId: 'analytics-service',
+  brokers: [process.env.KAFKA_BROKERS || 'kafka:29092']
 });
-
-export { kafka };
