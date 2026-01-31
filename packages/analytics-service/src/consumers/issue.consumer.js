@@ -32,10 +32,7 @@ export async function runAssignerConsumer() {
   while (retries < maxRetries) {
     try {
       console.log(`[Kafka Consumer] Попытка подписки на топик ${retries + 1}/${maxRetries}...`);
-      await issueConsumer.subscribe({
-        topic: 'issue_created',
-        fromBeginning: true
-      });
+
       console.log('[Kafka Consumer] ✅ Подписка на топик "issue_created" успешна');
       break;
     } catch (error) {
@@ -47,6 +44,10 @@ export async function runAssignerConsumer() {
       await new Promise(resolve => setTimeout(resolve, 2000));
     }
   }
+    await issueConsumer.subscribe({
+        topic: 'issue_created',
+        fromBeginning: true
+      });
 
   // Запуск consumer ПОСЛЕ подписки
   await issueConsumer.run({
