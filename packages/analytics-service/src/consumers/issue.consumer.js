@@ -13,11 +13,13 @@ export async function runAssignerConsumer() {
   // Retry подключения
   while (retries < maxRetries) {
     try {
+      console.log(`[Kafka Consumer] Попытка подключения ${retries + 1}/${maxRetries}...`);
       await issueConsumer.connect();
       console.log('[Kafka Consumer] ✅ Успешно подключен к Kafka');
       break;
     } catch (error) {
       retries++;
+      console.error(`[Kafka Consumer] ❌ Ошибка подключения (попытка ${retries}):`, error.message);
       if (retries >= maxRetries) {
         throw error;
       }
@@ -25,14 +27,16 @@ export async function runAssignerConsumer() {
     }
   }
 
+  // Подписка на топик ДО вызова run()
   retries = 0;
   while (retries < maxRetries) {
     try {
-
+      console.log(`[Kafka Consumer] Попытка подписки на топик ${retries + 1}/${maxRetries}...`);
       await issueConsumer.subscribe({
         topic: 'issue_created',
         fromBeginning: true
       });
+      console.log('[Kafka Consumer] ✅ Подписка на топик "issue_created" успешна');
       break;
     } catch (error) {
       retries++;
@@ -44,21 +48,18 @@ export async function runAssignerConsumer() {
     }
   }
 
+  // Запуск consumer ПОСЛЕ подписки
   await issueConsumer.run({
-    partitionsConsumedConcurrently: 5, // Обработка 5 партиций одновременно
+    partitionsConsumedConcurrently: 5,
     eachMessage: async ({ topic, partition, message }) => {
       try {
-        const key = message.key ? message.key.toString() : null;
         const value = message.value ? message.value.toString() : null;
+        const event = JSON.parse(value);
 
         console.log('\n[Kafka Consumer] 📨 Получено новое сообщение:');
         console.log(`  Topic: ${topic}`);
         console.log(`  Partition: ${partition}`);
-        console.log(`  Key: ${key}`);
-        console.log(`  Value: ${value}`);
-
-        const event = JSON.parse(value);
-        console.log(`\n[Kafka Consumer] 🎯 Событие: ${event.event || event.webhookEvent}`);
+        console.log(`[Kafka Consumer] 🎯 Событие:`, event.webhookEvent);
         console.log(`[Kafka Consumer] 📊 Данные:`, JSON.stringify(event, null, 2));
       } catch (err) {
         console.error('[Kafka Consumer] ❌ Ошибка обработки сообщения:', err);
@@ -66,7 +67,7 @@ export async function runAssignerConsumer() {
     }
   });
 
-  console.log('\n[Kafka Consumer] 🎧 Consumer запущен и слушает topic "issue.created"\n');
+  console.log('\n[Kafka Consumer] 🎧 Consumer запущен и слушает topic "issue_created"\n');
 
   const shutdown = async () => {
     console.log('\n[Kafka Consumer] 🛑 Получен сигнал завершения...');
@@ -83,5 +84,4 @@ export async function runAssignerConsumer() {
   process.on('SIGINT', shutdown);
   process.on('SIGTERM', shutdown);
 }
-
 
