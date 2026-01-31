@@ -27,7 +27,7 @@ export async function runShiftCreatedConsumer() {
   }
 
     try {
-        await runShiftCreatedConsumer.subscribe({
+        await shiftConsumer.subscribe({
             topic: 'shift.created',
             fromBeginning: true
         });
