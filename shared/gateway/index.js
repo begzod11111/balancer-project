@@ -222,6 +222,25 @@ app.use('/api/assigner/webhook/created-issue', createProxyMiddleware({
     }
 }));
 
+app.use('/api/analytics/webhook/comment-created', createProxyMiddleware({
+    target: SERVICES.analytics.url,
+    changeOrigin: true,
+    pathRewrite: {
+      '^/api/analytics/webhook/comment-created': '/api/webhook/comment-created'
+    },
+    onProxyReq: (proxyReq, req, res) => {
+      console.log(`[Gateway -> Analytics Comment Webhook] ${req.method} ${req.path}`);
+      rewriteBody(proxyReq, req);
+    },
+    onError: (err, req, res) => {
+      console.error(`[Gateway] Analytics Comment webhook error:`, err.message);
+      res.status(502).json({
+        success: false,
+        message: 'Analytics service unavailable'
+      });
+    }
+}));
+
 // ========== HEALTH CHECK ==========
 app.get('/health', (req, res) => {
   res.json({

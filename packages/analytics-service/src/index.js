@@ -5,8 +5,9 @@ import * as cron from "node-cron";
 import typeRoutes from './routes/typeRoutes.js';
 import {connectDB} from "./models/db.js";
 import {connectRedis} from "./services/redisService.js";
-import webhookRoutes from "./webhook/changeStatus.js";
+import webhookRoutes from "./webhook/webhook.js";
 import {runShiftCreatedConsumer} from "./consumers/consumer.js";
+import jira from "./services/jiraService.js";
 
 
 const app = express();
