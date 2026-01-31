@@ -10,7 +10,7 @@ export async function runAssignerConsumer() {
   const maxRetries = 30;
   let retries = 0;
 
-  // Retry подключения
+  // Подключение к Kafka
   while (retries < maxRetries) {
     try {
       console.log(`[Kafka Consumer] Попытка подключения ${retries + 1}/${maxRetries}...`);
@@ -26,18 +26,20 @@ export async function runAssignerConsumer() {
       await new Promise(resolve => setTimeout(resolve, 3000));
     }
   }
+
+  // Подписка на топик (до запуска consumer!)
   try {
-      await issueConsumer.subscribe({
-        topic: 'issue_created',
-        fromBeginning: true
-      });
-      console.log('[Kafka Consumer] ✅ Успешно подписан на topic "issue_created"');
+    await issueConsumer.subscribe({
+      topic: 'issue_created',
+      fromBeginning: true
+    });
+    console.log('[Kafka Consumer] ✅ Успешно подписан на topic "issue_created"');
   } catch (error) {
-        console.error('[Kafka Consumer] ❌ Ошибка подписки на topic "issue_created":', error);
+    console.error('[Kafka Consumer] ❌ Ошибка подписки на topic "issue_created":', error);
+    throw error;
   }
 
-
-  // Запуск consumer ПОСЛЕ подписки
+  // Запуск consumer
   await issueConsumer.run({
     partitionsConsumedConcurrently: 5,
     eachMessage: async ({ topic, partition, message }) => {

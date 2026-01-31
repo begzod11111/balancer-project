@@ -26,26 +26,15 @@ export async function runShiftCreatedConsumer() {
     }
   }
 
-  // Retry подписки на топик
-  retries = 0;
-  while (retries < maxRetries) {
     try {
-      console.log(`[Kafka Consumer] Попытка подписки на топик ${retries + 1}/${maxRetries}...`);
-      await shiftConsumer.subscribe({ topic: 'shift.created', fromBeginning: true });
-      console.log('[Kafka Consumer] ✅ Подписка на топик "shift.created" успешна');
-      break;
+        await runShiftCreatedConsumer.subscribe({
+            topic: 'shift.created',
+            fromBeginning: true
+        });
+        console.log('[Kafka Consumer] ✅ Успешно подписан на topic "shift.created"');
     } catch (error) {
-      retries++;
-      console.error(`[Kafka Consumer] ❌ Ошибка подписки (попытка ${retries}):`, error.message);
-
-      if (retries >= maxRetries) {
-        console.error('[Kafka Consumer] Превышено максимальное количество попыток подписки');
-        throw error;
-      }
-
-      await new Promise(resolve => setTimeout(resolve, 2000));
+        console.error('[Kafka Consumer] ❌ Ошибка подписки на topic "shift.created":', error);
     }
-  }
 
   await shiftConsumer.run({
     eachMessage: async ({ topic, partition, message }) => {
