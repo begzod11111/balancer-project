@@ -243,7 +243,6 @@ class IssueService {
     async reassignIssues(fromAssigneeId, toAssigneeId, filters = {}) {
         const query = {
             assigneeAccountId: fromAssigneeId,
-            status: 'open'
         };
 
         if (filters.assignmentGroupId) {

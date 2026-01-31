@@ -62,8 +62,15 @@ export async function runAssignerConsumer() {
         console.log('\n[Kafka Consumer] 📨 Получено новое сообщение:');
         console.log(`  Topic: ${topic}`);
         console.log(`  Partition: ${partition}`);
-
-        await IssueService.createIssue(event)
+        if (topic === TOPICS.ISSUE_CREATED) {
+            await IssueService.createIssue(event)
+        } else if (topic === TOPICS.ISSUE_ASSIGNED) {
+            await IssueService.updateIssueAssignee(event.issueId, event.assigneeAccountId)
+        } else if (topic === TOPICS.ISSUE_GENERIC) {
+            await IssueService.updateIssueStatus(event.issueId, event.status, event.issueStatusId)
+        } else {
+            console.warn(`[Kafka Consumer] ⚠️ Неизвестный topic: ${topic}`);
+        }
 
       } catch (err) {
         console.error('[Kafka Consumer] ❌ Ошибка обработки сообщения:', err);
