@@ -30,7 +30,7 @@ export async function runAssignerConsumer() {
     try {
 
       await issueConsumer.subscribe({
-        topic: 'issue.created',
+        topic: 'issue_created',
         fromBeginning: true
       });
       break;
