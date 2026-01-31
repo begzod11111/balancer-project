@@ -1,8 +1,11 @@
-// packages/analytics-service/src/services/issueAnalyticsService.js
+// packages/analytics-service/src/services/issueService.js
 
 import {models} from "../models/db.js";
 
-class IssueAnalyticsService {
+class IssueService {
+
+
+
     // Получить все задачи с фильтрацией
     async getIssues(filters = {}) {
         const query = {};
@@ -258,6 +261,27 @@ class IssueAnalyticsService {
         );
     }
 
+    async createIssue(issueData) {
+        const existingIssue = await models.Issue.findOne({issueId: issueData.issueId});
+        if (existingIssue) {
+            return existingIssue;
+        }
+
+        const newIssue = new models.Issue({
+            issueId: issueData.issueId,
+            issueKey: issueData.issueKey,
+            typeId: issueData.typeId,
+            status: issueData.status,
+            issueStatusId: issueData.issueStatusId,
+            assigneeAccountId: issueData.assigneeAccountId,
+            assignmentGroupId: issueData.assignmentGroupId,
+            createdAt: issueData.createdAt || new Date(),
+            updatedAt: issueData.updatedAt || new Date()
+        });
+
+        return newIssue.save();
+    }
+
 
     // Общая статистика
     async getOverallStats(filters = {}) {
@@ -282,4 +306,4 @@ class IssueAnalyticsService {
     }
 }
 
-export default new IssueAnalyticsService();
+export default new IssueService();

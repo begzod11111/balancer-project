@@ -1,4 +1,5 @@
 import { kafka } from '../config/kafka.js';
+import IssueService from '../services/issueService.js';
 
 const issueConsumer = kafka.consumer({
   groupId: 'assigner-issueConsumer',
@@ -50,8 +51,9 @@ export async function runAssignerConsumer() {
         console.log('\n[Kafka Consumer] 📨 Получено новое сообщение:');
         console.log(`  Topic: ${topic}`);
         console.log(`  Partition: ${partition}`);
-        console.log(`[Kafka Consumer] 🎯 Событие:`, event.webhookEvent);
-        console.log(`[Kafka Consumer] 📊 Данные:`, JSON.stringify(event, null, 2));
+
+        await IssueService.createIssue(event)
+
       } catch (err) {
         console.error('[Kafka Consumer] ❌ Ошибка обработки сообщения:', err);
       }

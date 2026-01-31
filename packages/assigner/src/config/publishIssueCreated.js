@@ -14,7 +14,8 @@ const publishIssueCreated = async (issueData) => {
       assignmentGroupId: issueData.issue.fields.customfield_18219?.[0]?.id || null,
       assigneeAccountId: issueData.issue.fields.assignee?.accountId || null,
       typeId: issueData.issue.fields.issuetype?.id || null,
-      issueStatusId: issueData.issue.fields.status?.id || null,
+      issueStatusId: issueData.issue.fields.status?.name || null,
+        status: issueData.issue.fields.status?.id || null,
       webhookEvent: issueData.webhookEvent,
       timestamp: issueData.timestamp
     };
