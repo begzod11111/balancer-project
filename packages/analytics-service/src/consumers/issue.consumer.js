@@ -26,28 +26,16 @@ export async function runAssignerConsumer() {
       await new Promise(resolve => setTimeout(resolve, 3000));
     }
   }
-
-  // Подписка на топик ДО вызова run()
-  retries = 0;
-  while (retries < maxRetries) {
-    try {
-      console.log(`[Kafka Consumer] Попытка подписки на топик ${retries + 1}/${maxRetries}...`);
-
-      console.log('[Kafka Consumer] ✅ Подписка на топик "issue_created" успешна');
-      break;
-    } catch (error) {
-      retries++;
-      console.error(`[Kafka Consumer] ❌ Ошибка подписки (попытка ${retries}):`, error.message);
-      if (retries >= maxRetries) {
-        throw error;
-      }
-      await new Promise(resolve => setTimeout(resolve, 2000));
-    }
-  }
-    await issueConsumer.subscribe({
+  try {
+      await issueConsumer.subscribe({
         topic: 'issue_created',
         fromBeginning: true
       });
+      console.log('[Kafka Consumer] ✅ Успешно подписан на topic "issue_created"');
+  } catch (error) {
+        console.error('[Kafka Consumer] ❌ Ошибка подписки на topic "issue_created":', error);
+  }
+
 
   // Запуск consumer ПОСЛЕ подписки
   await issueConsumer.run({
