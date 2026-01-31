@@ -6,8 +6,9 @@ import typeRoutes from './routes/typeRoutes.js';
 import {connectDB} from "./models/db.js";
 import {connectRedis} from "./services/redisService.js";
 import webhookRoutes from "./webhook/webhook.js";
-import {runShiftCreatedConsumer} from "./consumers/consumer.js";
+import {runShiftCreatedConsumer} from "./consumers/shift.consumer.js";
 import jira from "./services/jiraService.js";
+import {startConsumers} from "./consumers/index.js";
 
 
 const app = express();
@@ -36,6 +37,7 @@ async function startScheduler() {
       await runShiftCreatedConsumer()
       await connectRedis()
       await connectDB()
+      await startConsumers()
   } catch (error) {
     console.error('Ошибка при запуске планировщика:', {
       message: error.message,

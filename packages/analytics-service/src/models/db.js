@@ -1,12 +1,16 @@
 // packages/analytics-service/src/models/db.js
 import mongoose from 'mongoose';
 import Type from './type.js';
+import Issue from './issue.js';
+import Comment from './comment.js';
 import dotenv from "dotenv";
 
 dotenv.config()
 
 export const models = {
-    Type
+    Type,
+    Comment,
+    Issue
 };
 
 /**

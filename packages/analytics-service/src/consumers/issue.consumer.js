@@ -1,53 +1,51 @@
 import { kafka } from '../config/kafka.js';
 
-const consumer = kafka.consumer({ groupId: 'analytics-consumer' });
+const issueConsumer = kafka.consumer({
+  groupId: 'assigner-issueConsumer',
+  sessionTimeout: 30000,
+  heartbeatInterval: 3000
+});
 
-export async function runShiftCreatedConsumer() {
+export async function runAssignerConsumer() {
   const maxRetries = 30;
   let retries = 0;
 
   // Retry подключения
   while (retries < maxRetries) {
     try {
-      console.log(`[Kafka Consumer] Попытка подключения ${retries + 1}/${maxRetries}...`);
-      await consumer.connect();
+      await issueConsumer.connect();
       console.log('[Kafka Consumer] ✅ Успешно подключен к Kafka');
       break;
     } catch (error) {
       retries++;
-      console.error(`[Kafka Consumer] ❌ Ошибка подключения (п��пытка ${retries}):`, error.message);
-
       if (retries >= maxRetries) {
-        console.error('[Kafka Consumer] Превышено максимальное количество попыток подключения');
         throw error;
       }
-
       await new Promise(resolve => setTimeout(resolve, 3000));
     }
   }
 
-  // Retry подписки на топик
   retries = 0;
   while (retries < maxRetries) {
     try {
-      console.log(`[Kafka Consumer] Попытка подписки на топик ${retries + 1}/${maxRetries}...`);
-      await consumer.subscribe({ topic: 'shift.created', fromBeginning: true });
-      console.log('[Kafka Consumer] ✅ Подписка на топик "shift.created" успешна');
+
+      await issueConsumer.subscribe({
+        topic: 'issue.created',
+        fromBeginning: true
+      });
       break;
     } catch (error) {
       retries++;
       console.error(`[Kafka Consumer] ❌ Ошибка подписки (попытка ${retries}):`, error.message);
-
       if (retries >= maxRetries) {
-        console.error('[Kafka Consumer] Превышено максимальное количество попыток подписки');
         throw error;
       }
-
       await new Promise(resolve => setTimeout(resolve, 2000));
     }
   }
 
-  await consumer.run({
+  await issueConsumer.run({
+    partitionsConsumedConcurrently: 5, // Обработка 5 партиций одновременно
     eachMessage: async ({ topic, partition, message }) => {
       try {
         const key = message.key ? message.key.toString() : null;
@@ -60,22 +58,20 @@ export async function runShiftCreatedConsumer() {
         console.log(`  Value: ${value}`);
 
         const event = JSON.parse(value);
-        console.log(`\n[Kafka Consumer] 🎯 Событие: ${event.event}`);
-        console.log(`[Kafka Consumer] ⏰ Время: ${event.timestamp}`);
-        console.log(`[Kafka Consumer] 📊 Данные:`, JSON.stringify(event.data, null, 2));
-        console.log('────────��────────────────────────────────\n');
+        console.log(`\n[Kafka Consumer] 🎯 Событие: ${event.event || event.webhookEvent}`);
+        console.log(`[Kafka Consumer] 📊 Данные:`, JSON.stringify(event, null, 2));
       } catch (err) {
         console.error('[Kafka Consumer] ❌ Ошибка обработки сообщения:', err);
       }
     }
   });
 
-  console.log('\n[Kafka Consumer] 🎧 Consumer запущен и слушает topic "shift.created"\n');
+  console.log('\n[Kafka Consumer] 🎧 Consumer запущен и слушает topic "issue.created"\n');
 
   const shutdown = async () => {
     console.log('\n[Kafka Consumer] 🛑 Получен сигнал завершения...');
     try {
-      await consumer.disconnect();
+      await issueConsumer.disconnect();
       console.log('[Kafka Consumer] ✅ Consumer отключен');
       process.exit(0);
     } catch (err) {
@@ -87,10 +83,5 @@ export async function runShiftCreatedConsumer() {
   process.on('SIGINT', shutdown);
   process.on('SIGTERM', shutdown);
 }
-
-runShiftCreatedConsumer().catch(err => {
-  console.error('[Kafka Consumer] ❌ Критическая ошибка:', err);
-  process.exit(1);
-});
 
 
