@@ -1,6 +1,14 @@
 import { kafka } from '../config/kafka.js';
 import IssueService from '../services/issueService.js';
 
+const TOPICS = {
+    ISSUE_CREATED: 'issue_created',
+    ISSUE_GENERIC: 'issue_generic',
+    ISSUE_ASSIGNED: 'issue_assigned'
+};
+
+// ['issue_created', 'issue_generic', 'issue_assigned']
+
 const issueConsumer = kafka.consumer({
   groupId: 'assigner-issueConsumer',
   sessionTimeout: 30000,
@@ -30,10 +38,13 @@ export async function runAssignerConsumer() {
 
   // Подписка на топик (до запуска consumer!)
   try {
-    await issueConsumer.subscribe({
-      topic: 'issue_created',
-      fromBeginning: true
-    });
+      for (const topic of Object.values(TOPICS)) {
+          await issueConsumer.subscribe({
+              topic,
+              fromBeginning: true
+          });
+          console.log(`[Kafka Consumer] ✅ Успешно подписан на topic "${topic}"`);
+      }
     console.log('[Kafka Consumer] ✅ Успешно подписан на topic "issue_created"');
   } catch (error) {
     console.error('[Kafka Consumer] ❌ Ошибка подписки на topic "issue_created":', error);

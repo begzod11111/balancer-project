@@ -1,4 +1,5 @@
 import express from 'express';
+import publishIssueUpdate from "../config/publishIssueUpdate.js";
 
 
 const router = express.Router();
@@ -8,10 +9,12 @@ router.post('/change-status', async (req, res) => {
     try {
         const statusData = req.body;
         console.log('[Analytics Service] Received change status webhook:', statusData);
+        publishIssueUpdate(statusData).then(
+            () => console.log('[Analytics Service] Status change published to Kafka successfully'),
+        ).catch(
+            (error) => console.error('[Analytics Service] Error publishing status change to Kafka:', error)
+        );
 
-        // Здесь можно добавить логику обработки изменения статуса задачи,
-        // например, обновление аналитических данных или отправка уведомлений.
-        // Пример ответа
         res.status(200).json({success: true, message: 'Status change processed successfully'});
     } catch (error) {
         console.error('[Analytics Service] Error processing change status webhook:', error);
