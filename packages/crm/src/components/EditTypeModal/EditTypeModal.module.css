@@ -15,7 +15,8 @@
 
 @keyframes fadeIn {
   from {
-    opacity: 0;}
+    opacity: 0;
+  }
   to {
     opacity: 1;
   }
@@ -59,7 +60,7 @@
   color: var(--text-primary);
 }
 
-.closeBtn {
+.closeButton {
   background: transparent;
   border: none;
   font-size: 1.25rem;
@@ -73,7 +74,7 @@
   justify-content: center;
 }
 
-.closeBtn:hover {
+.closeButton:hover {
   background: var(--bg-hover);
   color: var(--text-primary);
 }
@@ -93,6 +94,7 @@
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+  margin-bottom: 1rem;
 }
 
 .formGroup label {
@@ -101,76 +103,37 @@
   color: var(--text-primary);
 }
 
-.required {
-  color: var(--color-error);
+.colorPicker {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
 }
 
-.formGroup input,
-.formGroup textarea {
-  padding: 0.625rem 0.875rem;
-  border: 1px solid var(--border-color);
+.colorPreview {
+  width: 40px;
+  height: 40px;
   border-radius: 8px;
-  font-size: 0.875rem;
-  color: var(--text-primary);
-  background: var(--bg-primary);
+  border: 2px solid var(--border-color);
+  flex-shrink: 0;
   transition: all 0.2s ease;
 }
 
-.formGroup input:focus,
-.formGroup textarea:focus {
-  outline: none;
-  border-color: var(--accent-color);
-  box-shadow: 0 0 0 3px rgba(var(--color-primary-rgb), 0.1);
+.colorPreview:hover {
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
-.formGroup input::placeholder,
-.formGroup textarea::placeholder {
-  color: var(--text-tertiary);
-}
-
-.inputError {
-  border-color: var(--color-error) !important;
-}
-
-.inputError:focus {
-  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1) !important;
-}
-
-.error {
-  font-size: 0.75rem;
-  color: var(--color-error);
-  margin-top: -0.25rem;
-}
-
-.colorInput {
-  height: 40px;
-  cursor: pointer;
-  padding: 0.25rem;
-}
-
-.colorInput::-webkit-color-swatch-wrapper {
-  padding: 0;
-}
-
-.colorInput::-webkit-color-swatch {
-  border: 1px solid var(--border-color);
-  border-radius: 6px;
-}
-
-.checkboxGroup {
-  margin-bottom: 1rem;
-}
-
-.checkboxGroup label {
+.checkboxLabel {
   display: flex;
   align-items: center;
   gap: 0.5rem;
   cursor: pointer;
   font-size: 0.875rem;
   color: var(--text-primary);
+  font-weight: 500 !important;
 }
 
-.checkboxGroup input[type="checkbox"] {
+.checkboxLabel input[type="checkbox"] {
   width: 18px;
   height: 18px;
   cursor: pointer;
@@ -209,6 +172,15 @@
   }
 
   .actions button {
+    width: 100%;
+  }
+
+  .colorPicker {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .colorPreview {
     width: 100%;
   }
 }

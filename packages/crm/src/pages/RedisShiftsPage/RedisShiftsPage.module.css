@@ -4,6 +4,69 @@
   width: 100%;
   margin: 0 auto;
 }
+.timeSection {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  background: var(--bg-secondary);
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+}
+
+.timeSection h4 {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.timeInputs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.ttlInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  background: var(--bg-primary);
+  border-radius: 6px;
+  border: 1px solid var(--accent-color);
+}
+
+.ttlCalculated {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-primary);
+  font-size: 14px;
+}
+
+.ttlCalculated svg {
+  color: var(--accent-color);
+  font-size: 16px;
+}
+
+.ttlCalculated strong {
+  color: var(--accent-color);
+  font-weight: 700;
+  font-family: 'Monaco', 'Courier New', monospace;
+}
+
+.ttlHint {
+  font-size: 12px;
+  color: var(--text-secondary);
+  padding-left: 24px;
+}
+
+@media (max-width: 768px) {
+  .timeInputs {
+    grid-template-columns: 1fr;
+  }
+}
 
 .header {
   display: flex;

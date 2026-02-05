@@ -1,14 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { URLS } from '../../utilities/urls';
-import { FaPlus, FaEdit, FaTrash, FaUndo, FaCog, FaChartLine } from 'react-icons/fa';
+import { FaPlus, FaEdit, FaTrash, FaUndo, FaCog, FaWeight } from 'react-icons/fa';
 import Button from '../../components/Button/Button';
 import { useNotification } from '../../contexts/NotificationProvider';
 import { useLoader } from '../../contexts/LoaderProvider';
 import CreateDepartmentModal from '../../components/CreateDepartmentModal/CreateDepartmentModal';
 import EditDepartmentModal from '../../components/EditDepartmentModal/EditDepartmentModal';
-import ConfigureDepartmentModal from '../../components/ConfigureDepartmentModal/ConfigureDepartmentModal';
+import ConfigureWeightsModal from '../../components/ConfigureWeightsModal/ConfigureWeightsModal';
 import classes from './DepartmentsPage.module.css';
+import Input from "../../components/Input/Input";
+import Select from "../../components/Select/Select";
 
 const DepartmentsPage = () => {
   const { notify } = useNotification();
@@ -16,10 +18,16 @@ const DepartmentsPage = () => {
 
   const [departments, setDepartments] = useState([]);
   const [filteredDepartments, setFilteredDepartments] = useState([]);
+  const [types, setTypes] = useState([]);
   const [stats, setStats] = useState(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [editingDepartment, setEditingDepartment] = useState(null);
-  const [configuringDepartment, setConfiguringDepartment] = useState(null);
+  const [configuringWeightsDepartment, setConfiguringWeightsDepartment] = useState(null);
+  const filtersValues = [
+    { value: 'all', label: 'Все статусы' },
+    { value: 'active', label: 'Активные' },
+    { value: 'inactive', label: 'Неактивные' },
+  ]
 
   const [filters, setFilters] = useState({
     search: '',
@@ -30,6 +38,7 @@ const DepartmentsPage = () => {
   useEffect(() => {
     fetchDepartments();
     fetchStats();
+    fetchTypes();
   }, []);
 
   useEffect(() => {
@@ -70,6 +79,23 @@ const DepartmentsPage = () => {
       }
     } catch (error) {
       console.error('Ошибка загрузки статистики:', error);
+    }
+  };
+
+  const fetchTypes = async () => {
+    try {
+      const { data } = await axios.get(URLS.GET_ALL_TYPES, {
+        params: { active: true },
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
+        }
+      });
+      if (data.success) {
+        setTypes(data.data);
+      }
+    } catch (error) {
+      console.error('Ошибка загрузки типов:', error);
+      notify.error('Не удалось загрузить типы задач');
     }
   };
 
@@ -218,23 +244,23 @@ const DepartmentsPage = () => {
 
       {/* Filters */}
       <div className={classes.filters}>
-        <input
+        <Input
           type="text"
+          variant={'focused'}
           placeholder="Поиск по названию, ID или описанию..."
           value={filters.search}
+          width={'55vw'}
           onChange={(e) => setFilters(prev => ({ ...prev, search: e.target.value }))}
-          className={classes.searchInput}
         />
 
-        <select
+        <Select
           value={filters.active}
-          onChange={(e) => setFilters(prev => ({ ...prev, active: e.target.value }))}
+          onChange={(e) => setFilters(prev => ({ ...prev, active: e }))}
           className={classes.filterSelect}
+            options={filtersValues}
+          width={'15vw'}
         >
-          <option value="all">Все статусы</option>
-          <option value="active">Активные</option>
-          <option value="inactive">Неактивные</option>
-        </select>
+        </Select>
 
         <label className={classes.checkboxLabel}>
           <input
@@ -283,7 +309,9 @@ const DepartmentsPage = () => {
                 <div className={classes.configItem}>
                   <span className={classes.configLabel}>Типов задач:</span>
                   <span className={classes.configValue}>
-                    {Object.keys(department.taskTypeWeights || {}).length}
+                    {Array.isArray(department.taskTypeWeights)
+                      ? department.taskTypeWeights.length
+                      : Object.keys(department.taskTypeWeights || {}).length}
                   </span>
                 </div>
                 <div className={classes.configItem}>
@@ -313,20 +341,12 @@ const DepartmentsPage = () => {
                     >
                       {department.active ? '🔴' : '🟢'}
                     </button>
-                    <button
-                      onClick={() => setConfiguringDepartment(department)}
-                      className={classes.actionBtn}
-                      title="Настройки"
-                    >
-                      <FaCog />
-                    </button>
-                    <button
+                    <Button
                       onClick={() => setEditingDepartment(department)}
-                      className={classes.actionBtn}
                       title="Редактировать"
                     >
                       <FaEdit />
-                    </button>
+                    </Button>
                     <button
                       onClick={() => handleDelete(department._id)}
                       className={`${classes.actionBtn} ${classes.deleteBtn}`}
@@ -361,21 +381,34 @@ const DepartmentsPage = () => {
         onSuccess={handleCreateSuccess}
       />
 
-      {editingDepartment && (
-        <EditDepartmentModal
-          isOpen={true}
-          department={editingDepartment}
-          onClose={() => setEditingDepartment(null)}
-          onSuccess={handleEditSuccess}
-        />
-      )}
+        {editingDepartment && (
+            <EditDepartmentModal
+                department={editingDepartment}
+                types={types}
+                onClose={() => setEditingDepartment(null)}
+                onSave={(updatedDepartment) => {
+                    setDepartments(prev =>
+                        prev.map(d => d._id === updatedDepartment._id ? updatedDepartment : d)
+                    );
+                    setEditingDepartment(null);
+                    fetchDepartments();
+                }}
+            />
+        )}
 
-      {configuringDepartment && (
-        <ConfigureDepartmentModal
-          isOpen={true}
-          department={configuringDepartment}
-          onClose={() => setConfiguringDepartment(null)}
-          onSuccess={handleConfigureSuccess}
+
+
+
+      {configuringWeightsDepartment && (
+        <ConfigureWeightsModal
+          department={configuringWeightsDepartment}
+          types={types}
+          onClose={() => setConfiguringWeightsDepartment(null)}
+          onUpdate={() => {
+            fetchDepartments();
+            setConfiguringWeightsDepartment(null);
+            notify.success('Веса задач успешно обновлены');
+          }}
         />
       )}
     </div>

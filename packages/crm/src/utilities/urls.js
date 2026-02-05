@@ -46,8 +46,9 @@ export const URLS = {
     // Управление весами типов задач
     GET_DEPARTMENT_WEIGHTS: (departmentId) => `${BASE_URL}/api/shift-service/department/${departmentId}/weights`,
     SET_TYPE_WEIGHT: (departmentId, typeId) => `${BASE_URL}/api/shift-service/department/${departmentId}/weights/${typeId}`,
+    SET_STATUS_WEIGHT: (departmentId, typeId, statusId) => `${BASE_URL}/api/shift-service/department/${departmentId}/weights/${typeId}/statuses/${statusId}`,
     REMOVE_TYPE_WEIGHT: (departmentId, typeId) => `${BASE_URL}/api/shift-service/department/${departmentId}/weights/${typeId}`,
-
+    REMOVE_STATUS_WEIGHT: (departmentId, typeId, statusId) => `${BASE_URL}/api/shift-service/department/${departmentId}/weights/${typeId}/statuses/${statusId}`,
     // Управление формулой расчёта нагрузки
     UPDATE_LOAD_FORMULA: (departmentId) => `${BASE_URL}/api/shift-service/department/${departmentId}/formula`,
 
@@ -65,10 +66,14 @@ export const URLS = {
     CREATE_TYPE: `${BASE_URL}/api/analytics/type`,
     SYNC_TYPES_FROM_JIRA: `${BASE_URL}/api/analytics/type/sync-jira`,
     UPDATE_TYPE: (typeId) => `${BASE_URL}/api/analytics/type/${typeId}`,
+    UPDATE_WEIGHTED_STATUS: (typeId, statusId) => `${BASE_URL}/api/analytics/type/${typeId}/status/${statusId}`,
     TOGGLE_TYPE_STATUS: (typeId) => `${BASE_URL}/api/analytics/type/${typeId}/active`,
     DELETE_TYPE: (typeId) => `${BASE_URL}/api/analytics/type/${typeId}`,
     RESTORE_TYPE: (typeId) => `${BASE_URL}/api/analytics/type/${typeId}/restore`,
     PERMANENT_DELETE_TYPE: (typeId) => `${BASE_URL}/api/analytics/type/${typeId}/permanent`,
+    UPDATE_TYPE_STATUSES: (id) => `${BASE_URL}/api/analytics/type/${id}/statuses`,
+    SYNC_TYPE_STATUSES: (id) => `${BASE_URL}/api/analytics/type/${id}/statuses/sync`,
+    VALIDATE_TYPE_STATUSES: (id) => `${BASE_URL}/api/analytics/type/${id}/statuses/validate`,
 
     // ========== GATEWAY HEALTH ==========
     GATEWAY_HEALTH: `${BASE_URL}/health`,
@@ -95,6 +100,8 @@ export const URLS = {
         `${BASE_URL}/api/shift-service/pool/${departmentObjectId}/${accountId}/${encodeURIComponent(assigneeEmail)}/ttl`,
     CHECK_REDIS_SHIFT_EXISTS: (departmentObjectId, accountId, assigneeEmail) =>
         `${BASE_URL}/api/shift-service/pool/${departmentObjectId}/${accountId}/${encodeURIComponent(assigneeEmail)}/exists`,
+    UPDATE_REDIS_SHIFT_LIMITS: (departmentObjectId, accountId, assigneeEmail) =>
+        `${BASE_URL}/api/shift-service/pool/${departmentObjectId}/${accountId}/${encodeURIComponent(assigneeEmail)}/limits`,
     GET_REDIS_SHIFTS_STATS: `${BASE_URL}/api/shift-service/pool/stats/all`,
     GET_ALL_REDIS_SHIFTS: `${BASE_URL}/api/shift-service/pool/all`,
     CREATE_REDIS_SHIFT: `${BASE_URL}/api/shift-service/pool`,

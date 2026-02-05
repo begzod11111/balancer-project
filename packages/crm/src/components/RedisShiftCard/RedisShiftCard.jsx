@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { FaUser, FaTrash, FaPlus, FaChevronDown, FaChevronUp, FaEdit, FaSave, FaTimes, FaClock, FaHourglassHalf } from 'react-icons/fa';
+import React, { useState } from 'react';
+import { FaUser, FaTrash, FaPlus, FaChevronDown, FaChevronUp, FaEdit, FaSave, FaTimes, FaClock } from 'react-icons/fa';
 import Button from '../Button/Button';
 import Input from '../Input/Input';
 import { useNotification } from '../../contexts/NotificationProvider';
@@ -7,9 +7,8 @@ import { useLoader } from '../../contexts/LoaderProvider';
 import { URLS } from '../../utilities/urls';
 import axios from 'axios';
 import classes from './ShiftCard.module.css';
-import CircularClock from "../CircularClock/CircularClock";
 
-const ShiftCard = ({ shift, onDelete, onIncrement, onUpdate, formatDate, ttl }) => {
+const ShiftCard = ({ shift, onDelete, onIncrement, onUpdate, formatDate }) => {
   const { showLoader, hideLoader } = useLoader();
   const { notify } = useNotification();
 
@@ -20,94 +19,6 @@ const ShiftCard = ({ shift, onDelete, onIncrement, onUpdate, formatDate, ttl }) 
     maxActiveIssues: shift.limits?.maxActiveIssues || 30,
     preferredLoadPercent: shift.limits?.preferredLoadPercent || 80
   });
-
-    const formatTTL = (seconds) => {
-        if (seconds <= 0) return '0 сек';
-
-        const hours = Math.floor(seconds / 3600);
-        const minutes = Math.floor((seconds % 3600) / 60);
-        const secs = seconds % 60;
-
-        const parts = [];
-        if (hours > 0) parts.push(`${hours}ч`);
-        if (minutes > 0) parts.push(`${minutes}м`);
-        parts.push(`${secs}с`);
-
-        return parts.join(' ');
-    };
-    const getTTLBadgeClass = (percent) => {
-        if (percent <= 0) return classes.ttlExpired;
-        if (percent <= 25) return classes.ttlExpired;
-        if (percent <= 50) return classes.ttlWarning;
-        if (percent <= 75) return classes.ttlNormal;
-        return classes.ttlGood;
-    };
-
-    const getTTLColor = (percent) => {
-        if (percent <= 0) return 'var(--color-error)';
-        if (percent <= 25) return 'var(--color-error)';
-        if (percent <= 50) return 'var(--color-warning)';
-        if (percent <= 75) return 'var(--color-info)';
-        return 'var(--color-success)';
-    };
-
-        // Добавьте функцию для анимированного отображения времени
-    const renderAnimatedTime = (seconds) => {
-      const hours = Math.floor(seconds / 3600);
-      const minutes = Math.floor((seconds % 3600) / 60);
-      const secs = seconds % 60;
-
-      return (
-        <span className={classes.ttlTime}>
-          {hours > 0 && (
-            <>
-              <span style={{ fontSize: '1em' }}>{hours}</span>
-              <span style={{ fontSize: '0.8em' }}>ч</span>
-              <span style={{ margin: '0 2px' }}> </span>
-            </>
-          )}
-          {minutes > 0 && (
-            <>
-              <span style={{ fontSize: '1em' }}>{minutes}</span>
-              <span style={{ fontSize: '0.8em' }}>м</span>
-              <span style={{ margin: '0 2px' }}> </span>
-            </>
-          )}
-          <span style={{ fontSize: '1em' }}>{secs}</span>
-          <span style={{ fontSize: '0.8em' }}>с</span>
-        </span>
-      );
-    };
-
-  // TTL countdown state
-  const [timeRemaining, setTimeRemaining] = useState(ttl || 0);
-  const [ttlPercent, setTtlPercent] = useState(100);
-
-  // Calculate initial TTL (24 hours in seconds)
-  const initialTTL = 24 * 60 * 60;
-
-  useEffect(() => {
-    if (ttl > 0) {
-      setTimeRemaining(ttl);
-      setTtlPercent((ttl / initialTTL) * 100);
-
-      const interval = setInterval(() => {
-        setTimeRemaining(prev => {
-          const newTime = prev - 1;
-          if (newTime <= 0) {
-            clearInterval(interval);
-            return 0;
-          }
-          setTtlPercent((newTime / initialTTL) * 100);
-          return newTime;
-        });
-      }, 1000);
-
-      return () => clearInterval(interval);
-    }
-  }, [ttl]);
-
-
 
 
 
@@ -154,8 +65,7 @@ const ShiftCard = ({ shift, onDelete, onIncrement, onUpdate, formatDate, ttl }) 
         { limits: editableLimits },
         {
           headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json'
+            'Authorization': `Bearer ${token}`
           }
         }
       );
@@ -175,39 +85,39 @@ const ShiftCard = ({ shift, onDelete, onIncrement, onUpdate, formatDate, ttl }) 
 
   return (
     <div className={classes.shiftCard}>
-      {/* TTL Progress Bar */}
-          <div className={classes.ttlBar}>
-      <div
-        className={classes.ttlProgress}
-        style={{
-          width: `${Math.max(0, Math.min(100, ttlPercent))}%`,
-          color: getTTLColor(ttlPercent)
-        }}
-      /></div>
-
-       <div className={classes.cardHeader}>
-      <div className={classes.assigneeInfo}>
-        <div className={classes.avatar}>
-          <FaUser />
+      <div className={classes.cardHeader}>
+        <div className={classes.assigneeInfo}>
+          <div className={classes.avatar}>
+            <FaUser />
+          </div>
+          <div className={classes.assigneeDetails}>
+            <h3>{shift.assigneeName}</h3>
+            <span className={classes.email}>{shift.assigneeEmail}</span>
+            <span className={classes.badge}>
+              Dept: {shift.departmentObjectId}
+            </span>
+          </div>
         </div>
-        <div className={classes.assigneeDetails}>
-          <h3>{shift.assigneeName}</h3>
-          <span className={classes.email}>{shift.assigneeEmail}</span>
-          <span className={classes.badge}>
-            {shift.departmentObjectId}
-          </span>
-        </div>
-      </div>
-    </div>
-
+        <div className={classes.completedBadge}>
+          <FaPlus />
+          <span>{shift.completedTasksCount || 0} выполнено</span>
+        </div></div>
 
       <div className={classes.cardBody}>
-           <CircularClock seconds={timeRemaining} percent={ttlPercent} />
         <div className={classes.infoRow}>
           <span className={classes.label}>Account ID:</span>
           <span className={classes.value}>{shift.accountId}</span>
         </div>
 
+        <div className={classes.infoRow}>
+          <span className={classes.label}>Макс. нагрузка:</span>
+          <span className={classes.value}>{shift.defaultMaxLoad}</span>
+        </div>
+
+        <div className={classes.infoRow}>
+          <span className={classes.label}>Множитель приоритета:</span>
+          <span className={classes.value}>{shift.priorityMultiplier}</span>
+        </div>
 
         <div className={classes.timeInfo}>
           <FaClock className={classes.clockIcon} />
@@ -235,7 +145,7 @@ const ShiftCard = ({ shift, onDelete, onIncrement, onUpdate, formatDate, ttl }) 
                 className={classes.editLimitsBtn}
                 onClick={handleStartEditLimits}
               >
-                <FaEdit /> Редактировать
+                <FaEdit /> Изменить
               </button>
             )}
           </div>
@@ -271,33 +181,27 @@ const ShiftCard = ({ shift, onDelete, onIncrement, onUpdate, formatDate, ttl }) 
                 />
               </div>
               <div className={classes.editLimitsActions}>
-                <Button variant="secondary" onClick={handleCancelEditLimits}>
-                  <FaTimes /> Отмена
+                <Button icon={<FaSave />} onClick={handleSaveLimits}>
+                  Сохранить
                 </Button>
-                <Button variant="primary" onClick={handleSaveLimits}>
-                  <FaSave /> Сохранить
+                <Button variant="secondary" icon={<FaTimes />} onClick={handleCancelEditLimits}>
+                  Отмена
                 </Button>
               </div>
             </div>
           ) : (
             <div className={classes.limitsGrid}>
               <div className={classes.limitItem}>
-                <span className={classes.limitLabel}>Макс. в день</span>
-                <strong className={classes.limitValue}>
-                  {shift.limits?.maxDailyIssues || 30}
-                </strong>
+                <span className={classes.limitLabel}>Макс. задач в день</span>
+                <span className={classes.limitValue}>{shift.limits?.maxDailyIssues || 0}</span>
               </div>
               <div className={classes.limitItem}>
                 <span className={classes.limitLabel}>Макс. активных</span>
-                <strong className={classes.limitValue}>
-                  {shift.limits?.maxActiveIssues || 30}
-                </strong>
+                <span className={classes.limitValue}>{shift.limits?.maxActiveIssues || 0}</span>
               </div>
               <div className={classes.limitItem}>
                 <span className={classes.limitLabel}>Загрузка</span>
-                <strong className={classes.limitValue}>
-                  {shift.limits?.preferredLoadPercent || 80}%
-                </strong>
+                <span className={classes.limitValue}>{shift.limits?.preferredLoadPercent || 0}%</span>
               </div>
             </div>
           )}
@@ -307,7 +211,6 @@ const ShiftCard = ({ shift, onDelete, onIncrement, onUpdate, formatDate, ttl }) 
           <span className={classes.formulaLabel}>Формула расчёта:</span>
           <code className={classes.formulaCode}>{shift.loadCalculationFormula}</code>
         </div>
-
 
         <button
           className={classes.toggleDetails}
@@ -321,25 +224,23 @@ const ShiftCard = ({ shift, onDelete, onIncrement, onUpdate, formatDate, ttl }) 
           <div className={classes.taskTypes}>
             <h4>Типы задач и веса:</h4>
             <div className={classes.typesList}>
-              {shift.taskTypeWeights.map(type => (
+              {shift.taskTypeWeights.map((type) => (
                 <div key={type._id} className={classes.typeItem}>
-                  <div className={classes.typeContent}>
+                  <div className={classes.typeHeader}>
                     <span className={classes.typeName}>{type.name}</span>
-                    {type.statusWeights && type.statusWeights.length > 0 && (
-                      <div className={classes.statusWeights}>
-                        <span className={classes.statusLabel}>Веса статусов:</span>
-                        {type.statusWeights.map(status => (
-                          <div key={status._id} className={classes.statusItem}>
-                            <span>{status.statusName}</span>
-                            <span className={classes.statusWeight}>
-                              Вес: {status.weight}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    )}
+                    <span className={classes.typeWeight}>Вес: {type.weight}</span>
                   </div>
-                  <span className={classes.typeWeight}>Вес: {type.weight}</span>
+                  {type.statusWeights && type.statusWeights.length > 0 && (
+                    <div className={classes.statusWeights}>
+                      <span className={classes.statusLabel}>Статусы:</span>
+                      {type.statusWeights.map((status) => (
+                        <div key={status._id} className={classes.statusItem}>
+                          <span>{status.statusName}</span>
+                          <span className={classes.statusWeight}>Вес: {status.weight}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
@@ -354,6 +255,12 @@ const ShiftCard = ({ shift, onDelete, onIncrement, onUpdate, formatDate, ttl }) 
         </div>
 
         <div className={classes.actions}>
+          <Button
+            variant="primary"
+            onClick={() => onIncrement(shift.departmentObjectId, shift.accountId, shift.assigneeEmail)}
+          >
+            <FaPlus /> Увеличить счётчик
+          </Button>
           <Button
             variant="danger"
             onClick={() => onDelete(shift.departmentObjectId, shift.accountId, shift.assigneeEmail)}

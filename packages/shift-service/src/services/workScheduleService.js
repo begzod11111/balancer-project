@@ -516,6 +516,7 @@ class WorkScheduleService {
                     assigneeId: schedule.assigneeId,
                     accountId: schedule.accountId,
                     assigneeName: schedule.assigneeName || "Неизвестный сотрудник",
+                    limits: schedule.limits,
                     assigneeEmail: schedule.assigneeEmail,
                     shifts: schedule.shifts,
                 };

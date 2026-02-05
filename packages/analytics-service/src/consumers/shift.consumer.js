@@ -1,4 +1,5 @@
 import { kafka } from '../config/kafka.js';
+import shiftAnalyticsService from '../services/shiftAnalytics.service.js';
 
 const shiftConsumer = kafka.consumer({ groupId: 'analytics-shiftConsumer' });
 
@@ -6,7 +7,6 @@ export async function runShiftCreatedConsumer() {
   const maxRetries = 30;
   let retries = 0;
 
-  // Retry подключения
   while (retries < maxRetries) {
     try {
       console.log(`[Kafka Consumer] Попытка подключения ${retries + 1}/${maxRetries}...`);
@@ -15,7 +15,7 @@ export async function runShiftCreatedConsumer() {
       break;
     } catch (error) {
       retries++;
-      console.error(`[Kafka Consumer] ❌ Ошибка подключения (п��пытка ${retries}):`, error.message);
+      console.error(`[Kafka Consumer] ❌ Ошибка подключения (попытка ${retries}):`, error.message);
 
       if (retries >= maxRetries) {
         console.error('[Kafka Consumer] Превышено максимальное количество попыток подключения');
@@ -26,15 +26,15 @@ export async function runShiftCreatedConsumer() {
     }
   }
 
-    try {
-        await shiftConsumer.subscribe({
-            topic: 'shift.created',
-            fromBeginning: true
-        });
-        console.log('[Kafka Consumer] ✅ Успешно подписан на topic "shift.created"');
-    } catch (error) {
-        console.error('[Kafka Consumer] ❌ Ошибка подписки на topic "shift.created":', error);
-    }
+  try {
+    await shiftConsumer.subscribe({
+      topic: 'shift.created',
+      fromBeginning: true
+    });
+    console.log('[Kafka Consumer] ✅ Успешно подписан на topic "shift.created"');
+  } catch (error) {
+    console.error('[Kafka Consumer] ❌ Ошибка подписки на topic "shift.created":', error);
+  }
 
   await shiftConsumer.run({
     eachMessage: async ({ topic, partition, message }) => {
@@ -46,13 +46,23 @@ export async function runShiftCreatedConsumer() {
         console.log(`  Topic: ${topic}`);
         console.log(`  Partition: ${partition}`);
         console.log(`  Key: ${key}`);
-        console.log(`  Value: ${value}`);
 
         const event = JSON.parse(value);
         console.log(`\n[Kafka Consumer] 🎯 Событие: ${event.event}`);
         console.log(`[Kafka Consumer] ⏰ Время: ${event.timestamp}`);
-        console.log(`[Kafka Consumer] 📊 Данные:`, JSON.stringify(event.data, null, 2));
-        console.log('────────��────────────────────────────────\n');
+
+        // Обработка события создания смены
+        if (event.event === 'shift.created' && event.data) {
+          console.log('[Kafka Consumer] 🔄 Начало обработки смены...');
+
+          const result = await shiftAnalyticsService.processShiftCreated(event.data);
+
+          console.log('[Kafka Consumer] ✅ Смена успешно обработана');
+          console.log(`  └─ Нагрузка: ${result.currentLoad}/${result.maxLoad} (${result.loadPercentage}%)`);
+          console.log(`  └─ Задач: ${result.totalTasks}`);
+        }
+
+        console.log('────────────────────────────────────────\n');
       } catch (err) {
         console.error('[Kafka Consumer] ❌ Ошибка обработки сообщения:', err);
       }
@@ -76,6 +86,5 @@ export async function runShiftCreatedConsumer() {
   process.on('SIGINT', shutdown);
   process.on('SIGTERM', shutdown);
 }
-
 
 

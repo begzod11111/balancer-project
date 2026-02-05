@@ -4,7 +4,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.75);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -13,13 +13,14 @@
 }
 
 .modal {
-  background: white;
+  background: var(--bg-primary);
   border-radius: 12px;
-  max-width: 600px;
   width: 100%;
+  max-width: 900px;
   max-height: 90vh;
-  overflow-y: auto;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20px 60px var(--shadow-color);
 }
 
 .header {
@@ -27,123 +28,235 @@
   justify-content: space-between;
   align-items: center;
   padding: 24px;
-  border-bottom: 1px solid #e0e0e0;
+  border-bottom: 1px solid var(--border-color);
 }
 
 .header h2 {
   margin: 0;
+  color: var(--text-primary);
   font-size: 24px;
-  color: #333;
 }
 
 .closeBtn {
   background: none;
   border: none;
-  font-size: 20px;
-  color: #999;
-  cursor: pointer;
-  padding: 8px;
-  display: flex;
+  color: var(--text-secondary);
+  font-size: 32px;
+  cursor: pointer;display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 4px;
-  transition: all 0.2s;
+  transition: color 0.2s;
 }
 
 .closeBtn:hover {
-  background: #f5f5f5;
-  color: #333;
+  color: var(--text-primary);
 }
 
-.form {
+.tabs {
+  display: flex;
+  padding: 0 24px;
+  border-bottom: 1px solid var(--border-color);
+  gap: 8px;
+}
+
+.tab {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  padding: 16px 24px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  border-bottom: 2px solid transparent;
+  transition: all 0.2s;
+}
+
+.tab:hover {
+  color: var(--text-primary);
+}
+
+.activeTab {
+  color: var(--accent-color);
+  border-bottom-color: var(--accent-color);
+}
+
+.content {
+  flex: 1;
+  overflow-y: auto;
   padding: 24px;
+}
+
+.generalSection {
   display: flex;
   flex-direction: column;
   gap: 20px;
 }
 
-.formGroup {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+.row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
 }
 
-.formGroup label {
-  font-size: 14px;
-  font-weight: 500;
-  color: #555;
-}
-
-.required {
-  color: #dc3545;
-}
-
-.formGroup input,
-.formGroup textarea {
-  padding: 10px 12px;
-  border: 1px solid #ddd;
-  border-radius: 6px;
-  font-size: 14px;
-  transition: border-color 0.2s;
-}
-
-.formGroup input:focus,
-.formGroup textarea:focus {
-  outline: none;
-  border-color: #007bff;
-}
-
-.formGroup textarea {
-  resize: vertical;
-  font-family: inherit;
-}
-
-.inputError {
-  border-color: #dc3545 !important;
-}
-
-.error {
-  font-size: 12px;
-  color: #dc3545;
-}
-
-.hint {
-  font-size: 12px;
-  color: #999;
-  font-style: italic;
-}
-
-.checkboxGroup {
-  padding: 12px;
-  background: #f8f9fa;
-  border-radius: 6px;
-}
-
-.checkboxGroup label {
+.checkbox {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 8px;color: var(--text-primary);
   cursor: pointer;
   user-select: none;
 }
 
-.checkboxGroup input[type="checkbox"] {
-  width: 18px;
-  height: 18px;
+.checkbox input {
+  width: 20px;
+  height: 20px;
   cursor: pointer;
-}
-
-.checkboxGroup span {
-  font-size: 14px;
-  color: #555;
 }
 
 .actions {
   display: flex;
   justify-content: flex-end;
   gap: 12px;
-  padding-top: 12px;
-  border-top: 1px solid #e0e0e0;
+  padding-top: 16px;
+  border-top: 1px solid var(--border-color);
+}
+
+.weightsSection {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.addTypeSection h3 {
+  color: var(--text-primary);
+  margin: 0 0 16px 0;
+  font-size: 18px;
+}
+
+.addTypeForm {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 12px;
+  align-items: end;
+}
+
+.typesList {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.typeCard {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.typeHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.typeInfo h4 {
+  margin: 0 0 4px 0;
+  color: var(--text-primary);
+  font-size: 16px;
+}
+
+.weight {
+  color: var(--accent-color);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.removeBtn {
+  background: var(--color-error);
+  border: none;
+  color: #fff;
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.2s;
+}
+
+.removeBtn:hover {
+  opacity: 0.8;
+}
+
+.statusesSection {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.addStatusForm {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 8px;
+  align-items: end;
+}
+
+.statusesList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;margin-top: 8px;
+}
+
+.statusItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--bg-primary);
+  padding: 12px;
+  border-radius: 6px;
+  border: 1px solid var(--border-color);
+}
+
+.statusName {
+  color: var(--text-primary);
+  font-size: 14px;
+}
+
+.statusWeight {
+  color: var(--accent-color);
+  font-size: 13px;
+  margin-left: auto;
+  margin-right: 12px;
+}
+
+.removeStatusBtn {
+  background: var(--color-error);
+  border: none;
+  color: #fff;
+  width: 28px;
+  height: 28px;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.2s;
+}
+
+.removeStatusBtn:hover {
+  opacity: 0.8;
+}
+
+.emptyState {
+  text-align: center;
+  padding: 40px;
+  color: var(--text-secondary);
+}
+
+.emptyState p {
+  margin: 0;
+  font-size: 14px;
 }
 
 @media (max-width: 768px) {
@@ -152,4 +265,96 @@
     max-height: 100vh;
     border-radius: 0;
   }
+
+  .row {
+    grid-template-columns: 1fr;
+  }
+
+  .addTypeForm,
+  .addStatusForm {
+    grid-template-columns: 1fr;
+  }
+}
+/* Добавьте эти стили к существующим */
+
+.weightDisplay {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.editBtn {
+  background: var(--accent-color);
+  border: none;
+  color: #fff;
+  width: 28px;
+  height: 28px;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.2s;
+}
+
+.editBtn:hover {
+  opacity: 0.8;
+}
+
+.editWeightForm {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.editWeightForm input {
+  width: 80px;
+}
+
+.saveWeightBtn {
+  background: var(--color-success);
+  border: none;
+  color: #fff;
+  width: 28px;
+  height: 28px;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.2s;
+}
+
+.saveWeightBtn:hover {
+  opacity: 0.8;
+}
+
+.cancelWeightBtn {
+  background: var(--text-secondary);
+  border: none;
+  color: #fff;
+  width: 28px;
+  height: 28px;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  transition: opacity 0.2s;
+}
+
+.cancelWeightBtn:hover {
+  opacity: 0.8;
+}
+
+.editStatusWeightForm {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.editStatusWeightForm input {
+  width: 80px;
 }

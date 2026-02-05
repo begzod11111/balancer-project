@@ -80,7 +80,8 @@ router.get('/stats', async (req, res) => {
 router.get('/check/:identifier', async (req, res) => {
   try {
     const { identifier } = req.params;
-    const exists = await departmentService.checkDepartmentExists(identifier);
+    const { workspaceId } = req.query;
+    const exists = await departmentService.checkDepartmentExists(identifier, workspaceId);
 
     res.status(200).json({
       success: true,
@@ -90,7 +91,7 @@ router.get('/check/:identifier', async (req, res) => {
     console.error('[GET /departments/check] Ошибка:', error);
     res.status(500).json({
       success: false,
-      message: 'Ошибка при проверке существования',
+      message: 'Ошибка при проверке существования департамента',
       error: error.message
     });
   }
@@ -103,7 +104,8 @@ router.get('/check/:identifier', async (req, res) => {
 router.get('/object-id/:objectId', async (req, res) => {
   try {
     const { objectId } = req.params;
-    const department = await departmentService.getDepartmentByObjectId(objectId);
+    const { workspaceId } = req.query;
+    const department = await departmentService.getDepartmentByObjectId(objectId, workspaceId);
 
     res.status(200).json({
       success: true,
@@ -134,7 +136,8 @@ router.get('/object-id/:objectId', async (req, res) => {
 router.get('/name/:name', async (req, res) => {
   try {
     const { name } = req.params;
-    const department = await departmentService.getDepartmentByName(decodeURIComponent(name));
+    const { workspaceId } = req.query;
+    const department = await departmentService.getDepartmentByName(decodeURIComponent(name), workspaceId);
 
     res.status(200).json({
       success: true,
@@ -230,7 +233,7 @@ router.get('/:id/weights', async (req, res) => {
 
     res.status(500).json({
       success: false,
-      message: 'Ошибка при получении весов',
+      message: 'Ошибка при получении весов типов задач',
       error: error.message
     });
   }
@@ -242,7 +245,7 @@ router.get('/:id/weights', async (req, res) => {
  */
 router.post('/', async (req, res) => {
   try {
-    const { name, ObjectId, description, active, taskTypeWeights, loadCalculationFormula } = req.body;
+    const { name, ObjectId, workspaceId, description, active, taskTypeWeights, loadCalculationFormula, defaultMaxLoad, priorityMultiplier } = req.body;
 
     if (!name || !name.trim()) {
       return res.status(400).json({
@@ -258,13 +261,23 @@ router.post('/', async (req, res) => {
       });
     }
 
+    if (!workspaceId || !workspaceId.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: 'workspaceId обязателен'
+      });
+    }
+
     const departmentData = {
       name,
       ObjectId,
+      workspaceId,
       description,
       active,
       taskTypeWeights,
-      loadCalculationFormula
+      loadCalculationFormula,
+      defaultMaxLoad,
+      priorityMultiplier
     };
 
     const newDepartment = await departmentService.createDepartment(departmentData);
@@ -308,7 +321,6 @@ router.put('/:id', async (req, res) => {
     }
 
     console.log(`[PUT /departments/${id}] Данные для обновления:`, req.body);
-    console.log(req.body);
 
     const updatedDepartment = await departmentService.updateDepartment(id, req.body);
 
@@ -354,7 +366,7 @@ router.patch('/:id/active', async (req, res) => {
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({
         success: false,
-        message: 'Некорректный ID департамента'
+        message: 'Некорре��тный ID департамента'
       });
     }
 
@@ -369,7 +381,7 @@ router.patch('/:id/active', async (req, res) => {
 
     res.status(200).json({
       success: true,
-      message: `Департамент ${active ? 'активирован' : 'деактив��рован'}`,
+      message: `Департамент ${active ? 'активирован' : 'деактивирован'}`,
       data: updatedDepartment
     });
   } catch (error) {
@@ -384,7 +396,7 @@ router.patch('/:id/active', async (req, res) => {
 
     res.status(500).json({
       success: false,
-      message: 'Ошибка при изменении статуса',
+      message: 'Ошибка при изменении статуса департамента',
       error: error.message
     });
   }
@@ -397,7 +409,7 @@ router.patch('/:id/active', async (req, res) => {
 router.put('/:id/weights/:typeId', async (req, res) => {
   try {
     const { id, typeId } = req.params;
-    const { weight } = req.body;
+    const { weight, typeName } = req.body;
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({
@@ -406,18 +418,18 @@ router.put('/:id/weights/:typeId', async (req, res) => {
       });
     }
 
-    if (typeof weight !== 'number') {
+    if (typeof weight !== 'number' || weight < 0.1 || weight > 10) {
       return res.status(400).json({
         success: false,
-        message: 'Параметр weight должен быть числом'
+        message: 'Вес должен быть числом от 0.1 до 10'
       });
     }
 
-    const updatedDepartment = await departmentService.setTypeWeight(id, typeId, weight);
+    const updatedDepartment = await departmentService.setTypeWeight(id, typeId, weight, typeName);
 
     res.status(200).json({
       success: true,
-      message: 'Вес типа успешно установлен',
+      message: 'Вес типа задачи обновлён',
       data: updatedDepartment
     });
   } catch (error) {
@@ -432,7 +444,95 @@ router.put('/:id/weights/:typeId', async (req, res) => {
 
     res.status(500).json({
       success: false,
-      message: 'Ошибка при установке веса',
+      message: 'Ошибка при установке веса типа',
+      error: error.message
+    });
+  }
+});
+
+/**
+ * PUT /api/departments/:id/weights/:typeId/statuses/:statusId
+ * Установка/обновление веса для статуса
+ */
+router.put('/:id/weights/:typeId/statuses/:statusId', async (req, res) => {
+  try {
+    const { id, typeId, statusId } = req.params;
+    const { weight, statusName } = req.body;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Некорректный ID департамента'
+      });
+    }
+
+    if (typeof weight !== 'number' || weight < 0.1 || weight > 10) {
+      return res.status(400).json({
+        success: false,
+        message: 'Вес должен быть числом от 0.1 до 10'
+      });
+    }
+
+    const updatedDepartment = await departmentService.setStatusWeight(id, typeId, statusId, statusName, weight);
+
+    res.status(200).json({
+      success: true,
+      message: 'Вес статуса обновлён',
+      data: updatedDepartment
+    });
+  } catch (error) {
+    console.error(`[PUT /departments/${req.params.id}/weights/${req.params.typeId}/statuses/${req.params.statusId}] Ошибка:`, error);
+
+    if (error.message.includes('не найден')) {
+      return res.status(404).json({
+        success: false,
+        message: error.message
+      });
+    }
+
+    res.status(500).json({
+      success: false,
+      message: 'Ошибка при установке веса статуса',
+      error: error.message
+    });
+  }
+});
+
+/**
+ * DELETE /api/departments/:id/weights/:typeId/statuses/:statusId
+ * Удаление веса статуса
+ */
+router.delete('/:id/weights/:typeId/statuses/:statusId', async (req, res) => {
+  try {
+    const { id, typeId, statusId } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Некорректный ID департамента'
+      });
+    }
+
+    const updatedDepartment = await departmentService.removeStatusWeight(id, typeId, statusId);
+
+    res.status(200).json({
+      success: true,
+      message: 'Вес статуса удалён',
+      data: updatedDepartment
+    });
+  } catch (error) {
+    console.error(`[DELETE /departments/${req.params.id}/weights/${req.params.typeId}/statuses/${req.params.statusId}] Ошибка:`, error);
+
+    if (error.message.includes('не найден')) {
+      return res.status(404).json({
+        success: false,
+        message: error.message
+      });
+    }
+
+    res.status(500).json({
+      success: false,
+      message: 'Ошибка при удалении веса статуса',
       error: error.message
     });
   }
@@ -472,7 +572,7 @@ router.delete('/:id/weights/:typeId', async (req, res) => {
 
     res.status(500).json({
       success: false,
-      message: 'Ошибка при удалении веса',
+      message: 'Ошибка при удалении веса типа',
       error: error.message
     });
   }
@@ -497,7 +597,7 @@ router.put('/:id/formula', async (req, res) => {
     if (!loadCalculationFormula || !loadCalculationFormula.trim()) {
       return res.status(400).json({
         success: false,
-        message: 'Формула расчёта обязательна'
+        message: 'Формула расчёта нагрузки обязательна'
       });
     }
 
@@ -505,7 +605,7 @@ router.put('/:id/formula', async (req, res) => {
 
     res.status(200).json({
       success: true,
-      message: 'Формула расчёта успешно обновлена',
+      message: 'Формула расчёта нагрузки обновлена',
       data: updatedDepartment
     });
   } catch (error) {

@@ -4,7 +4,7 @@ import cors from "cors";
 import * as cron from "node-cron";
 import typeRoutes from './routes/typeRoutes.js';
 import {connectDB} from "./models/db.js";
-import {connectRedis} from "./services/redisService.js";
+import {connectRedis} from "./config/redis.js";
 import webhookRoutes from "./webhook/webhook.js";
 import {runShiftCreatedConsumer} from "./consumers/shift.consumer.js";
 import jira from "./services/jiraService.js";

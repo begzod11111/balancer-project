@@ -223,8 +223,8 @@ router.post('/', async (req, res) => {
 
         res.status(500).json({
             success: false,
-            message: 'Не удалось создать тип',
-            error: error.message
+            message: error.message
+
         });
     }
 });
@@ -461,5 +461,127 @@ router.get('/check/:identifier', async (req, res) => {
         });
     }
 });
+
+/**
+ * PUT /api/types/:id/statuses
+ * Обновление статусов типа
+ */
+router.put('/:id/statuses', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { statuses, validateFromJira } = req.body;
+
+        if (!statuses || !Array.isArray(statuses)) {
+            return res.status(400).json({
+                success: false,
+                message: 'Поле statuses должно быть массивом'
+            });
+        }
+
+        const type = await typeService.updateTypeStatuses(id, statuses, validateFromJira);
+
+        res.status(200).json({
+            success: true,
+            message: 'Статусы успешно обновлены',
+            data: type
+        });
+    } catch (error) {
+        console.error('Ошибка обновления статусов:', error);
+
+        if (error.message === 'Тип не найден') {
+            return res.status(404).json({
+                success: false,
+                message: error.message
+            });
+        }
+
+        if (error.message.includes('Недействительные статусы')) {
+            return res.status(400).json({
+                success: false,
+                message: error.message
+            });
+        }
+
+        res.status(500).json({
+            success: false,
+            message: 'Не удалось обновить статусы',
+            error: error.message
+        });
+    }
+});
+
+/**
+ * POST /api/types/:id/statuses/sync
+ * Синхронизация статусов типа с Jira
+ */
+router.post('/:id/statuses/sync', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const type = await typeService.syncStatusesFromJira(id);
+
+        res.status(200).json({
+            success: true,
+            message: 'Статусы синхронизированы с Jira',
+            data: type
+        });
+    } catch (error) {
+        console.error('Ошибка синхронизации статусов:', error);
+
+        if (error.message === 'Тип не найден') {
+            return res.status(404).json({
+                success: false,
+                message: error.message
+            });
+        }
+
+        res.status(500).json({
+            success: false,
+            message: 'Не удалось синхронизировать статусы',
+            error: error.message
+        });
+    }
+});
+
+/**
+ * POST /api/types/:id/statuses/validate
+ * Проверка статусов в Jira
+ */
+router.post('/:id/statuses/validate', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { statuses } = req.body;
+
+        if (!statuses || !Array.isArray(statuses)) {
+            return res.status(400).json({
+                success: false,
+                message: 'Поле statuses должно быть массивом'
+            });
+        }
+
+        const type = await typeService.getTypeById(id);
+        const result = await typeService.validateStatusesFromJira(type.typeId, statuses);
+
+        res.status(200).json({
+            success: true,
+            data: result
+        });
+    } catch (error) {
+        console.error('Ошибка проверки статусов:', error);
+
+        if (error.message === 'Тип не найден') {
+            return res.status(404).json({
+                success: false,
+                message: error.message
+            });
+        }
+
+        res.status(500).json({
+            success: false,
+            message: 'Не удалось проверить статусы',
+            error: error.message
+        });
+    }
+});
+
 
 export default router;

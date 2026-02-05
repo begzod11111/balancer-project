@@ -5,7 +5,7 @@ import dotenv from 'dotenv';
 dotenv.config()
 
 
-const redis = new Redis({
+export const redisClient = new Redis({
   host: process.env.REDIS_HOST, // или ваш хост Redis
   port: process.env.REDIS_PORT,        // стандартный порт
   password: process.env.REDIS_PASSWORD,
@@ -14,7 +14,7 @@ const redis = new Redis({
 
 export const connectRedis = async () => {
   try {
-    await redis.ping();
+    await redisClient.ping();
     console.log('Connected to Redis');
   } catch (error) {
     console.error('Error connecting to Redis:', error);
@@ -22,4 +22,3 @@ export const connectRedis = async () => {
   }
 };
 
-export default redis;

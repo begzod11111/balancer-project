@@ -71,7 +71,7 @@ const CreateTypeModal = ({ isOpen, onClose, onSuccess }) => {
       return;
     }
 
-    if (loader?.showLoader) loader.showLoader();
+    loader.showLoader('Создание типа...');
 
     try {
       const token = localStorage.getItem('accessToken');
@@ -81,12 +81,9 @@ const CreateTypeModal = ({ isOpen, onClose, onSuccess }) => {
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
+
         notify.success('Тип успешно создан');
-
-
-      if (onSuccess) {
-        onSuccess(response.data.data);
-      }
+        onSuccess(response.data);
 
       handleClose();
     } catch (error) {
@@ -96,7 +93,7 @@ const CreateTypeModal = ({ isOpen, onClose, onSuccess }) => {
     );
 
     } finally {
-      if (loader?.hideLoader) loader.hideLoader();
+        loader.hideLoader();
     }
   };
 

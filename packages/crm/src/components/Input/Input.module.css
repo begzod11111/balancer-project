@@ -177,14 +177,13 @@
   transform: scale(1.05) rotate(90deg);
 }
 
-/* Textarea specific */
+
 .container textarea {
   min-height: 100px;
   line-height: 1.6;
 }
 
 
-/* File input styles */
 .fileContainer {
   cursor: pointer;
   justify-content: space-between;
@@ -252,7 +251,7 @@
   transform: scale(0.95);
 }
 
-/* Добавьте в конец файла */
+
 
 .required {
   color: #ef4444;

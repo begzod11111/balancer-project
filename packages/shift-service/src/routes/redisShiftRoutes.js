@@ -30,6 +30,7 @@ router.post('/', async (req, res) => {
             completedTasksCount,
             shiftStartTime,
             shiftEndTime,
+            limits,
             ttl
         } = req.body;
 
@@ -52,7 +53,8 @@ router.post('/', async (req, res) => {
             priorityMultiplier: priorityMultiplier || 1.0,
             completedTasksCount: completedTasksCount || 0,
             shiftStartTime: shiftStartTime ? new Date(shiftStartTime) : new Date(),
-            shiftEndTime: shiftEndTime ? new Date(shiftEndTime) : null
+            shiftEndTime: shiftEndTime ? new Date(shiftEndTime) : null,
+            limits
         }, ttl);
 
         return res.status(201).json({
@@ -394,5 +396,75 @@ router.get('/stats/all', async (req, res) => {
     });
   }
 });
+
+/**
+ * PATCH /api/redis-shifts/:departmentObjectId/:accountId/:assigneeEmail/limits
+ * Обновление лимитов смены
+ */
+router.patch('/:departmentObjectId/:accountId/:assigneeEmail/limits', async (req, res) => {
+  try {
+    const { departmentObjectId, accountId, assigneeEmail } = req.params;
+    const { limits } = req.body;
+
+    if (!limits) {
+      return res.status(400).json({
+        success: false,
+        message: 'Необходимо указать лимиты'
+      });
+    }
+
+    // Валидация лимитов
+    const { maxDailyIssues, maxActiveIssues, preferredLoadPercent } = limits;
+
+    if (maxDailyIssues !== undefined && (typeof maxDailyIssues !== 'number' || maxDailyIssues < 0)) {
+      return res.status(400).json({
+        success: false,
+        message: 'maxDailyIssues должен быть положительным числом'
+      });
+    }
+
+    if (maxActiveIssues !== undefined && (typeof maxActiveIssues !== 'number' || maxActiveIssues < 0)) {
+      return res.status(400).json({
+        success: false,
+        message: 'maxActiveIssues должен быть положительным числом'
+      });
+    }
+
+    if (preferredLoadPercent !== undefined && (typeof preferredLoadPercent !== 'number' || preferredLoadPercent < 0 || preferredLoadPercent > 100)) {
+      return res.status(400).json({
+        success: false,
+        message: 'preferredLoadPercent должен быть числом от 0 до 100'
+      });
+    }
+
+    const updatedShift = await redisService.updateLimits(
+      departmentObjectId,
+      accountId,
+      assigneeEmail,
+      limits
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: 'Лимиты успешно обновлены',
+      data: updatedShift
+    });
+  } catch (error) {
+    console.error('[API] Ошибка обновления лимитов:', error);
+
+    if (error.message === 'Смена не найдена') {
+      return res.status(404).json({
+        success: false,
+        message: error.message
+      });
+    }
+
+    return res.status(500).json({
+      success: false,
+      message: error.message || 'Ошибка обновления лимитов'
+    });
+  }
+});
+
 
 export default router;

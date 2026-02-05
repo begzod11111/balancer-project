@@ -1,0 +1,172 @@
+.clockContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  background: var(--bg-secondary);
+  border-radius: 12px;
+  border: 2px solid var(--border-color);
+  margin: 16px 0;
+}
+
+.timeDisplay {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.clockIcon {
+  font-size: 24px;
+  animation: clockTick 2s ease-in-out infinite;
+}
+
+@keyframes clockTick {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 0.8;
+  }
+}
+
+.timeText {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.label {
+  font-size: 13px;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.time {
+  font-family: 'Monaco', 'Courier New', monospace;
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+
+.progressBar {
+  height: 12px;
+  background: var(--bg-tertiary);
+  border-radius: 6px;
+  overflow: hidden;
+  position: relative;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.progressFill {
+  height: 100%;
+  transition: width 1s linear, background-color 0.3s ease;
+  border-radius: 6px;
+  position: relative;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+}
+
+.progressFill::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.3),
+    transparent
+  );
+  animation: shimmer 2s linear infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.clockExpired .clockIcon {
+  animation: urgentPulse 0.5s ease-in-out infinite;
+}
+
+@keyframes urgentPulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.2);
+  }
+}
+
+.clockExpired {
+  border-color: var(--color-error);
+  background: rgba(239, 68, 68, 0.05);
+  animation: borderBlink 1s ease-in-out infinite;
+}
+
+@keyframes borderBlink {
+  0%, 100% {
+    border-color: var(--color-error);
+    box-shadow: 0 0 0 rgba(239, 68, 68, 0.4);
+  }
+  50% {
+    border-color: transparent;
+    box-shadow: 0 0 20px rgba(239, 68, 68, 0.6);
+  }
+}
+
+.clockCritical {
+  border-color: var(--color-error);
+  background: rgba(239, 68, 68, 0.03);
+}
+
+.clockNormal {
+  border-color: var(--border-color);
+}
+
+@media (max-width: 768px) {
+  .clockContainer {
+    padding: 20px;
+  }
+
+  .clockIcon {
+    font-size: 28px;
+  }
+
+  .time {
+    font-size: 22px;
+  }
+
+  .progressBar {
+    height: 14px;
+  }
+}
+
+@media (max-width: 480px) {
+  .clockContainer {
+    padding: 24px;
+  }
+
+  .clockIcon {
+    font-size: 32px;
+  }
+
+  .label {
+    font-size: 14px;
+  }
+
+  .time {
+    font-size: 24px;
+  }
+
+  .progressBar {
+    height: 16px;
+  }
+}

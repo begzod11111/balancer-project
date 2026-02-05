@@ -1,5 +1,5 @@
 // packages/shift-service/src/services/departmentService.js
-import {models} from '../models/db.js';
+import { models } from '../models/db.js';
 import mongoose from 'mongoose';
 
 class DepartmentService {
@@ -7,66 +7,35 @@ class DepartmentService {
     /**
      * Создание нового департамента
      */
-    async createDepartment(departmentData) {
-        try {
-            const {
-                name,
-                ObjectId,
-                description,
-                active = true,
-                taskTypeWeights = {},
-                loadCalculationFormula
-            } = departmentData;
+    async createDepartment(data) {
+        const { name, ObjectId, workspaceId, description, taskTypeWeights, defaultMaxLoad, priorityMultiplier, loadCalculationFormula } = data;
 
-            console.log('[createDepartment] Создание департамента:', {name, ObjectId});
+        const existingDept = await models.Department.findOne({
+            $or: [
+                { name: name.trim(), workspaceId },
+                { ObjectId: ObjectId.trim(), workspaceId }
+            ],
+            delete: false
+        });
 
-            // Проверка обязательных полей
-            if (!name || !name.trim()) {
-                throw new Error('Название департамента обязательно');
-            }
-
-            if (!ObjectId || !ObjectId.trim()) {
-                throw new Error('ObjectId обязателен');
-            }
-
-            // Проверка уникальности
-            const existingByName = await models.Department.findOne({
-                name: name.trim(),
-                delete: false
-            });
-
-            if (existingByName) {
-                throw new Error(`Департамент с названием "${name}" уже существует`);
-            }
-
-            const existingByObjectId = await models.Department.findOne({
-                ObjectId: ObjectId.trim(),
-                delete: false
-            });
-
-            if (existingByObjectId) {
-                throw new Error(`Департамент с ObjectId "${ObjectId}" уже существует`);
-            }
-
-            // Создание департамента
-            const department = new models.Department({
-                name: name.trim(),
-                ObjectId: ObjectId.trim(),
-                description: description || '',
-                active,
-                taskTypeWeights: this.convertWeightsToArray(taskTypeWeights),
-                loadCalculationFormula: loadCalculationFormula || 'activeIssues * 1.5 + dailyIssues'
-            });
-
-            await department.save();
-
-            console.log('[createDepartment] Департамент создан:', department._id);
-
-            return department;
-        } catch (error) {
-            console.error('[createDepartment] Ошибка:', error);
-            throw error;
+        if (existingDept) {
+            throw new Error('Отдел с таким именем или ObjectId уже существует в этом workspace');
         }
+
+        const department = new models.Department({
+            name: name.trim(),
+            ObjectId: ObjectId.trim(),
+            workspaceId: workspaceId || "1be9e6ab-23d3-4044-be51-802c29c0229a",
+            description: description?.trim(),
+            taskTypeWeights: taskTypeWeights || [],
+            defaultMaxLoad: defaultMaxLoad || 100,
+            priorityMultiplier: priorityMultiplier || 1.0,
+            loadCalculationFormula: loadCalculationFormula || 'activeIssues * 1.5 + dailyIssues'
+        });
+
+        await department.save();
+        console.log('[createDepartment] Создан департамент:', department.name);
+        return department;
     }
 
     /**
@@ -97,16 +66,22 @@ class DepartmentService {
     /**
      * Получение департамента по ObjectId
      */
-    async getDepartmentByObjectId(objectId) {
+    async getDepartmentByObjectId(objectId, workspaceId = null) {
         try {
             if (!objectId || !objectId.trim()) {
                 throw new Error('ObjectId не может быть пустым');
             }
 
-            const department = await models.Department.findOne({
+            const query = {
                 ObjectId: objectId.trim(),
                 delete: false
-            });
+            };
+
+            if (workspaceId) {
+                query.workspaceId = workspaceId;
+            }
+
+            const department = await models.Department.findOne(query);
 
             if (!department) {
                 throw new Error('Департамент не найден');
@@ -122,16 +97,22 @@ class DepartmentService {
     /**
      * Получение департамента по названию
      */
-    async getDepartmentByName(name) {
+    async getDepartmentByName(name, workspaceId = null) {
         try {
             if (!name || !name.trim()) {
                 throw new Error('Название не может быть пустым');
             }
 
-            const department = await models.Department.findOne({
+            const query = {
                 name: name.trim(),
                 delete: false
-            });
+            };
+
+            if (workspaceId) {
+                query.workspaceId = workspaceId;
+            }
+
+            const department = await models.Department.findOne(query);
 
             if (!department) {
                 throw new Error('Департамент не найден');
@@ -150,6 +131,7 @@ class DepartmentService {
     async getAllDepartments(filters = {}) {
         try {
             const {
+                workspaceId,
                 active,
                 deleted = false,
                 search,
@@ -158,7 +140,11 @@ class DepartmentService {
                 sort = 'name'
             } = filters;
 
-            const query = {delete: deleted === true || deleted === 'true'};
+            const query = { delete: deleted === true || deleted === 'true' };
+
+            if (workspaceId) {
+                query.workspaceId = workspaceId;
+            }
 
             if (active !== undefined) {
                 query.active = active === true || active === 'true';
@@ -166,9 +152,9 @@ class DepartmentService {
 
             if (search && search.trim()) {
                 query.$or = [
-                    {name: {$regex: search.trim(), $options: 'i'}},
-                    {ObjectId: {$regex: search.trim(), $options: 'i'}},
-                    {description: {$regex: search.trim(), $options: 'i'}}
+                    { name: { $regex: search.trim(), $options: 'i' } },
+                    { ObjectId: { $regex: search.trim(), $options: 'i' } },
+                    { description: { $regex: search.trim(), $options: 'i' } }
                 ];
             }
 
@@ -196,14 +182,20 @@ class DepartmentService {
     /**
      * Получение только активных департаментов
      */
-    async getActiveDepartments() {
+    async getActiveDepartments(workspaceId = null) {
         try {
+            const query = {
+                active: true,
+                delete: false
+            };
+
+            if (workspaceId) {
+                query.workspaceId = workspaceId;
+            }
+
             const departments = await models.Department
-                .find({
-                    active: true,
-                    delete: false
-                })
-                .sort({name: 1})
+                .find(query)
+                .sort({ name: 1 })
                 .lean();
 
             console.log('[getActiveDepartments] Найдено активных департаментов:', departments.length);
@@ -227,14 +219,10 @@ class DepartmentService {
                 throw new Error('Некорректный ID департамента');
             }
 
-
             const department = await models.Department.findOne({
                 _id: departmentId,
                 delete: false
             });
-            if (updateData.taskTypeWeights !== undefined) {
-                department.taskTypeWeights = this.convertWeightsToArray(updateData.taskTypeWeights);
-            }
 
             if (!department) {
                 throw new Error('Департамент не найден');
@@ -244,12 +232,13 @@ class DepartmentService {
             if (updateData.name && updateData.name !== department.name) {
                 const existingByName = await models.Department.findOne({
                     name: updateData.name.trim(),
+                    workspaceId: department.workspaceId,
                     delete: false,
-                    _id: {$ne: departmentId}
+                    _id: { $ne: departmentId }
                 });
 
                 if (existingByName) {
-                    throw new Error(`Департамент с названием "${updateData.name}" уже существует`);
+                    throw new Error(`Департамент с название�� "${updateData.name}" уже существует`);
                 }
             }
 
@@ -257,8 +246,9 @@ class DepartmentService {
             if (updateData.ObjectId && updateData.ObjectId !== department.ObjectId) {
                 const existingByObjectId = await models.Department.findOne({
                     ObjectId: updateData.ObjectId.trim(),
+                    workspaceId: department.workspaceId,
                     delete: false,
-                    _id: {$ne: departmentId}
+                    _id: { $ne: departmentId }
                 });
 
                 if (existingByObjectId) {
@@ -267,7 +257,7 @@ class DepartmentService {
             }
 
             // Обновление полей
-            const allowedFields = ['name', 'ObjectId', 'description', 'active', 'taskTypeWeights', 'loadCalculationFormula'];
+            const allowedFields = ['name', 'ObjectId', 'description', 'active', 'taskTypeWeights', 'loadCalculationFormula', 'defaultMaxLoad', 'priorityMultiplier', 'workspaceId'];
 
             allowedFields.forEach(field => {
                 if (updateData[field] !== undefined) {
@@ -286,10 +276,9 @@ class DepartmentService {
 
             console.log('[updateDepartment] Обновлённый департамент:', department);
 
-            // Сохранение изменений
             const savedDepartment = await department.save();
 
-            console.log('[updateDepartment] Департамент сохранён:', department);
+            console.log('[updateDepartment] Департамент сохранён:', savedDepartment);
 
             return savedDepartment;
         } catch (error) {
@@ -364,7 +353,7 @@ class DepartmentService {
 
             console.log('[deleteDepartment] Департамент удалён:', department.name);
 
-            return {success: true};
+            return { success: true };
         } catch (error) {
             console.error('[deleteDepartment] Ошибка:', error);
             throw error;
@@ -416,7 +405,7 @@ class DepartmentService {
                 throw new Error('Некорректный ID департамента');
             }
 
-            const result = await models.Department.deleteOne({_id: departmentId});
+            const result = await models.Department.deleteOne({ _id: departmentId });
 
             if (result.deletedCount === 0) {
                 throw new Error('Департамент не найден');
@@ -424,7 +413,7 @@ class DepartmentService {
 
             console.log('[permanentDeleteDepartment] Департамент полностью удалён');
 
-            return {success: true, deletedCount: result.deletedCount};
+            return { success: true, deletedCount: result.deletedCount };
         } catch (error) {
             console.error('[permanentDeleteDepartment] Ошибка:', error);
             throw error;
@@ -444,7 +433,10 @@ class DepartmentService {
         }
     }
 
-    async setTypeWeight(departmentId, typeId, weight) {
+    /**
+     * Установка веса для типа задачи
+     */
+    async setTypeWeight(departmentId, typeId, weight, typeName = null) {
         try {
             console.log('[setTypeWeight] Департамент:', departmentId, 'Тип:', typeId, 'Вес:', weight);
 
@@ -465,6 +457,10 @@ class DepartmentService {
                 delete: false
             });
 
+            if (!department) {
+                throw new Error('Департамент не найден');
+            }
+
             const existingIndex = department.taskTypeWeights.findIndex(
                 item => item.typeId === typeId.trim()
             );
@@ -478,7 +474,8 @@ class DepartmentService {
                 department.taskTypeWeights.push({
                     typeId: typeId.trim(),
                     name: typeName || typeId.trim(),
-                    weight
+                    weight,
+                    statusWeights: []
                 });
             }
 
@@ -490,6 +487,96 @@ class DepartmentService {
         }
     }
 
+    /**
+     * Установка веса для статуса внутри типа задачи
+     */
+    async setStatusWeight(departmentId, typeId, statusId, statusName, weight) {
+        try {
+            console.log('[setStatusWeight] Департамент:', departmentId, 'Тип:', typeId, 'Статус:', statusId, 'Вес:', weight);
+
+            if (!mongoose.Types.ObjectId.isValid(departmentId)) {
+                throw new Error('Некорректный ID департамента');
+            }
+
+            if (!typeId?.trim() || !statusId?.trim()) {
+                throw new Error('ID типа и статуса обязательны');
+            }
+
+            if (typeof weight !== 'number' || weight < 0.1 || weight > 10) {
+                throw new Error('Вес должен быть числом от 0.1 до 10');
+            }
+
+            const department = await models.Department.findOne({
+                _id: departmentId,
+                delete: false
+            });
+
+            if (!department) {
+                throw new Error('Департамент не найден');
+            }
+
+            const taskType = department.taskTypeWeights.find(t => t.typeId === typeId.trim());
+
+            if (!taskType) {
+                throw new Error('Тип задачи не найден. Сначала добавьте тип задачи.');
+            }
+
+            const existingStatusIndex = taskType.statusWeights.findIndex(s => s.statusId === statusId.trim());
+
+            if (existingStatusIndex >= 0) {
+                taskType.statusWeights[existingStatusIndex].statusName = statusName || statusId;
+                taskType.statusWeights[existingStatusIndex].weight = weight;
+            } else {
+                taskType.statusWeights.push({
+                    statusId: statusId.trim(),
+                    statusName: statusName || statusId,
+                    weight
+                });
+            }
+
+            department.updatedAt = new Date();
+            return await department.save();
+        } catch (error) {
+            console.error('[setStatusWeight] Ошибка:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Удаление веса статуса
+     */
+    async removeStatusWeight(departmentId, typeId, statusId) {
+        try {
+            console.log('[removeStatusWeight] Департамент:', departmentId, 'Тип:', typeId, 'Статус:', statusId);
+
+            if (!mongoose.Types.ObjectId.isValid(departmentId)) {
+                throw new Error('Некорректный ID департамента');
+            }
+
+            const department = await models.Department.findOne({
+                _id: departmentId,
+                delete: false
+            });
+
+            if (!department) {
+                throw new Error('Департамент не найден');
+            }
+
+            const taskType = department.taskTypeWeights.find(t => t.typeId === typeId.trim());
+
+            if (!taskType) {
+                throw new Error('Тип задачи не найден');
+            }
+
+            taskType.statusWeights = taskType.statusWeights.filter(s => s.statusId !== statusId.trim());
+
+            department.updatedAt = new Date();
+            return await department.save();
+        } catch (error) {
+            console.error('[removeStatusWeight] Ошибка:', error);
+            throw error;
+        }
+    }
 
     /**
      * Удаление веса типа (возврат к дефолтному)
@@ -499,7 +586,7 @@ class DepartmentService {
             console.log('[removeTypeWeight] Департамент:', departmentId, 'Тип:', typeId);
 
             if (!mongoose.Types.ObjectId.isValid(departmentId)) {
-                throw new Error('Неко��ректный ID департамента');
+                throw new Error('Некорректный ID департамента');
             }
 
             const department = await models.Department.findOne({
@@ -523,14 +610,42 @@ class DepartmentService {
     }
 
     /**
+     * Получение веса задачи с учетом типа и статуса
+     */
+    getTaskWeight(department, typeId, statusId) {
+        if (!department || !department.taskTypeWeights) {
+            return 1.0;
+        }
+
+        const taskType = department.taskTypeWeights.find(t => t.typeId === typeId);
+
+        if (!taskType) {
+            return 1.0; // Вес по умолчанию
+        }
+
+        // Проверяем специфичный вес статуса
+        if (statusId && taskType.statusWeights && taskType.statusWeights.length > 0) {
+            const statusWeight = taskType.statusWeights.find(s => s.statusId === statusId);
+            if (statusWeight) {
+                return statusWeight.weight;
+            }
+        }
+
+        // Базовый вес типа
+        return taskType.weight;
+    }
+
+    /**
      * Получение статистики по департаментам
      */
-    async getDepartmentStats() {
+    async getDepartmentStats(workspaceId = null) {
         try {
-            const total = await models.Department.countDocuments({delete: false});
-            const active = await models.Department.countDocuments({active: true, delete: false});
-            const inactive = await models.Department.countDocuments({active: false, delete: false});
-            const deleted = await models.Department.countDocuments({delete: true});
+            const query = workspaceId ? { workspaceId } : {};
+
+            const total = await models.Department.countDocuments({ ...query, delete: false });
+            const active = await models.Department.countDocuments({ ...query, active: true, delete: false });
+            const inactive = await models.Department.countDocuments({ ...query, active: false, delete: false });
+            const deleted = await models.Department.countDocuments({ ...query, delete: true });
 
             return {
                 total,
@@ -547,20 +662,26 @@ class DepartmentService {
     /**
      * Проверка существования департамента
      */
-    async checkDepartmentExists(identifier) {
+    async checkDepartmentExists(identifier, workspaceId = null) {
         try {
             if (!identifier || !identifier.trim()) {
                 return false;
             }
 
-            const department = await models.Department.findOne({
+            const query = {
                 $or: [
-                    {name: identifier.trim()},
-                    {ObjectId: identifier.trim()},
-                    ...(mongoose.Types.ObjectId.isValid(identifier) ? [{_id: identifier}] : [])
+                    { name: identifier.trim() },
+                    { ObjectId: identifier.trim() },
+                    ...(mongoose.Types.ObjectId.isValid(identifier) ? [{ _id: identifier }] : [])
                 ],
                 delete: false
-            });
+            };
+
+            if (workspaceId) {
+                query.workspaceId = workspaceId;
+            }
+
+            const department = await models.Department.findOne(query);
 
             return !!department;
         } catch (error) {
@@ -570,7 +691,7 @@ class DepartmentService {
     }
 
     /**
-     * Вспомогательная функция: преобразование объекта весов в Map
+     * Вспомогательная функция: преобразование объекта весов в массив
      */
     convertWeightsToArray(weights) {
         if (!weights) return [];
@@ -582,7 +703,8 @@ class DepartmentService {
             ).map(item => ({
                 typeId: item.typeId,
                 name: item.typeName || item.name || item.typeId,
-                weight: item.weight
+                weight: item.weight,
+                statusWeights: item.statusWeights || []
             }));
         }
 
@@ -590,13 +712,14 @@ class DepartmentService {
         if (typeof weights === 'object') {
             return Object.entries(weights).map(([typeId, value]) => {
                 if (typeof value === 'number') {
-                    return {typeId, name: typeId, weight: value};
+                    return { typeId, name: typeId, weight: value, statusWeights: [] };
                 }
                 if (typeof value === 'object' && value.weight !== undefined) {
                     return {
                         typeId: value.typeId || typeId,
                         name: value.typeName || value.name || typeId,
-                        weight: value.weight
+                        weight: value.weight,
+                        statusWeights: value.statusWeights || []
                     };
                 }
                 return null;
@@ -605,9 +728,6 @@ class DepartmentService {
 
         return [];
     }
-
-
-
 
     /**
      * Валидация весов типов задач
@@ -622,7 +742,7 @@ class DepartmentService {
                 throw new Error(`Вес для типа "${typeId}" должен быть числом`);
             }
             if (weight < 0.1 || weight > 10) {
-                throw new Error(`Вес для типа "${typeId}" должен быть от 0.1 до 10`);
+                throw new Error(`Вес для типа "${typeId}" должен быть ��т 0.1 до 10`);
             }
         }
 
@@ -637,7 +757,6 @@ class DepartmentService {
             throw new Error('Формула расчёта нагрузки обязательна');
         }
 
-        // Проверка на опасные символы
         const dangerousPatterns = [';', 'eval', 'Function', 'require', 'import', '__proto__'];
         const formulaLower = formula.toLowerCase();
 
