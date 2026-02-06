@@ -18,9 +18,8 @@ const IssueSchema = new mongoose.Schema(
 )
 
 IssueSchema.index({ typeId: 1 })
-IssueSchema.index({ issueStatusId: 1 })
-IssueSchema.index({ assigneeAccountId: 1 })
 IssueSchema.index({ assignmentGroupId: 1 })
+IssueSchema.index({ assigneeAccountId: 1, issueStatusId: 1 });
 
 const Issue = mongoose.model('Issue', IssueSchema)
 

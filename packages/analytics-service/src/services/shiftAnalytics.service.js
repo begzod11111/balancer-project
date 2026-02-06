@@ -70,15 +70,11 @@ export class ShiftAnalyticsService {
 
             const tasks = await models.Issue.find({
                 assigneeAccountId,
-                // ✅ Все задачи, созданные или обновлённые за последние 10 дней
-                $or: [
-                    {createdAt: {$gte: tenDaysAgo}},
-                    {updatedAt: {$gte: tenDaysAgo}}
-                ]
             })
                 .select('issueKey typeId issueStatusId status createdAt updatedAt')
                 .lean()
                 .exec();
+
 
             console.log(`[Analytics] 📋 Найдено задач за последние 10 дней: ${tasks.length}`);
             return tasks;
