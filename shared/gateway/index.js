@@ -9,7 +9,7 @@ const app = express();
 // Конфигурация сервисов
 const SERVICES = {
     shift: {
-        url: 'http://crm_shift:9002',
+        url: 'http://shift-service:9002',
         prefix: '/api/shift'
     },
     auth: {
@@ -17,7 +17,7 @@ const SERVICES = {
         prefix: '/api/auth'
     },
     analytics: {
-        url: 'http://crm_analytics:9001',
+        url: 'http://analytics-service:9001',
         prefix: '/api/analytics'
     },
     assigner: {
