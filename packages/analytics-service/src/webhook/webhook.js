@@ -1,5 +1,5 @@
 import express from 'express';
-import publishIssueUpdate from "../config/publishIssueUpdate.js";
+import issueProducer from "../producers/issue.producer.js";
 
 
 const router = express.Router();
@@ -9,7 +9,7 @@ router.post('/change-status', async (req, res) => {
     try {
         const statusData = req.body;
         console.log('[Analytics Service] Received change status webhook:', statusData);
-        publishIssueUpdate(statusData).then(
+        issueProducer(statusData).then(
             () => console.log('[Analytics Service] Status change published to Kafka successfully'),
         ).catch(
             (error) => console.error('[Analytics Service] Error publishing status change to Kafka:', error)

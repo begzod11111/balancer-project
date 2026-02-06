@@ -1,7 +1,7 @@
 import express from "express";
 import cors from "cors";
 import {connectDB, models} from "./models/db.js";
-// import {connectRedis} from "./models/redisClient.js";
+// import {connectRedis} from "./models/redis.js";
 import authRoutes from "./routes/authRoute.js";
 
 

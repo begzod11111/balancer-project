@@ -36,13 +36,10 @@ const jira = {
         }
     },
 
-    // getJQLForIssues({
-    //     projectKey = 'UAS',
-    //     department = null,
-    //                 }) {
-    //     const jqlParts = issueKeys.map(key => `key = "${key}"`);
-    //     return jqlParts.join(' OR ');
-    // }
+    getAssignmentGroupIssues(assignmentGroup, options = {}) {
+        const jql = `project = "${process.env.DEFAULT_PROJECT_KEY}" AND "${process.env.DEPARTMENT_FIELD_JIRA_NAME}" = "ari:cloud:cmdb::object/1be9e6ab-23d3-4044-be51-802c29c0229a/${assignmentGroup.objectId}" ORDER BY created DESC`;
+        return this.searchIssues(jql, options);
+    },
 
     async searchAssignee(assigneeKey, options = {}) {
         try {
@@ -59,6 +56,19 @@ const jira = {
         } catch (error) {
             throw new Error(`Failed to fetch assignee ${assigneeKey}: ${error.response?.data?.errorMessages?.join(', ') || error.message}`);
         }
+    },
+
+    generateJQL(filters) {
+        const jqlParts = [];
+        for (const [field, value] of Object.entries(filters)) {
+            if (Array.isArray(value)) {
+                const valuesList = value.map(v => `"${v}"`).join(', ');
+                jqlParts.push(`${field} IN (${valuesList})`);
+            } else {
+                jqlParts.push(`${field} = "${value}"`);
+            }
+        }
+        return jqlParts.join(' AND ');
     },
 
     async searchIssues(jql, options = {}) {

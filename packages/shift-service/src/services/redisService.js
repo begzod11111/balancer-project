@@ -1,5 +1,6 @@
 // packages/shift-service/src/services/redisService.js
 import redis from '../models/redisClient.js';
+import {sendShiftCreatedEvent} from "../producers/index.js";
 
 class RedisService {
     constructor() {
@@ -52,7 +53,6 @@ class RedisService {
         try {
             const key = this.generateKey(departmentObjectId, accountId, assigneeEmail);
             const exists = await redis.exists(key);
-            console.log(exists);
 
             if (exists) {
                 console.log(`[Redis] Смена уже существует: ${key}`);
@@ -79,7 +79,7 @@ class RedisService {
 
             await redis.setex(key, ttl, JSON.stringify(data));
 
-            this.publishShiftCreated({
+            sendShiftCreatedEvent({
                 departmentId, departmentObjectId, accountId, assigneeEmail,
             }).then(r => console.log('Успешно записан в топик')).catch(e => console.error(e));
 
@@ -91,32 +91,6 @@ class RedisService {
         }
     }
 
-    /**
-     * Публикация события создания смены в Kafka
-     */
-    async publishShiftCreated(shiftData) {
-        try {
-            const {kafka} = await import('../config/kafka.js');
-            const producer = kafka.producer();
-
-            await producer.connect();
-
-            await producer.send({
-                topic: 'shift_created', messages: [{
-                    key: shiftData.assigneeEmail, value: JSON.stringify({
-                        event: 'shift_created', timestamp: new Date().toISOString(), data: shiftData
-                    })
-                }]
-            });
-
-            await producer.disconnect();
-
-            console.log(`[Kafka] Опубликовано событие shift_created для ${shiftData.assigneeEmail}`);
-        } catch (error) {
-            console.error('[Kafka] Ошибка публикации события:', error);
-            // Не бросаем ошибку, чтобы не прерывать создание смены
-        }
-    }
 
     /**
      * Получение смены по ключу

@@ -1,7 +1,7 @@
 
 
-const publishIssueUpdate = async (issueData) => {
-  const { kafka } = await import('./kafka.js');
+const issueProducer = async (issueData) => {
+  const { kafka } = await import('../config/kafka.js');
 
   const producer = kafka.producer();
 
@@ -40,4 +40,4 @@ const publishIssueUpdate = async (issueData) => {
 };
 
 
-export default publishIssueUpdate;
+export default issueProducer;
