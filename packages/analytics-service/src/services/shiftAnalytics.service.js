@@ -1,7 +1,6 @@
 import { redisClient } from '../config/redis.js';
 import { create, all } from 'mathjs';
 import { models } from "../models/db.js";
-import Issue from '../models/issue.model.js'; // ✅ Добавьте модель Issue
 
 const math = create(all);
 
