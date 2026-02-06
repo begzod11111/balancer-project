@@ -75,7 +75,6 @@ services:
       - shift-service
       - analytics-service
       - assigner-service
-      - kafka
     networks:
       - crm_network
 
