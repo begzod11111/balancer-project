@@ -252,7 +252,7 @@ class ShiftAnalyticsService {
         try {
             // Получаем все ключи департамента
             const memberKeys = await redisClient.smembers(
-                `Department:${departmentObjectId}:members`
+                `Department:${departmentObjectId}:*`
             );
 
             if (memberKeys.length === 0) {
@@ -341,5 +341,7 @@ class ShiftAnalyticsService {
         }
     }
 }
+
+
 
 export default new ShiftAnalyticsService();
