@@ -102,9 +102,9 @@ class RedisService {
             await producer.connect();
 
             await producer.send({
-                topic: 'shift.created', messages: [{
+                topic: 'shift_created', messages: [{
                     key: shiftData.assigneeEmail, value: JSON.stringify({
-                        event: 'SHIFT_CREATED', timestamp: new Date().toISOString(), data: shiftData
+                        event: 'shift_created', timestamp: new Date().toISOString(), data: shiftData
                     })
                 }]
             });

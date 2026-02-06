@@ -34,7 +34,6 @@ app.use('/api/webhook', webhookRoutes);
 
 async function startScheduler() {
   try {
-      await runShiftCreatedConsumer()
       await connectRedis()
       await connectDB()
       await startConsumers()

@@ -28,7 +28,7 @@ export async function runShiftCreatedConsumer() {
 
   try {
     await shiftConsumer.subscribe({
-      topic: 'shift.created',
+      topic: 'shift_created',
       fromBeginning: true
     });
     console.log('[Kafka Consumer] ✅ Успешно подписан на topic "shift.created"');
@@ -52,7 +52,7 @@ export async function runShiftCreatedConsumer() {
         console.log(`[Kafka Consumer] ⏰ Время: ${event.timestamp}`);
 
         // Обработка события создания смены
-        if (event.event === 'shift.created' && event.data) {
+        if (event.event === 'shift_created' && event.data) {
           console.log('[Kafka Consumer] 🔄 Начало обработки смены...');
 
           const result = await shiftAnalyticsService.processShiftCreated(event.data);
