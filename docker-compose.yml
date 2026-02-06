@@ -1,5 +1,6 @@
+version: '3.8'
+
 services:
-  # Auth Service (9000)
   auth-service:
     build:
       context: ./packages/guard-auth
@@ -9,8 +10,10 @@ services:
     ports:
       - "9000:9000"
     env_file: .env
-    depends_on:
-      - kafka
+    environment:
+      - KAFKA_BROKER=host.docker.internal:9092
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     networks:
       - crm_network
 
@@ -18,21 +21,9 @@ services:
     build:
       context: ./packages/analytics-service
     container_name: analytics-service
-    environment:
-      - NODE_ENV=production
-      - KAFKA_BROKER=host.docker.internal:9092  # Указываем на host машину
-      - MONGO_URL=${MONGO_URI}
-      - REDIS_URL=redis://${REDIS_USERNAME}:${REDIS_PASSWORD}@${REDIS_HOST}:${REDIS_PORT}
-    extra_hosts:
-      - "host.docker.internal:host-gateway"  # Для доступа к Kafka на host
-    networks:
-      - app-network
     restart: unless-stopped
-
-  shift-service:
-    build:
-      context: ./packages/shift-service
-    container_name: shift-service
+    ports:
+      - "9001:9001"
     environment:
       - NODE_ENV=production
       - KAFKA_BROKER=host.docker.internal:9092
@@ -41,11 +32,25 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
     networks:
-      - app-network
+      - crm_network
+
+  shift-service:
+    build:
+      context: ./packages/shift-service
+    container_name: shift-service
     restart: unless-stopped
+    ports:
+      - "9002:9002"
+    environment:
+      - NODE_ENV=production
+      - KAFKA_BROKER=host.docker.internal:9092
+      - MONGO_URL=${MONGO_URI}
+      - REDIS_URL=redis://${REDIS_USERNAME}:${REDIS_PASSWORD}@${REDIS_HOST}:${REDIS_PORT}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - crm_network
 
-
-  # Assigner Service (9003)
   assigner-service:
     build:
       context: ./packages/assigner
@@ -55,12 +60,13 @@ services:
     ports:
       - "9003:9003"
     env_file: .env
-    depends_on:
-      - kafka
+    environment:
+      - KAFKA_BROKER=host.docker.internal:9092
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     networks:
       - crm_network
 
-  # Gateway (8000)
   gateway:
     build:
       context: ./shared
@@ -78,7 +84,6 @@ services:
     networks:
       - crm_network
 
-  # CRM Frontend (3001)
   crm:
     build:
       context: ./packages/crm
@@ -93,14 +98,10 @@ services:
     networks:
       - crm_network
     healthcheck:
-      test: [ "CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3001/health" ]
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3001/health"]
       interval: 30s
       timeout: 3s
       retries: 3
-
-volumes:
-  zookeeper_data:
-  kafka_data:
 
 networks:
   crm_network:
