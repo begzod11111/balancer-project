@@ -31,9 +31,9 @@ export async function runShiftCreatedConsumer() {
       topic: 'shift_created',
       fromBeginning: true
     });
-    console.log('[Kafka Consumer] ✅ Успешно подписан на topic "shift.created"');
+    console.log('[Kafka Consumer] ✅ Успешно подписан на topic "shift_created"');
   } catch (error) {
-    console.error('[Kafka Consumer] ❌ Ошибка подписки на topic "shift.created":', error);
+    console.error('[Kafka Consumer] ❌ Ошибка подписки на topic "shift_created":', error);
   }
 
   await shiftConsumer.run({
@@ -69,7 +69,7 @@ export async function runShiftCreatedConsumer() {
     }
   });
 
-  console.log('\n[Kafka Consumer] 🎧 Consumer запущен и слушает topic "shift.created"\n');
+  console.log('\n[Kafka Consumer] 🎧 Consumer запущен и слушает topic "shift_created"\n');
 
   const shutdown = async () => {
     console.log('\n[Kafka Consumer] 🛑 Получен сигнал завершения...');

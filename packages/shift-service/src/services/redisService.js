@@ -111,7 +111,7 @@ class RedisService {
 
             await producer.disconnect();
 
-            console.log(`[Kafka] Опубликовано событие shift.created для ${shiftData.assigneeEmail}`);
+            console.log(`[Kafka] Опубликовано событие shift_created для ${shiftData.assigneeEmail}`);
         } catch (error) {
             console.error('[Kafka] Ошибка публикации события:', error);
             // Не бросаем ошибку, чтобы не прерывать создание смены
