@@ -10,8 +10,6 @@ services:
     ports:
       - "9000:9000"
     env_file: .env
-    environment:
-      - KAFKA_BROKER=host.docker.internal:9092
     extra_hosts:
       - "host.docker.internal:host-gateway"
     networks:
@@ -24,11 +22,7 @@ services:
     restart: unless-stopped
     ports:
       - "9001:9001"
-    environment:
-      - NODE_ENV=production
-      - KAFKA_BROKER=host.docker.internal:9092
-      - MONGO_URL=${MONGO_URI}
-      - REDIS_URL=redis://${REDIS_USERNAME}:${REDIS_PASSWORD}@${REDIS_HOST}:${REDIS_PORT}
+    env_file: .env
     extra_hosts:
       - "host.docker.internal:host-gateway"
     networks:
@@ -41,11 +35,7 @@ services:
     restart: unless-stopped
     ports:
       - "9002:9002"
-    environment:
-      - NODE_ENV=production
-      - KAFKA_BROKER=host.docker.internal:9092
-      - MONGO_URL=${MONGO_URI}
-      - REDIS_URL=redis://${REDIS_USERNAME}:${REDIS_PASSWORD}@${REDIS_HOST}:${REDIS_PORT}
+    env_file: .env
     extra_hosts:
       - "host.docker.internal:host-gateway"
     networks:
@@ -60,8 +50,6 @@ services:
     ports:
       - "9003:9003"
     env_file: .env
-    environment:
-      - KAFKA_BROKER=host.docker.internal:9092
     extra_hosts:
       - "host.docker.internal:host-gateway"
     networks:
