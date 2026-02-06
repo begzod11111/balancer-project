@@ -5,16 +5,13 @@ import { models } from "../models/db.js";
 const math = create(all);
 
 export class ShiftAnalyticsService {
-  /**
-   * Обработка события создания смены
-   */
   async processShiftCreated(shiftData) {
     try {
       console.log(`[Analytics] 📊 Начало обработки смены для ${shiftData.assigneeEmail}`);
 
       const { departmentObjectId, assigneeAccountId, assigneeEmail } = shiftData;
 
-      // ✅ Параллельные запросы для ускорения
+      // ✅ Параллельные запросы
       const [assigneeTasks, departmentShifts] = await Promise.all([
         this.getAssigneeTasks(assigneeAccountId),
         this.getAllDepartmentShifts(departmentObjectId)
@@ -23,36 +20,46 @@ export class ShiftAnalyticsService {
       console.log(`[Analytics] 📋 Найдено задач у сотрудника: ${assigneeTasks.length}`);
       console.log(`[Analytics] 👥 Найдено смен в отделе: ${departmentShifts.length}`);
 
-      // Рассчитываем статистику задач сотрудника
+      // 1️⃣ Рассчитываем базовую статистику по задачам
       const taskStats = this.calculateTaskStats(assigneeTasks, shiftData.taskTypeWeights || []);
 
-      // Рассчитываем статистику по отделу
+      // 2️⃣ Рассчитываем вес сотрудника с учётом лимитов
+      const employeeBaseWeight = this.calculateEmployeeBaseWeight(taskStats, shiftData.limits || {});
+
+      // 3️⃣ Рассчитываем статистику отдела
       const departmentStats = this.calculateDepartmentStats(departmentShifts);
 
-      // Рассчитываем вес сотрудника относительно отдела
-      const employeeWeight = this.calculateEmployeeWeight(taskStats, departmentStats);
+      // 4️⃣ Рассчитываем относительный вес среди коллег
+      const relativeWeight = this.calculateRelativeWeight(
+        employeeBaseWeight,
+        taskStats,
+        departmentStats
+      );
 
-      // Формируем обогащённые данные смены
       const enrichedShift = {
         ...shiftData,
-        assigneeTasks: assigneeTasks.map(t => t.issueKey), // Сохраняем только ключи задач
+        assigneeTasks: assigneeTasks.map(t => t.issueKey),
         taskTypeWeights: taskStats.typeWeights,
         completedTasksCount: taskStats.completedCount,
         activeTasksCount: taskStats.activeCount,
         totalTasksCount: taskStats.totalCount,
         totalWeight: taskStats.totalWeight,
-        employeeWeight: math.round(employeeWeight, 2), // ✅ Округление через mathjs
+        employeeBaseWeight: math.round(employeeBaseWeight, 2),
+        employeeWeight: math.round(relativeWeight, 2),
         departmentTotalLoad: departmentStats.totalLoad,
-        departmentAverageLoad: math.round(departmentStats.averageLoad, 2),
+        departmentTotalWeight: departmentStats.totalWeight,
+        departmentAverageWeight: math.round(departmentStats.averageWeight, 2),
+        departmentEmployeeCount: departmentStats.employeeCount,
+        loadPercent: this.calculateLoadPercent(taskStats, shiftData.limits || {}),
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
       };
 
-      // Сохраняем в Redis
       await this.saveToRedis(enrichedShift);
 
       console.log(`[Analytics] ✅ Смена обработана для ${assigneeEmail}`);
-      console.log(`[Analytics] 📈 Статистика: ${taskStats.totalCount} задач, вес: ${employeeWeight.toFixed(2)}%`);
+      console.log(`[Analytics] 📈 Задач: ${taskStats.totalCount}, базовый вес: ${employeeBaseWeight.toFixed(2)}, относительный: ${relativeWeight.toFixed(2)}%`);
+      console.log(`[Analytics] 👥 Отдел: ${departmentStats.employeeCount} человек, средний вес: ${departmentStats.averageWeight.toFixed(2)}`);
 
       return enrichedShift;
     } catch (error) {
@@ -61,32 +68,40 @@ export class ShiftAnalyticsService {
     }
   }
 
-    /**
-     * Получает все задачи сотрудника из MongoDB за последние 10 дней
-     */
-    async getAssigneeTasks(assigneeAccountId) {
-        try {
-            const tenDaysAgo = new Date(Date.now() - 10 * 24 * 60 * 60 * 1000);
+  /**
+   * Получает все задачи сотрудника из MongoDB
+   */
+  async getAssigneeTasks(assigneeAccountId) {
+    try {
+      console.log(`[Analytics] 🔍 Поиск задач для accountId: ${assigneeAccountId}`);
 
-            const tasks = await models.Issue.find({
-                assigneeAccountId,
-            })
-                .select('issueKey typeId issueStatusId status createdAt updatedAt')
-                .lean()
-                .exec();
+      const tasks = await models.Issue.find({
+        assigneeAccountId,
+      })
+        .select('issueKey typeId issueStatusId status createdAt updatedAt')
+        .lean()
+        .exec();
 
+      console.log(`[Analytics] 📋 Найдено задач: ${tasks.length}`);
 
-            console.log(`[Analytics] 📋 Найдено задач за последние 10 дней: ${tasks.length}`);
-            return tasks;
-        } catch (error) {
-            console.error('[Analytics] ❌ Ошибка получения задач:', error);
-            return [];
-        }
+      if (tasks.length > 0) {
+        console.log('[Analytics] 🔍 Пример задачи:', {
+          issueKey: tasks[0].issueKey,
+          typeId: tasks[0].typeId,
+          status: tasks[0].status,
+          issueStatusId: tasks[0].issueStatusId
+        });
+      }
+
+      return tasks;
+    } catch (error) {
+      console.error('[Analytics] ❌ Ошибка получения задач:', error);
+      return [];
     }
-
+  }
 
   /**
-   * Получает все смены отдела через SCAN (быстрее чем KEYS)
+   * ✅ ИСПРАВЛЕНО: Получает все смены отдела через SCAN
    */
   async getAllDepartmentShifts(departmentObjectId) {
     try {
@@ -94,7 +109,8 @@ export class ShiftAnalyticsService {
       const shifts = [];
       let cursor = '0';
 
-      // ✅ SCAN вместо KEYS для больших объёмов данных
+      console.log(`[Analytics] 🔍 Поиск смен по паттерну: ${pattern}`);
+
       do {
         const [nextCursor, keys] = await redisClient.scan(
           cursor,
@@ -106,19 +122,28 @@ export class ShiftAnalyticsService {
 
         cursor = nextCursor;
 
-        // Параллельно получаем данные по всем ключам
+        console.log(`[Analytics] 🔑 Найдено ключей: ${keys.length}`, keys);
+
         if (keys.length > 0) {
+          // ✅ ИСПРАВЛЕНИЕ: используем GET вместо SMEMBERS
           const pipeline = redisClient.pipeline();
-          keys.forEach(key => pipeline.smembers(key));
+          keys.forEach(key => pipeline.get(key));
           const results = await pipeline.exec();
 
-          for (const [err, members] of results) {
-            if (!err && members) {
-              shifts.push(...members.map(m => JSON.parse(m)));
+          for (const [err, data] of results) {
+            if (!err && data) {
+              try {
+                const shift = JSON.parse(data);
+                shifts.push(shift);
+              } catch (parseErr) {
+                console.error('[Analytics] ❌ Ошибка парсинга смены:', parseErr);
+              }
             }
           }
         }
       } while (cursor !== '0');
+
+      console.log(`[Analytics] 📊 Загружено смен из отдела: ${shifts.length}`);
 
       return shifts;
     } catch (error) {
@@ -128,7 +153,7 @@ export class ShiftAnalyticsService {
   }
 
   /**
-   * Рассчитывает статистику по задачам с использованием весов из конфигурации
+   * ✅ Рассчитывает статистику по задачам (fallback = 1.0)
    */
   calculateTaskStats(tasks, taskTypeWeights) {
     const typeMap = new Map();
@@ -136,14 +161,19 @@ export class ShiftAnalyticsService {
     let activeCount = 0;
     let totalWeight = 0;
 
-    // Создаём индекс весов для быстрого поиска
+    // Создаём индекс весов
     const weightIndex = new Map();
     for (const typeWeight of taskTypeWeights) {
+      const statusWeightsMap = new Map();
+
+      for (const sw of (typeWeight.statusWeights || [])) {
+        statusWeightsMap.set(sw.statusId, sw.weight || 1.0);
+      }
+
       weightIndex.set(typeWeight.typeId, {
         weight: typeWeight.weight || 1.0,
-        statusWeights: new Map(
-          (typeWeight.statusWeights || []).map(sw => [sw.statusId, sw.weight || 1.0])
-        )
+        name: typeWeight.name || 'Unknown Type',
+        statusWeights: statusWeightsMap
       });
     }
 
@@ -156,12 +186,21 @@ export class ShiftAnalyticsService {
         activeCount++;
       }
 
-      // Получаем веса из конфигурации
-      const typeConfig = weightIndex.get(task.typeId) || { weight: 1.0, statusWeights: new Map() };
-      const statusWeight = typeConfig.statusWeights.get(task.status) || 1.0;
+      // ✅ Получаем веса из конфигурации с fallback = 1.0
+      const typeConfig = weightIndex.get(task.typeId);
+
+      let typeWeight = 1.0;
+      let typeName = 'Unknown Type';
+      let statusWeight = 1.0;
+
+      if (typeConfig) {
+        typeWeight = typeConfig.weight;
+        typeName = typeConfig.name;
+        statusWeight = typeConfig.statusWeights.get(task.status) || 1.0;
+      }
 
       // ✅ Расчёт веса через mathjs
-      const taskWeight = math.multiply(typeConfig.weight, statusWeight);
+      const taskWeight = math.multiply(typeWeight, statusWeight);
       totalWeight = math.add(totalWeight, taskWeight);
 
       // Группировка по типам
@@ -170,9 +209,9 @@ export class ShiftAnalyticsService {
       if (!typeMap.has(typeId)) {
         typeMap.set(typeId, {
           typeId,
-          name: task.typeName || 'Unknown Type',
+          name: typeName,
           count: 0,
-          weight: typeConfig.weight,
+          weight: typeWeight,
           statusWeights: []
         });
       }
@@ -180,7 +219,6 @@ export class ShiftAnalyticsService {
       const typeData = typeMap.get(typeId);
       typeData.count++;
 
-      // Добавляем статус
       const existingStatus = typeData.statusWeights.find(s => s.statusId === task.status);
       if (!existingStatus) {
         typeData.statusWeights.push({
@@ -190,8 +228,11 @@ export class ShiftAnalyticsService {
           count: 1
         });
       } else {
-        existingStatus.count++;}
+        existingStatus.count++;
+      }
     }
+
+    console.log(`[Analytics] 🎯 Итоговый вес задач: ${totalWeight}`);
 
     return {
       typeWeights: Array.from(typeMap.values()),
@@ -203,47 +244,178 @@ export class ShiftAnalyticsService {
   }
 
   /**
-   * Рассчитывает статистику по отделу
+   * ✅ Рассчитывает базовый вес сотрудника с учётом лимитов
+   */
+  calculateEmployeeBaseWeight(taskStats, limits) {
+    const { maxDailyIssues = 30, maxActiveIssues = 30, preferredLoadPercent = 80 } = limits;
+
+    try {
+      // 1. Базовый вес по задачам (вес всех задач)
+      const taskWeightScore = taskStats.totalWeight;
+
+      // 2. Коэффициент загрузки по активным задачам (0-100)
+      const activeLoadFactor = math.multiply(
+        math.divide(taskStats.activeCount, maxActiveIssues),
+        100
+      );
+
+      // 3. Коэффициент выполнения задач (0-100)
+      const completionFactor = math.multiply(
+        math.divide(taskStats.completedCount, maxDailyIssues),
+        100
+      );
+
+      // 4. Текущая загрузка относительно предпочтительной
+      const currentLoad = math.multiply(
+        math.divide(taskStats.totalCount, math.add(maxDailyIssues, maxActiveIssues)),
+        100
+      );
+
+      const loadMultiplier = math.divide(currentLoad, preferredLoadPercent);
+
+      // ✅ Финальная формула базового веса:
+      // BaseWeight = (taskWeight × 0.4 + activeLoad × 0.3 + completion × 0.2 + currentLoad × 0.1) × loadMultiplier
+      const baseWeight = math.multiply(
+        math.add(
+          math.multiply(taskWeightScore, 0.4),
+          math.multiply(activeLoadFactor, 0.3),
+          math.multiply(completionFactor, 0.2),
+          math.multiply(currentLoad, 0.1)
+        ),
+        loadMultiplier
+      );
+
+      console.log(`[Analytics] 📊 Расчёт базового веса:`);
+      console.log(`  - Вес задач: ${math.round(taskWeightScore, 2)}`);
+      console.log(`  - Загрузка по активным: ${math.round(activeLoadFactor, 2)}%`);
+      console.log(`  - Выполнение задач: ${math.round(completionFactor, 2)}%`);
+      console.log(`  - Текущая загрузка: ${math.round(currentLoad, 2)}%`);
+      console.log(`  - Множитель загрузки: ${math.round(loadMultiplier, 2)}`);
+      console.log(`  - Базовый вес: ${math.round(baseWeight, 2)}`);
+
+      return baseWeight;
+    } catch (error) {
+      console.error('[Analytics] ❌ Ошибка расчёта базового веса:', error);
+      return 0;
+    }
+  }
+
+  /**
+   * ✅ Рассчитывает статистику отдела (включая веса коллег)
    */
   calculateDepartmentStats(departmentShifts) {
     let totalLoad = 0;
     let totalWeight = 0;
+    let totalEmployeeWeights = 0;
+    let employeeCount = 0;
 
     for (const shift of departmentShifts) {
       totalLoad = math.add(totalLoad, shift.totalTasksCount || 0);
       totalWeight = math.add(totalWeight, shift.totalWeight || 0);
+
+      // ✅ Считаем базовый вес каждого сотрудника
+      if (shift.employeeBaseWeight) {
+        totalEmployeeWeights = math.add(totalEmployeeWeights, shift.employeeBaseWeight);
+        employeeCount++;
+      }
     }
+
+    const averageWeight = employeeCount > 0
+      ? math.divide(totalEmployeeWeights, employeeCount)
+      : 0;
+
+    console.log(`[Analytics] 🏢 Статистика отдела:`);
+    console.log(`  - Сотрудников: ${employeeCount}`);
+    console.log(`  - Общий вес задач: ${totalWeight}`);
+    console.log(`  - Средний вес сотрудника: ${math.round(averageWeight, 2)}`);
+    console.log(`  - Общая нагрузка: ${totalLoad} задач`);
 
     return {
       totalLoad,
       totalWeight,
-      employeeCount: departmentShifts.length,
-      averageLoad: departmentShifts.length > 0 ? math.divide(totalLoad, departmentShifts.length) : 0
+      totalEmployeeWeights,
+      averageWeight,
+      employeeCount,
+      averageLoad: employeeCount > 0 ? math.divide(totalLoad, employeeCount) : 0
     };
   }
 
   /**
-   * Рассчитывает вес сотрудника относительно отдела
+   * ✅ Рассчитывает относительный вес сотрудника среди коллег
    */
-  calculateEmployeeWeight(taskStats, departmentStats) {
-    if (departmentStats.totalWeight === 0) return 0;
+  calculateRelativeWeight(employeeBaseWeight, taskStats, departmentStats) {
+    if (departmentStats.employeeCount === 0) {
+      console.log('[Analytics] ⚠️ Нет коллег в отделе, относительный вес = базовый вес');
+      return employeeBaseWeight;
+    }
 
-    // ✅ Расчёт через mathjs: (вес сотрудника / общий вес отдела) * 100
-    return math.multiply(
-      math.divide(taskStats.totalWeight, departmentStats.totalWeight),
-      100
-    );
+    if (departmentStats.totalEmployeeWeights === 0) {
+      console.log('[Analytics] ⚠️ Общий вес отдела = 0, относительный вес = 0');
+      return 0;
+    }
+
+    try {
+      // ✅ Относительный вес = (вес сотрудника / общий вес отдела) × 100
+      const relativeWeight = math.multiply(
+        math.divide(employeeBaseWeight, departmentStats.totalEmployeeWeights),
+        100
+      );
+
+      // ✅ Бонус за перегрузку (если вес > среднего)
+      const overloadBonus = employeeBaseWeight > departmentStats.averageWeight
+        ? math.multiply(
+            math.divide(
+              math.subtract(employeeBaseWeight, departmentStats.averageWeight),
+              departmentStats.averageWeight
+            ),
+            10
+          )
+        : 0;
+
+      const finalWeight = math.add(relativeWeight, overloadBonus);
+
+      console.log(`[Analytics] 📊 Расчёт относительного веса:`);
+      console.log(`  - Базовый вес сотрудника: ${math.round(employeeBaseWeight, 2)}`);
+      console.log(`  - Общий вес отдела: ${math.round(departmentStats.totalEmployeeWeights, 2)}`);
+      console.log(`  - Средний вес коллег: ${math.round(departmentStats.averageWeight, 2)}`);
+      console.log(`  - Относительный вес: ${math.round(relativeWeight, 2)}%`);
+      console.log(`  - Бонус за перегрузку: ${math.round(overloadBonus, 2)}%`);
+      console.log(`  - Итоговый вес: ${math.round(finalWeight, 2)}%`);
+
+      return finalWeight;
+    } catch (error) {
+      console.error('[Analytics] ❌ Ошибка расчёта относительного веса:', error);
+      return employeeBaseWeight;
+    }
   }
 
   /**
-   * Сохраняет смену в Redis
+   * ✅ Рассчитывает процент загрузки относительно лимитов
    */
+  calculateLoadPercent(taskStats, limits) {
+    const { maxDailyIssues = 30, maxActiveIssues = 30 } = limits;
+
+    try {
+      const totalCapacity = math.add(maxDailyIssues, maxActiveIssues);
+      return math.round(
+        math.multiply(
+          math.divide(taskStats.totalCount, totalCapacity),
+          100
+        ),
+        2
+      );
+    } catch (error) {
+      console.error('[Analytics] ❌ Ошибка расчёта загрузки:', error);
+      return 0;
+    }
+  }
+
   async saveToRedis(shiftData) {
     try {
-      const key = `Department:${shiftData.departmentObjectId}:${shiftData.assigneeEmail}`;
+      const key = `Department:${shiftData.departmentObjectId}:${shiftData.assigneeAccountId}:${shiftData.assigneeEmail}`;
+      const ttl = await redisClient.ttl(key);
 
-      await redisClient.sadd(key, JSON.stringify(shiftData));
-      await redisClient.expire(key, 30 * 24 * 60 * 60);
+      await redisClient.setex(key, ttl, JSON.stringify(shiftData));
 
       console.log(`[Analytics] 💾 Добавлено в Redis: ${key}`);
     } catch (error) {
@@ -252,9 +424,6 @@ export class ShiftAnalyticsService {
     }
   }
 
-  /**
-   * Получает все смены сотрудника
-   */
   async getShiftsByEmail(email) {
     try {
       const pattern = `Department:*:${email}`;
@@ -272,7 +441,13 @@ export class ShiftAnalyticsService {
 
           for (const [err, members] of results) {
             if (!err && members) {
-              shifts.push(...members.map(m => JSON.parse(m)));
+              for (const member of members) {
+                try {
+                  shifts.push(JSON.parse(member));
+                } catch (parseErr) {
+                  console.error('[Analytics] ❌ Ошибка парсинга:', parseErr);
+                }
+              }
             }
           }
         }
