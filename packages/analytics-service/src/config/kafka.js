@@ -5,7 +5,7 @@ dotenv.config();
 
 export const kafka = new Kafka({
   clientId: 'analytics-service',
-  brokers: [process.env.KAFKA_BROKERS],
+  brokers: [process.env.KAFKA_BROKER],
   retry: {
     initialRetryTime: 300,
     retries: 10,
