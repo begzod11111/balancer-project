@@ -34,7 +34,7 @@ export class AnalyticsService {
       console.log(`[Analytics] 📊 Найдено задач: сегодня=${todayIssues.length}, выполнено=${completedIssues.length}, активно=${activeIssues.length}`);
 
       // 3. Обновляем структуру taskTypeWeights
-      const updatedTaskWeights = this.updateTaskTypeWeights(
+      const updatedTaskWeights = this.compactTaskTypeWeights(
         taskTypeWeights || [],
         [...todayIssues, ...activeIssues]
       );
@@ -134,74 +134,67 @@ export class AnalyticsService {
     return { todayIssues, completedIssues, activeIssues };
   }
 
-  /**
-   * Обновляет структуру taskTypeWeights на основе найденных задач
-   */
-  updateTaskTypeWeights(existingWeights, issues) {
-    const weightMap = new Map();
+    /**
+     * Компактифицирует taskTypeWeights: сохраняет weight, суммирует counts и statusCounts.
+     * Неизвестные typeId (из issues), которых нет в existingWeights, добавляются в 'other' (count += 1).
+     *
+     * @param {Array} existingWeights - исходные taskTypeWeights из события
+     * @param {Array} issues - список найденных issues для сотрудника
+     * @returns {Array} компактный массив: [{ typeId, weight, count, statusCounts: { statusId: count } }, ...]
+     */
+    compactTaskTypeWeights(existingWeights = [], issues = []) {
+        const map = new Map();
 
-    // Инициализируем существующими весами
-    existingWeights.forEach(weight => {
-      weightMap.set(weight.typeId, {
-        ...weight,
-        count: 0,
-        statusCounts: new Map()
-      });
-    });
-
-    // Подсчитываем задачи
-    issues.forEach(issue => {
-      const typeId = issue.typeId || 'other';
-      const statusId = issue.issueStatusId || issue.status;
-
-      if (!weightMap.has(typeId)) {
-        // Создаём новый элемент с дефолтными весами
-        weightMap.set(typeId, {
-          typeId,
-          name: typeId === 'other' ? 'Other' : `Type ${typeId}`,
-          weight: 1.0,
-          count: 0,
-          statusWeights: [],
-          statusCounts: new Map()
-        });
-      }
-
-      const typeWeight = weightMap.get(typeId);
-      typeWeight.count++;
-
-      // Обновляем счётчики по статусам
-      const currentCount = typeWeight.statusCounts.get(statusId) || 0;
-      typeWeight.statusCounts.set(statusId, currentCount + 1);
-    });
-
-    // Преобразуем обратно в массив
-    const result = Array.from(weightMap.values()).map(item => {
-      const statusWeights = item.statusWeights || [];
-
-      // Добавляем счётчики к существующим статусам
-      item.statusCounts.forEach((count, statusId) => {
-        const existingStatus = statusWeights.find(s => s.statusId === statusId);
-        if (existingStatus) {
-          existingStatus.count = count;
-        } else {
-          statusWeights.push({
-            statusId,
-            statusName: statusId,
-            weight: 1.0,
-            count
-          });
+        // Инициализируем из существующих весов: берем weight и существующие count/statusWeights
+        for (const tw of existingWeights) {
+            const statusCounts = {};
+            if (Array.isArray(tw.statusWeights)) {
+                for (const sw of tw.statusWeights) {
+                    if (sw.count) statusCounts[String(sw.statusId)] = (statusCounts[String(sw.statusId)] || 0) + sw.count;
+                }
+            }
+            map.set(String(tw.typeId), {
+                typeId: String(tw.typeId),
+                weight: typeof tw.weight === 'number' ? tw.weight : 1,
+                count: typeof tw.count === 'number' ? tw.count : 0,
+                statusCounts
+            });
         }
-      });
 
-      delete item.statusCounts;
-      return {
-        ...item,
-        statusWeights
-      };
-    });
+        // Убедимся, что есть запись 'other'
+        if (!map.has('other')) {
+            map.set('other', {typeId: 'other', weight: 1, count: 0, statusCounts: {}});
+        }
 
-    return result;
-  }
+        // Проходим по issues и аккумулируем
+        for (const issue of issues || []) {
+            const typeId = issue.typeId ? String(issue.typeId) : 'other';
+            const statusId = issue.issueStatusId ? String(issue.issueStatusId) : (issue.status ? String(issue.status) : 'unknown');
+
+            if (!map.has(typeId)) {
+                // неизвестный тип — увеличиваем other вместо создания полного нового элемента
+                const other = map.get('other');
+                other.count += 1;
+                other.statusCounts[statusId] = (other.statusCounts[statusId] || 0) + 1;
+            } else {
+                const entry = map.get(typeId);
+                entry.count += 1;
+                entry.statusCounts[statusId] = (entry.statusCounts[statusId] || 0) + 1;
+            }
+        }
+
+        // Преобразуем в компактный массив и сортируем по count (необязательно)
+        const compact = Array.from(map.values())
+            .map(e => ({
+                typeId: e.typeId,
+                weight: e.weight,
+                count: e.count,
+                statusCounts: e.statusCounts
+            }))
+            .sort((a, b) => (b.count || 0) - (a.count || 0));
+
+        return compact;
+    }
 
   /**
    * Корректирует лимиты для нового сотрудника
