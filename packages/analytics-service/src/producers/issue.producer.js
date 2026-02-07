@@ -8,16 +8,16 @@ const issueProducer = async (issueData) => {
   try {
     await producer.connect();
 
-    const message = {
-      issueKey: issueData.issue.key,
-      issueId: issueData.issue.id,
-      assigneeAccountId: issueData.issue.fields.assignee?.accountId || null,
-      typeId: issueData.issue.fields.issuetype?.id || null,
-      issueStatusId: issueData.issue.fields.status?.name || null,
-        status: issueData.issue.fields.status?.id || null,
-      webhookEvent: issueData.webhookEvent,
-      timestamp: issueData.timestamp
-    };
+      const message = {
+          issueKey: issueData.issue.key,
+          issueId: issueData.issue.id,
+          assigneeAccountId: issueData.issue.fields.assignee?.accountId || null,
+          typeId: issueData.issue.fields.issuetype?.id || null,
+          status: issueData.issue.fields.status?.name || null,
+          issueStatusId: issueData.issue.fields.status?.id || null,
+          webhookEvent: issueData.webhookEvent,
+          timestamp: issueData.timestamp
+      };
 
     await producer.send({
       topic: issueData.issue_event_type_name,
