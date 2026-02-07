@@ -73,15 +73,14 @@ class RedisService {
                 shiftStartTime: shiftStartTime ? shiftStartTime.toISOString() : null,
                 shiftEndTime: shiftEndTime ? shiftEndTime.toISOString() : null,
                 limits,
+                ttl,
                 createdAt: new Date().toISOString(),
                 updatedAt: new Date().toISOString()
             };
 
-            await redis.setex(key, ttl, JSON.stringify(data));
 
-            sendShiftCreatedEvent({
-                departmentId, departmentObjectId, accountId, assigneeEmail,
-            }).then(r => console.log('Успешно записан в топик')).catch(e => console.error(e));
+
+            await sendShiftCreatedEvent(data)
 
             console.log(`[Redis] Добавлена смена: ${key}`);
             return {success: true, key};

@@ -54,13 +54,15 @@ export async function runShiftCreatedConsumer() {
         // Обработка события создания смены
         if (event.event === 'shift_created' && event.data) {
 
-          shiftAnalyticsService.processShiftCreated({
-            assigneeEmail: event.data.assigneeEmail,
-            assigneeAccountId: event.data.assigneeAccountId,
-              departmentObjectId: event.data.departmentObjectId,
-          }).then(
-            () => console.log('[Kafka Consumer] ✅ Смена обработана успешно'),
-          );
+            console.log(event.data);
+
+          // shiftAnalyticsService.processShiftCreated({
+          //   assigneeEmail: event.data.assigneeEmail,
+          //   assigneeAccountId: event.data.assigneeAccountId,
+          //     departmentObjectId: event.data.departmentObjectId,
+          // }).then(
+          //   () => console.log('[Kafka Consumer] ✅ Смена обработана успешно'),
+          // );
         }
 
         console.log('────────────────────────────────────────\n');
