@@ -14,7 +14,7 @@ export class AnalyticsService {
       console.log(`[Analytics] 🚀 Обработка события shift_created для ${eventData.assigneeEmail}`);
 
       const {
-        assigneeAccountId,
+        accountId,
         assigneeEmail,
         departmentObjectId,
         taskTypeWeights,
@@ -26,7 +26,7 @@ export class AnalyticsService {
       } = eventData;
 
       // 1. Получаем задачи сотрудника
-      const issues = await this.getEmployeeIssues(assigneeAccountId);
+      const issues = await this.getEmployeeIssues(accountId);
 
       // 2. Фильтруем задачи
       const { todayIssues, completedIssues, activeIssues } = this.filterIssues(issues);
@@ -292,11 +292,12 @@ export class AnalyticsService {
    * Сохраняет данные в Redis
    */
   async saveToRedis(data, ttl = 14400) {
+
     try {
-      const { departmentObjectId, assigneeAccountId, assigneeEmail } = data;
+      const { departmentObjectId, accountId, assigneeEmail } = data;
 
       // Формируем ключ по указанному формату
-      const key = `Department:${departmentObjectId}:${assigneeAccountId}:${assigneeEmail}`;
+      const key = `Department:${departmentObjectId}:${accountId}:${assigneeEmail}`;
 
       // Сохраняем с TTL
       await redisClient.setex(
@@ -306,7 +307,7 @@ export class AnalyticsService {
       );
 
       // Дополнительно сохраняем вес сотрудника
-      const weightKey = `employee:weight:${assigneeAccountId}`;
+      const weightKey = `employee:weight:${accountId}`;
       await redisClient.setex(
         weightKey,
         ttl,
