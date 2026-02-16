@@ -9,6 +9,7 @@ import EmployeeSchedulePage from "./pages/EmployeeSchedulePage/EmployeeScheduleP
 import DepartmentsPage from "./pages/DepartmentsPage/DepartmentsPage";
 import TypesPage from "./pages/TypesPage/TypesPage";
 import RedisShiftsPage from "./pages/RedisShiftsPage/RedisShiftsPage";
+import NotReadyYet from "./components/NotReadyYet/NotReadyYet";
 
 const AppRouter = () => {
   return (
@@ -27,7 +28,7 @@ const AppRouter = () => {
           <Route path="/dashboard" element={
               <ProtectedRoute>
                   <MainContainer>
-                      <div>Dashboard</div>
+                  <NotReadyYet/>
                   </MainContainer>
               </ProtectedRoute>
           }/>

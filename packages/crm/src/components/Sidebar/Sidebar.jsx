@@ -4,18 +4,21 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useSidebar } from '../../contexts/SidebarProvider';
 import { useAuth } from '../../contexts/AuthProvider';
 import {
-  IoGrid,
-  IoPeople,
-  IoFolder,
-  IoCheckboxOutline,
-  IoAnalytics,
-  IoChatbubbles,
-  IoSettings,
-  IoLogOut,
-  IoChevronBack,
-  IoPerson
+    IoGrid,
+    IoPeople,
+    IoFolder,
+    IoCheckboxOutline,
+    IoAnalytics,
+    IoChatbubbles,
+    IoSettings,
+    IoLogOut,
+    IoChevronBack,
+    IoPerson, IoCalendarOutline
 } from 'react-icons/io5';
 import styles from './Sidebar.module.css';
+import {MdGroups} from "react-icons/md";
+import {VscGroupByRefType} from "react-icons/vsc";
+import {FaStackOverflow} from "react-icons/fa";
 
 const menuItems = [
     {id: 'dashboard', label: 'Дашборд', path: '/dashboard', icon: IoGrid},
@@ -25,10 +28,10 @@ const menuItems = [
     {id: 'analytics', label: 'Аналитика', path: '/analytics', icon: IoAnalytics},
     {id: 'messages', label: 'Сообщения', path: '/messages', icon: IoChatbubbles, badge: 3},
     {id: 'settings', label: 'Настройки', path: '/settings', icon: IoSettings},
-    {id: "shifts", label: "Смены", path: "/shifts", icon: IoPeople},
-    {id: "departments", label: "Отделы", path: "/departments", icon: IoPeople},
-    {id: "types", label: "Типы", path: "/types", icon: IoPeople},
-    {id: "pool", label: "Поток", path: "/pool", icon: IoPeople},
+    {id: "shifts", label: "Смены", path: "/shifts", icon: IoCalendarOutline},
+    {id: "departments", label: "Отделы", path: "/departments", icon: MdGroups},
+    {id: "types", label: "Типы", path: "/types", icon: VscGroupByRefType},
+    {id: "pool", label: "Поток", path: "/pool", icon: FaStackOverflow},
 ];
 
 const Sidebar = () => {

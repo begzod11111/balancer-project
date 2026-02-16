@@ -1,0 +1,47 @@
+.container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    background-color: var(--bg-primary);
+}
+
+.content {
+    text-align: center;
+    padding: 2rem;
+    max-width: 500px;
+}
+
+.emoji {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+}
+
+.title {
+    font-size: 2rem;
+    color: var(--text-primary);
+    margin: 1rem 0;
+}
+
+.text {
+    font-size: 1rem;
+    color: var(--text-secondary);
+    line-height: 1.6;
+    margin: 1rem 0;
+}
+
+.backButton {
+    margin-top: 2rem;
+    padding: 0.75rem 1.5rem;
+    font-size: 1rem;
+    background-color: var(--btn-primary);
+    color: var(--btn-text);
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.backButton:hover {
+    background-color: var(--btn-primary-hover);
+}
