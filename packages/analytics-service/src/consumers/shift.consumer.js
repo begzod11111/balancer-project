@@ -1,5 +1,5 @@
 import { kafka } from '../config/kafka.js';
-import shiftAnalyticsService from '../services/shiftAnalytics.service.js';
+import employeeWeightService from "../services/EmployeeWeightService.js";
 
 const shiftConsumer = kafka.consumer({ groupId: 'analytics-shiftConsumer' });
 
@@ -53,7 +53,7 @@ export async function runShiftCreatedConsumer() {
 
         // Обработка события создания смены
         if (event.event === 'shift_created' && event.data) {
-          shiftAnalyticsService.processShiftCreated(event.data).then(
+          employeeWeightService.createShiftInRedis(event.data).then(
             () => console.log('[Kafka Consumer] ✅ Смена обработана успешно'),
           );
         }
