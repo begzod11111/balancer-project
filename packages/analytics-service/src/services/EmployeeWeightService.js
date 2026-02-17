@@ -75,18 +75,6 @@ class EmployeeWeightService {
       const mainKey = `Department:${departmentObjectId}:${accountId}:${assigneeEmail}`;
       await redisClient.setex(mainKey, ttl, JSON.stringify(employeeData));
 
-      // Дополнительный ключ для быстрого доступа к весу
-      const weightKey = `employee:weight:${accountId}`;
-      await redisClient.setex(
-        weightKey,
-        ttl,
-        String(employeeData.calculatedWeight || 0)
-      );
-
-      // Индексный ключ для списка сотрудников отдела
-      const deptKey = `department:${departmentObjectId}:employees`;
-      await redisClient.sadd(deptKey, accountId);
-      await redisClient.expire(deptKey, ttl);
 
       console.log(`[EmployeeWeight] 💾 Сохранено в Redis: ${mainKey}, TTL=${ttl}s`);
 
@@ -116,6 +104,8 @@ class EmployeeWeightService {
   async createShiftInRedis(shiftData) {
       try {
           const {departmentObjectId, accountId, assigneeEmail} = shiftData;
+
+          console.log(`[EmployeeWeight] 🚀 Создание смены в Redis для ${assigneeEmail} (Account ID: ${accountId})`);
           const issues = await this.getTodayIssues(accountId);
             const processed = this.processEmployeeWeight(shiftData, issues);
             await this.saveToRedis(processed, shiftData.ttl || 14400);
