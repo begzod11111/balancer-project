@@ -100,20 +100,40 @@ class EmployeeWeightService {
     }
   }
 
-  /** Создания смены а редисе */
-  async createShiftInRedis(shiftData) {
-      try {
-          const {departmentObjectId, accountId, assigneeEmail} = shiftData;
+    /**
+     * Создание смены в Redis (оптимизированная версия)
+     * @param {Object} shiftData - Данные смены
+     * @returns {Object} Обработанные данные с весом
+     */
+    async createShiftInRedis(shiftData) {
+        try {
+            const {departmentObjectId, accountId, assigneeEmail, ttl = 14400} = shiftData;
 
-          console.log(`[EmployeeWeight] 🚀 Создание смены в Redis для ${assigneeEmail} (Account ID: ${accountId})`);
-          const issues = await this.getTodayIssues(accountId);
+            console.log(`[EmployeeWeight] 🚀 Создание смены в Redis для ${assigneeEmail} (${accountId})`);
+
+            // Параллельная загрузка задач и формирование ключа
+            const [issues, redisKey] = await Promise.all([
+                this.getTodayIssues(accountId),
+                Promise.resolve(`Department:${departmentObjectId}:${accountId}:${assigneeEmail}`)
+            ]);
+
+            console.log(`[EmployeeWeight] 📊 Получено ${issues.length} задач за сегодня`);
+
+            // Обработка веса
             const processed = this.processEmployeeWeight(shiftData, issues);
-            await this.saveToRedis(processed, shiftData.ttl || 14400);
-      } catch (error) {
-          console.error('[EmployeeWeight] ❌ Ошибка создания смены в Redis:', error);
-          throw error;
-      }
-  }
+
+            // Сохранение в Redis
+            await redisClient.setex(redisKey, ttl, JSON.stringify(processed));
+
+            console.log(`[EmployeeWeight] ✅ Смена создана, вес: ${processed.calculatedWeight}`);
+
+            return processed;
+        } catch (error) {
+            console.error('[EmployeeWeight] ❌ Ошибка создания смены в Redis:', error);
+            throw error;
+        }
+    }
+
 
     /**
      * Обновляет вес сотрудника при назначении новой задачи
