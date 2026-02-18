@@ -20,6 +20,8 @@ const issueProducer = async (issueData) => {
             changelog: issueData.changelog
       };
 
+      console.log(JSON.stringify(issueData.changelog, null, 2));
+
     await producer.send({
       topic: issueData.issue_event_type_name,
       messages: [
