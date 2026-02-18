@@ -7,16 +7,18 @@ class ChangelogService {
    * Сохранение новых логов изменений
    */
   async saveChangelog(issueId, issueKey, departmentId, eventType, user, changelogItem) {
-    try {
-      if (!changelogItem?.items?.length) {
-        console.log(`[Changelog] ℹ️ Нет изменений для ${issueKey}`);
-        return null;
-      }
+  try {
+    if (!changelogItem?.items?.length) {
+      console.log(`[Changelog] ℹ️ Нет изменений для ${issueKey}`);
+      return null;
+    }
 
-      console.log(`[Changelog] 📝 Обработка события "${eventType}" для ${issueKey}`);
+    console.log(`[Changelog] 📝 Обработка события "${eventType}" для ${issueKey}`);
 
-      const events = changelogItem.items.map(item => ({
-        historyId: `${changelogItem.id}_${item.field}`,
+    // Для issue_created сохраняем одно агрегированное событие
+    if (eventType === 'issue_created') {
+      const aggregatedEvent = {
+        historyId: changelogItem.id,
         issueId,
         issueKey,
         departmentId,
@@ -27,30 +29,72 @@ class ChangelogService {
         authorActive: user.active !== false,
         authorTimeZone: user.timeZone,
         created: new Date(),
-        field: item.field,
-        fieldtype: item.fieldtype,
-        fieldId: item.fieldId,
-        from: item.from,
-        fromString: item.fromString,
-        to: item.to,
-        toString: item.toString,
-        fromAccountId: item.tmpFromAccountId || null,
-        toAccountId: item.tmpToAccountId || null
-      }));
+        field: 'issue_created_aggregate',
+        fieldtype: 'aggregate',
+        fieldId: 'issue_created',
+        from: null,
+        fromString: null,
+        to: JSON.stringify(changelogItem.items.reduce((acc, item) => {
+          acc[item.field] = {
+            to: item.to,
+            toString: item.toString,
+            fieldtype: item.fieldtype
+          };
+          return acc;
+        }, {})),
+        toString: `Created with ${changelogItem.items.length} initial fields`,
+        fromAccountId: null,
+        toAccountId: null
+      };
 
-      await ChangelogEvent.insertMany(events, { ordered: false });
-
-      console.log(`[Changelog] ✅ Сохранено ${events.length} событий для ${issueKey}`);
-      return { added: events.length, total: events.length };
-    } catch (error) {
-      if (error.code !== 11000) {
-        console.error('[Changelog] ❌ Ошибка:', error);
-        throw error;
+      try {
+        await ChangelogEvent.create(aggregatedEvent);
+        console.log(`[Changelog] ✅ Сохранено агрегированное событие создания для ${issueKey}`);
+        return { added: 1, total: 1 };
+      } catch (error) {
+        if (error.code !== 11000) throw error;
+        console.log(`[Changelog] ℹ️ Событие создания уже существует`);
+        return { added: 0 };
       }
-      console.log(`[Changelog] ℹ️ Некоторые события уже существуют`);
-      return { added: 0 };
     }
+
+    // Для остальных событий сохраняем отдельные записи
+    const events = changelogItem.items.map(item => ({
+      historyId: `${changelogItem.id}_${item.field}`,
+      issueId,
+      issueKey,
+      departmentId,
+      eventType,
+      authorAccountId: user.accountId,
+      authorDisplayName: user.displayName,
+      authorEmail: user.emailAddress || null,
+      authorActive: user.active !== false,
+      authorTimeZone: user.timeZone,
+      created: new Date(),
+      field: item.field,
+      fieldtype: item.fieldtype,
+      fieldId: item.fieldId,
+      from: item.from,
+      fromString: item.fromString,
+      to: item.to,
+      toString: item.toString,
+      fromAccountId: item.tmpFromAccountId || null,
+      toAccountId: item.tmpToAccountId || null
+    }));
+
+    await ChangelogEvent.insertMany(events, { ordered: false });
+
+    console.log(`[Changelog] ✅ Сохранено ${events.length} событий для ${issueKey}`);
+    return { added: events.length, total: events.length };
+  } catch (error) {
+    if (error.code !== 11000) {
+      console.error('[Changelog] ❌ Ошибка:', error);
+      throw error;
+    }
+    console.log(`[Changelog] ℹ️ Некоторые события уже существуют`);
+    return { added: 0 };
   }
+}
 
   /**
    * Пакетное сохранение логов
