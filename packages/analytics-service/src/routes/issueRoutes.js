@@ -150,48 +150,5 @@ router.get('/assignee-load/:groupId', async (req, res) => {
   }
 });
 
-// Обновить статус задачи
-router.patch('/:issueId/status', async (req, res) => {
-  try {
-    const { status, statusId } = req.body;
-    const issue = await issueService.updateIssueStatus(req.params.issueId, status, statusId);
-    res.json({ success: true, data: issue });
-  } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
-  }
-});
-
-// Обновить исполнителя
-router.patch('/:issueId/assignee', async (req, res) => {
-  try {
-    const { assigneeAccountId } = req.body;
-    const issue = await issueService.updateIssueAssignee(req.params.issueId, assigneeAccountId);
-    res.json({ success: true, data: issue });
-  } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
-  }
-});
-
-// Массовое обновление статусов
-router.patch('/bulk/status', async (req, res) => {
-  try {
-    const { issueIds, status, statusId } = req.body;
-    const result = await issueService.bulkUpdateStatus(issueIds, status, statusId);
-    res.json({ success: true, data: result });
-  } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
-  }
-});
-
-// Переназначить задачи
-router.post('/reassign', async (req, res) => {
-  try {
-    const { fromAssigneeId, toAssigneeId, assignmentGroupId } = req.body;
-    const result = await issueService.reassignIssues(fromAssigneeId, toAssigneeId, { assignmentGroupId });
-    res.json({ success: true, data: result });
-  } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
-  }
-});
 
 export default router;

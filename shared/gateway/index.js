@@ -183,6 +183,34 @@ app.use('/api/analytics/type', authGuard, createProxyMiddleware({
     });
   }
 }));
+
+app.use('/api/analytics/issues', authGuard, createProxyMiddleware({
+  target: SERVICES.analytics.url,
+  changeOrigin: true,
+  pathRewrite: {
+    '^/api/analytics/issues': '/api/issues'
+  },
+  onProxyReq: (proxyReq, req, res) => {
+    console.log(`[Gateway -> Analytics] ${req.method} ${req.path}`);
+
+    if (req.user) {
+      proxyReq.setHeader('x-user-id', req.user.userId);
+      proxyReq.setHeader('x-user-role', req.user.role);
+      proxyReq.setHeader('x-user-email', req.user.email);
+    }
+
+    rewriteBody(proxyReq, req);
+  },
+  onError: (err, req, res) => {
+    console.error(`[Gateway] Analytics service error:`, err.message);
+    res.status(502).json({
+      success: false,
+      message: 'Analytics service unavailable'
+    });
+  }
+}));
+
+
 // ========== WEBHOOKS ==========
 app.use('/api/analytics/webhook/change-status', createProxyMiddleware({
   target: SERVICES.analytics.url,
