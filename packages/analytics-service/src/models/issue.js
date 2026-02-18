@@ -11,7 +11,7 @@ const IssueSchema = new mongoose.Schema(
     createdAt: { type: Date, default: Date.now },
     updatedAt: { type: Date, default: Date.now },
     assigneeAccountId: { type: String, required: false },
-    assignmentGroupId: { type: String, required: true },
+    assignmentGroupId: { type: String, required: true , default: "1"},
 
   },
   { timestamps: true }
