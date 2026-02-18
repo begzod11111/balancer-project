@@ -17,6 +17,7 @@ const IssueSchema = new mongoose.Schema(
   { timestamps: true }
 )
 
+IssueSchema.index({ createdAt: 1 }, { expireAfterSeconds: 604800 });
 IssueSchema.index({ typeId: 1 })
 IssueSchema.index({ assignmentGroupId: 1 })
 IssueSchema.index({ assigneeAccountId: 1, issueStatusId: 1 });

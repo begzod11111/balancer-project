@@ -6,6 +6,7 @@ import typeRoutes from './routes/typeRoutes.js';
 import {connectDB} from "./models/db.js";
 import {connectRedis} from "./config/redis.js";
 import webhookRoutes from "./webhook/webhook.js";
+import issueRoutes from "./routes/issueRoutes.js";
 import {runShiftCreatedConsumer} from "./consumers/shift.consumer.js";
 import jira from "./services/jiraService.js";
 import {startConsumers} from "./consumers/index.js";

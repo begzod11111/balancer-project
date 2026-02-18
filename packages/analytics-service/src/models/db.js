@@ -3,6 +3,7 @@ import mongoose from 'mongoose';
 import Type from './type.js';
 import Issue from './issue.js';
 import Comment from './comment.js';
+import IssueChangelog from "./changelog.js";
 import dotenv from "dotenv";
 
 dotenv.config()
@@ -10,7 +11,9 @@ dotenv.config()
 export const models = {
     Type,
     Comment,
-    Issue
+    Issue,
+    IssueChangelog
+
 };
 
 /**

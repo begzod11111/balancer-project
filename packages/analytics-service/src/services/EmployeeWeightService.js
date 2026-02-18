@@ -101,7 +101,7 @@ class EmployeeWeightService {
   }
 
     /**
-     * Создание смены в Redis (оптимизированная версия)
+     * Создание смены в Redis
      * @param {Object} shiftData - Данные смены
      * @returns {Object} Обработанные данные с весом
      */
@@ -117,7 +117,6 @@ class EmployeeWeightService {
                 Promise.resolve(`Department:${departmentObjectId}:${accountId}:${assigneeEmail}`)
             ]);
 
-            console.log(`[EmployeeWeight] 📊 Получено ${issues.length} задач за сегодня`);
 
             // Обработка веса
             const processed = this.processEmployeeWeight(shiftData, issues);
