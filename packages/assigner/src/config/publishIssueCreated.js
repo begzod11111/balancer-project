@@ -18,7 +18,8 @@ const publishIssueCreated = async (issueData) => {
           status: issueData.issue.fields.status?.name || null,
           webhookEvent: issueData.webhookEvent,
           timestamp: issueData.timestamp,
-          changelog: issueData.changelog
+          changelog: issueData.changelog,
+          user: issueData.user,
       };
     await producer.send({
       topic: issueData.issue_event_type_name,

@@ -72,7 +72,14 @@ export async function runAssignerConsumer() {
         } else {
             console.warn(`[Kafka Consumer] ⚠️ Неизвестный topic: ${topic}`);
         }
-        changelogService.saveChangelogs(event.issueId, event.issueKey, event.assigneeAccountId, event.changelog.items || []).catch(err => {
+        changelogService.saveChangelog(
+            event.issueId,
+            event.issueKey,
+            event.assigneeAccountId,
+            topic,
+            event.user,
+            event.changelog
+            ).catch(err => {
             console.error('[Kafka Consumer] ❌ Ошибка сохранения changelog:', err);
         })
       } catch (err) {
