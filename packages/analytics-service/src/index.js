@@ -32,6 +32,7 @@ app.use(express.urlencoded({ extended: true }));
 
 app.use('/api/type', typeRoutes);
 app.use('/api/webhook', webhookRoutes);
+app.use('/api/issues', issueRoutes);
 
 async function startScheduler() {
   try {

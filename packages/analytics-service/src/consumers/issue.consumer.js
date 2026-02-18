@@ -1,5 +1,6 @@
 import { kafka } from '../config/kafka.js';
 import IssueService from '../services/issueService.js';
+import changelogService from "../services/changelogService.js";
 
 const TOPICS = {
     ISSUE_CREATED: 'issue_created',
@@ -71,7 +72,9 @@ export async function runAssignerConsumer() {
         } else {
             console.warn(`[Kafka Consumer] ⚠️ Неизвестный topic: ${topic}`);
         }
-
+        changelogService.saveChangelogs(event.issueId, event.issueKey, event.assigneeAccountId, event.changelog.items || []).catch(err => {
+            console.error('[Kafka Consumer] ❌ Ошибка сохранения changelog:', err);
+        })
       } catch (err) {
         console.error('[Kafka Consumer] ❌ Ошибка обработки сообщения:', err);
       }

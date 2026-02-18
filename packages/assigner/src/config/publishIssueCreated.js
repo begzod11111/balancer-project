@@ -17,7 +17,8 @@ const publishIssueCreated = async (issueData) => {
           issueStatusId: issueData.issue.fields.status?.id || null,
           status: issueData.issue.fields.status?.name || null,
           webhookEvent: issueData.webhookEvent,
-          timestamp: issueData.timestamp
+          timestamp: issueData.timestamp,
+          changelog: issueData.changelog
       };
 
     await producer.send({

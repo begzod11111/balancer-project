@@ -7,6 +7,11 @@ const Department = new Schema({
         required: true,
         unique: true
     },
+    jiraId: {
+        type: String,
+        required: true,
+        unique: true
+    },
     ObjectId: {
         type: String,
         required: true,
