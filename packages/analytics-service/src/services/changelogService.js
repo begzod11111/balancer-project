@@ -15,8 +15,19 @@ class ChangelogService {
 
     console.log(`[Changelog] 📝 Обработка события "${eventType}" для ${issueKey}`);
 
-    // Для issue_created сохраняем одно агрегированное событие
+    // Только для issue_created делаем агрегацию
     if (eventType === 'issue_created') {
+      const createdFields = {};
+
+      for (const item of changelogItem.items) {
+        createdFields[item.field] = {
+          value: item.toString || item.to,
+          id: item.to,
+          fieldtype: item.fieldtype,
+          fieldId: item.fieldId
+        };
+      }
+
       const aggregatedEvent = {
         historyId: changelogItem.id,
         issueId,
@@ -29,36 +40,31 @@ class ChangelogService {
         authorActive: user.active !== false,
         authorTimeZone: user.timeZone,
         created: new Date(),
-        field: 'issue_created_aggregate',
+        field: 'issue_created',
         fieldtype: 'aggregate',
         fieldId: 'issue_created',
         from: null,
         fromString: null,
-        to: JSON.stringify(changelogItem.items.reduce((acc, item) => {
-          acc[item.field] = {
-            to: item.to,
-            toString: item.toString,
-            fieldtype: item.fieldtype
-          };
-          return acc;
-        }, {})),
-        toString: `Created with ${changelogItem.items.length} initial fields`,
+        to: JSON.stringify(createdFields),
+        toString: `Created with ${changelogItem.items.length} fields`,
         fromAccountId: null,
         toAccountId: null
       };
 
       try {
         await ChangelogEvent.create(aggregatedEvent);
-        console.log(`[Changelog] ✅ Сохранено агрегированное событие создания для ${issueKey}`);
+        console.log(`[Changelog] ✅ Сохранено агрегированное событие создания для ${issueKey} (${changelogItem.items.length} полей)`);
         return { added: 1, total: 1 };
       } catch (error) {
-        if (error.code !== 11000) throw error;
-        console.log(`[Changelog] ℹ️ Событие создания уже существует`);
-        return { added: 0 };
+        if (error.code === 11000) {
+          console.log(`[Changelog] ℹ️ Событие создания уже существует для ${issueKey}`);
+          return { added: 0 };
+        }
+        throw error;
       }
     }
 
-    // Для остальных событий сохраняем отдельные записи
+    // Для всех остальных событий сохраняем каждое изменение отдельно
     const events = changelogItem.items.map(item => ({
       historyId: `${changelogItem.id}_${item.field}`,
       issueId,
@@ -82,19 +88,24 @@ class ChangelogService {
       toAccountId: item.tmpToAccountId || null
     }));
 
-    await ChangelogEvent.insertMany(events, { ordered: false });
+    const result = await ChangelogEvent.insertMany(events, { ordered: false });
 
-    console.log(`[Changelog] ✅ Сохранено ${events.length} событий для ${issueKey}`);
-    return { added: events.length, total: events.length };
+    console.log(`[Changelog] ✅ Сохранено ${result.length} событий для ${issueKey}`);
+    return { added: result.length, total: events.length };
+
   } catch (error) {
-    if (error.code !== 11000) {
-      console.error('[Changelog] ❌ Ошибка:', error);
-      throw error;
+    if (error.code === 11000) {
+      // Подсчитываем, сколько записей успешно добавлено
+      const addedCount = error.insertedDocs?.length || 0;
+      console.log(`[Changelog] ⚠️ Некоторые события уже существуют для ${issueKey}. Добавлено: ${addedCount}`);
+      return { added: addedCount };
     }
-    console.log(`[Changelog] ℹ️ Некоторые события уже существуют`);
-    return { added: 0 };
+
+    console.error('[Changelog] ❌ Ошибка сохранения:', error);
+    throw error;
   }
 }
+
 
   /**
    * Пакетное сохранение логов
