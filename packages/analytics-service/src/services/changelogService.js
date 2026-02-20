@@ -2,6 +2,7 @@ import { models } from '../models/db.js';
 
 const { ChangelogEvent } = models;
 
+
 class ChangelogService {
     /**
      * Сохранение новых логов изменений
@@ -50,7 +51,7 @@ class ChangelogService {
         issueKey,
         departmentId: assigneeAccountId,
         eventType,
-        authorAccountId: user.accountId,
+        authorAccountId: this._formatAccountId(user.accountId),
         authorDisplayName: user.displayName,
         authorEmail: user.emailAddress || null,
         authorActive: user.active !== false,
@@ -89,7 +90,7 @@ class ChangelogService {
         issueId,
         issueKey,
         eventType,
-        authorAccountId: user.accountId,
+        authorAccountId: this._formatAccountId(user.accountId),
         authorDisplayName: user.displayName,
         authorEmail: user.emailAddress || null,
         authorActive: user.active !== false,
@@ -120,6 +121,18 @@ class ChangelogService {
         throw error;
       }
     }
+
+    /** Отформатирует accountId, учитывая возможные префиксы */
+    _formatAccountId(accountId) {
+      try {
+          return accountId.split(':').pop(); // Возьмем последнюю часть после разделителя
+      } catch (error) {
+        console.error('[Changelog] ❌ Ошибка форматирования accountId:', error);
+        return accountId; // Возвращаем оригинальный, если что-то пошло не так
+      }
+    }
+
+
 
 
 
