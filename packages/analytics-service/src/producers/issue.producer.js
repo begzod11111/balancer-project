@@ -17,7 +17,7 @@ const issueProducer = async (issueData) => {
           issueStatusId: issueData.issue.fields.status?.id || null,
           webhookEvent: issueData.webhookEvent,
           timestamp: issueData.timestamp,
-            changelog: issueData.changelog,
+          changelog: issueData.changelog,
           user: issueData.user,
       };
 
