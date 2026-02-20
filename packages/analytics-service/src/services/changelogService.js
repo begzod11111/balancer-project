@@ -3,20 +3,36 @@ import { models } from '../models/db.js';
 const { ChangelogEvent } = models;
 
 class ChangelogService {
-  /**
-   * Сохранение новых логов изменений
-   */
-  async saveChangelog(issueId, issueKey, departmentId, eventType, user, changelogItem) {
-  try {
-    if (!changelogItem?.items?.length) {
-      console.log(`[Changelog] ℹ️ Нет изменений для ${issueKey}`);
-      return null;
+    /**
+     * Сохранение новых логов изменений
+     */
+    async saveChangelog(issueId, issueKey, departmentId, eventType, user, changelogItem) {
+      try {
+        if (!changelogItem?.items?.length) {
+          console.log(`[Changelog] ℹ️ Нет изменений для ${issueKey}`);
+          return null;
+        }
+
+        console.log(`[Changelog] 📝 Обработка события "${eventType}" для ${issueKey}`);
+
+        // Для issue_created используем отдельный метод
+        if (eventType === 'issue_created') {
+          return await this._saveIssueCreated(issueId, issueKey, departmentId, eventType, user, changelogItem);
+        }
+
+        // Для всех остальных событий сохраняем каждое изменение отдельно
+        return await this._saveRegularChangelog(issueId, issueKey, departmentId, eventType, user, changelogItem);
+
+      } catch (error) {
+        console.error('[Changelog] ❌ Ошибка сохранения:', error);
+        throw error;
+      }
     }
 
-    console.log(`[Changelog] 📝 Обработка события "${eventType}" для ${issueKey}`);
-
-    // Только для issue_created делаем агрегацию
-    if (eventType === 'issue_created') {
+    /**
+     * Приватный метод: сохранение события создания задачи (агрегация)
+     */
+    async _saveIssueCreated(issueId, issueKey, departmentId, eventType, user, changelogItem) {
       const createdFields = {};
 
       for (const item of changelogItem.items) {
@@ -58,53 +74,54 @@ class ChangelogService {
       } catch (error) {
         if (error.code === 11000) {
           console.log(`[Changelog] ℹ️ Событие создания уже существует для ${issueKey}`);
-          return { added: 0 };
+          return { added: 0, total: 0 };
         }
         throw error;
       }
     }
 
-    // Для всех остальных событий сохраняем каждое изменение отдельно
-    const events = changelogItem.items.map(item => ({
-      historyId: `${changelogItem.id}_${item.field}`,
-      issueId,
-      issueKey,
-      departmentId,
-      eventType,
-      authorAccountId: user.accountId,
-      authorDisplayName: user.displayName,
-      authorEmail: user.emailAddress || null,
-      authorActive: user.active !== false,
-      authorTimeZone: user.timeZone,
-      created: new Date(),
-      field: item.field,
-      fieldtype: item.fieldtype,
-      fieldId: item.fieldId,
-      from: item.from,
-      fromString: item.fromString,
-      to: item.to,
-      toString: item.toString,
-      fromAccountId: item.tmpFromAccountId || null,
-      toAccountId: item.tmpToAccountId || null
-    }));
+    /**
+     * Приватный метод: сохранение обычных событий (отдельные записи)
+     */
+    async _saveRegularChangelog(issueId, issueKey, departmentId, eventType, user, changelogItem) {
+      const events = changelogItem.items.map(item => ({
+        historyId: `${changelogItem.id}_${item.field}`,
+        issueId,
+        issueKey,
+        departmentId,
+        eventType,
+        authorAccountId: user.accountId,
+        authorDisplayName: user.displayName,
+        authorEmail: user.emailAddress || null,
+        authorActive: user.active !== false,
+        authorTimeZone: user.timeZone,
+        created: new Date(),
+        field: item.field,
+        fieldtype: item.fieldtype,
+        fieldId: item.fieldId,
+        from: item.from,
+        fromString: item.fromString,
+        to: item.to,
+        toString: item.toString,
+        fromAccountId: item.tmpFromAccountId || null,
+        toAccountId: item.tmpToAccountId || null
+      }));
 
-    const result = await ChangelogEvent.insertMany(events, { ordered: false });
-
-    console.log(`[Changelog] ✅ Сохранено ${result.length} событий для ${issueKey}`);
-    return { added: result.length, total: events.length };
-
-  } catch (error) {
-    if (error.code === 11000) {
-      // Подсчитываем, сколько записей успешно добавлено
-      const addedCount = error.insertedDocs?.length || 0;
-      console.log(`[Changelog] ⚠️ Некоторые события уже существуют для ${issueKey}. Добавлено: ${addedCount}`);
-      return { added: addedCount };
+      try {
+        const result = await ChangelogEvent.insertMany(events, { ordered: false });
+        console.log(`[Changelog] ✅ Сохранено ${result.length} событий для ${issueKey}`);
+        return { added: result.length, total: events.length };
+      } catch (error) {
+        if (error.code === 11000 && error.writeErrors) {
+          // Подсчитываем успешно добавленные записи
+          const addedCount = events.length - error.writeErrors.length;
+          console.log(`[Changelog] ⚠️ Некоторые события уже существуют для ${issueKey}. Добавлено: ${addedCount}/${events.length}`);
+          return { added: addedCount, total: events.length };
+        }
+        throw error;
+      }
     }
 
-    console.error('[Changelog] ❌ Ошибка сохранения:', error);
-    throw error;
-  }
-}
 
 
   /**
