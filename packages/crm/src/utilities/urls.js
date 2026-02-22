@@ -106,5 +106,45 @@ export const URLS = {
     GET_ALL_REDIS_SHIFTS: `${BASE_URL}/api/shift-service/pool/all`,
     CREATE_REDIS_SHIFT: `${BASE_URL}/api/shift-service/pool`,
 
-};
+
+    // ========== CRM SERVICE (ISSUES) ==========
+    GET_ISSUES: `${BASE_URL}/api/analytics/issues`,
+    GET_ISSUE_BY_ID: (issueId) => `${BASE_URL}/api/analytics/issues/${issueId}`,
+    GET_ISSUES_STATS: `${BASE_URL}/api/analytics/issues/stats`,
+    GET_ISSUES_STATS_BY_TYPE: `${BASE_URL}/api/analytics/issues/stats/by-type`,
+    GET_ISSUES_STATS_BY_STATUS: `${BASE_URL}/api/analytics/issues/stats/by-status`,
+    GET_ISSUES_STATS_BY_ASSIGNEE: `${BASE_URL}/api/analytics/issues/stats/by-assignee`,
+    GET_ISSUES_STATS_BY_GROUP: `${BASE_URL}/api/analytics/issues/stats/by-group`,
+
+    // ========== CHANGELOG SERVICE ==========
+    // Сохранение changelog событий
+    SAVE_CHANGELOG: `${BASE_URL}/api/analytics/changelog/save`,
+    SAVE_BULK_CHANGELOGS: `${BASE_URL}/api/analytics/changelog/bulk`,
+
+    // Получение истории изменений
+    GET_CHANGELOG_BY_ISSUE: (issueId) => `${BASE_URL}/api/analytics/changelog/issue/${issueId}`,
+    GET_ASSIGNMENT_HISTORY: (issueId) => `${BASE_URL}/api/analytics/changelog/assignment-history/${issueId}`,
+    GET_STATUS_HISTORY: (issueId) => `${BASE_URL}/api/analytics/changelog/status-history/${issueId}`,
+    GET_HISTORY_BY_EVENT_TYPE: (issueId, eventType) => `${BASE_URL}/api/analytics/changelog/event-type/${issueId}/${eventType}`,
+
+    // Статистика по сотрудникам
+    GET_EMPLOYEE_STATS: (accountId) => `${BASE_URL}/api/analytics/changelog/employee-stats/${accountId}`,
+    GET_AUTHOR_ACTIONS: (authorAccountId) => `${BASE_URL}/api/analytics/changelog/author-actions/${authorAccountId}`,
+    GET_AUTHOR_STATS: (authorAccountId) => `${BASE_URL}/api/analytics/changelog/author-stats/${authorAccountId}`,
+
+    // Статистика по департаментам
+    GET_DEPARTMENT_ACTIVITY: (departmentId) => `${BASE_URL}/api/analytics/changelog/department-activity/${departmentId}`,
+
+    // Статистика по типам событий
+    GET_EVENT_TYPE_STATS: `${BASE_URL}/api/analytics/changelog/event-type-stats`,
+
+    // Действия группы людей
+    GET_GROUP_ACTIONS: `${BASE_URL}/api/analytics/changelog/group-actions`,
+
+    // Матрица назначений
+    GET_ASSIGNMENT_MATRIX: `${BASE_URL}/api/analytics/changelog/assignment-matrix`,
+
+    // Универсальный поиск
+    SEARCH_CHANGELOGS: `${BASE_URL}/api/analytics/changelog/search`,
+    SEARCH_MULTIPLE_AUTHORS: `${BASE_URL}/api/analytics/changelog/search-multiple-authors`,
 

@@ -13,18 +13,21 @@ import {
     IoSettings,
     IoLogOut,
     IoChevronBack,
-    IoPerson, IoCalendarOutline
+    IoPerson,
+    IoCalendarOutline
 } from 'react-icons/io5';
 import styles from './Sidebar.module.css';
 import {MdGroups} from "react-icons/md";
 import {VscGroupByRefType} from "react-icons/vsc";
-import {FaStackOverflow} from "react-icons/fa";
+import {FaStackOverflow, FaChartLine} from "react-icons/fa";
 
 const menuItems = [
     {id: 'dashboard', label: 'Дашборд', path: '/dashboard', icon: IoGrid},
     {id: 'users', label: 'Пользователи', path: '/users', icon: IoPeople},
     {id: 'projects', label: 'Проекты', path: '/projects', icon: IoFolder},
-    {id: 'tasks', label: 'Задачи', path: '/tasks', icon: IoCheckboxOutline},
+    {id: 'issues', label: 'Задачи', path: '/issues', icon: IoCheckboxOutline},
+    {id: 'activity', label: 'Активность', path: '/activity', icon: FaChartLine},
+    {id: 'schedule-table', label: 'График смен', path: '/schedule-table', icon: IoPerson},
     {id: 'analytics', label: 'Аналитика', path: '/analytics', icon: IoAnalytics},
     {id: 'messages', label: 'Сообщения', path: '/messages', icon: IoChatbubbles, badge: 3},
     {id: 'settings', label: 'Настройки', path: '/settings', icon: IoSettings},

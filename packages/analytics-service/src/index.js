@@ -10,6 +10,7 @@ import issueRoutes from "./routes/issueRoutes.js";
 import {runShiftCreatedConsumer} from "./consumers/shift.consumer.js";
 import jira from "./services/jiraService.js";
 import {startConsumers} from "./consumers/index.js";
+import changelogRoutes from "./routes/changelogRoutes.js";
 
 
 const app = express();
@@ -33,6 +34,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use('/api/type', typeRoutes);
 app.use('/api/webhook', webhookRoutes);
 app.use('/api/issues', issueRoutes);
+app.use('/api/changelog', changelogRoutes);
 
 async function startScheduler() {
   try {

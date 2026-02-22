@@ -10,6 +10,9 @@ import DepartmentsPage from "./pages/DepartmentsPage/DepartmentsPage";
 import TypesPage from "./pages/TypesPage/TypesPage";
 import RedisShiftsPage from "./pages/RedisShiftsPage/RedisShiftsPage";
 import NotReadyYet from "./components/NotReadyYet/NotReadyYet";
+import IssuesPage from "./pages/IssuesPage/IssuesPage";
+import ScheduleTablePage from "./pages/ScheduleTablePage/ScheduleTablePage";
+import DepartmentActivityPage from "./pages/DepartmentActivityPage/DepartmentActivityPage";
 
 const AppRouter = () => {
   return (
@@ -57,10 +60,34 @@ const AppRouter = () => {
               </ProtectedRoute>
           }/>
 
+        <Route path="/schedule-table" element={
+                <ProtectedRoute>
+                    <MainContainer>
+                        <ScheduleTablePage/>
+                    </MainContainer>
+                </ProtectedRoute>
+        } />
+
+
           <Route path='/types' element={
               <ProtectedRoute>
                   <MainContainer>
                       <TypesPage/>
+                  </MainContainer>
+              </ProtectedRoute>
+          }/>
+          <Route path='/issues' element={
+              <ProtectedRoute>
+                  <MainContainer>
+                      <IssuesPage/>
+                  </MainContainer>
+              </ProtectedRoute>
+          }/>
+
+          <Route path='/activity' element={
+              <ProtectedRoute>
+                  <MainContainer>
+                      <DepartmentActivityPage/>
                   </MainContainer>
               </ProtectedRoute>
           }/>

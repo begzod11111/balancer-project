@@ -1,0 +1,326 @@
+/* packages/crm/src/pages/ScheduleTablePage/ScheduleTablePage.module.css */
+.page {
+  padding: 32px;
+  max-width: 100%;
+  margin: 0 auto;
+  min-height: 100vh;
+  background: var(--bg-primary);
+}
+
+.header {
+  margin-bottom: 32px;
+}
+
+.header h1 {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0 0 8px;
+}
+
+.header p {
+  color: var(--text-secondary);
+  margin: 0;
+  font-size: 15px;
+}
+
+.filterPanel {
+  background: var(--bg-secondary);
+  padding: 24px;
+  border-radius: 16px;
+  margin-bottom: 28px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  border: 1px solid var(--border-color);
+}
+
+.filterHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.filterHeader h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.advancedFilters {
+  padding-top: 20px;
+  border-top: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.filterRow {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 20px;
+  align-items: end;
+}
+
+.filterRow label {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.filterInput {
+  padding: 10px 14px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-size: 14px;
+  transition: border-color 0.2s;
+  width: 100%;
+}
+
+.filterInput:focus {
+  outline: none;
+  border-color: var(--accent-color);
+}
+
+.checkboxLabel {
+  flex-direction: row !important;
+  align-items: center !important;
+  gap: 10px !important;
+  cursor: pointer;
+}
+
+.checkboxLabel input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  accent-color: var(--accent-color);
+}
+
+.filterActions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  padding-top: 16px;
+  border-top: 1px solid var(--border-color);
+}
+
+.tableContainer {
+  background: var(--bg-secondary);
+  border-radius: 16px;
+  overflow: auto;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  border: 1px solid var(--border-color);
+  max-height: calc(100vh - 300px);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.table thead {
+  position: sticky;
+  top: 0;
+  background: var(--bg-tertiary);
+  z-index: 10;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.table th {
+  padding: 16px 12px;
+  text-align: left;
+  font-weight: 600;
+  color: var(--text-primary);
+  border-bottom: 2px solid var(--border-color);
+  white-space: nowrap;
+}
+
+.dayHeader {
+  text-align: center !important;
+  min-width: 100px;
+  background: var(--bg-secondary);
+}
+
+.stickyCol {
+  position: sticky;
+  left: 0;
+  background: var(--bg-tertiary);
+  z-index: 11;
+  min-width: 220px;
+  box-shadow: 2px 0 4px rgba(0,0,0,0.05);
+}
+
+.table tbody tr {
+  transition: background 0.2s;
+}
+
+.table tbody tr:hover {
+  background: var(--bg-tertiary);
+}
+
+.table tbody tr.inactive {
+  opacity: 0.6;
+}
+
+.table td {
+  padding: 16px 12px;
+  border-bottom: 1px solid var(--border-color);
+  vertical-align: middle;
+}
+
+.employeeInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.employeeInfo strong {
+  font-size: 15px;
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.employeeInfo span {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.deptCell {
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+
+.badge.active {
+  background: rgba(16, 185, 129, 0.15);
+  color: #10b981;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.badge.inactive {
+  background: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.shiftCell {
+  text-align: center;
+  padding: 8px !important;
+}
+
+.shiftTime {
+  padding: 8px 10px;
+  background: var(--bg-primary);
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  white-space: nowrap;
+}
+
+.noShift {
+  color: var(--text-tertiary);
+  font-size: 18px;
+}
+
+.limitsCell {
+  min-width: 180px;
+}
+
+.limits {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.limits div {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.limits strong {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.empty {
+  text-align: center;
+  padding: 80px 20px !important;
+  color: var(--text-secondary);
+}
+
+.empty svg {
+  opacity: 0.4;
+  margin-bottom: 16px;
+}
+
+.empty p {
+  margin: 8px 0 0;
+  font-size: 16px;
+}
+
+@media (max-width: 1200px) {
+  .page {
+    padding: 16px;
+  }
+
+  .table {
+    font-size: 13px;
+  }
+
+  .table th,
+  .table td {
+    padding: 12px 8px;
+  }
+
+  .stickyCol {
+    min-width: 180px;
+  }
+
+  .dayHeader {
+    min-width: 80px;
+  }
+}
+
+@media (max-width: 768px) {
+  .filterRow {
+    grid-template-columns: 1fr;
+  }
+
+  .tableContainer {
+    max-height: calc(100vh - 400px);
+  }
+
+  .table {
+    font-size: 12px;
+  }
+
+  .stickyCol {
+    min-width: 150px;
+  }
+}
