@@ -6,7 +6,7 @@ const changelogEventSchema = new mongoose.Schema({
   issueKey: { type: String, required: true, index: true },
   projectId: { type: String, index: true },
   projectKey: { type: String, index: true },
-  departmentId: { type: mongoose.Schema.Types.ObjectId, ref: 'Department', index: true },
+  departmentId: { type: String, index: true, default: null },
   eventType: { type: String, required: true, index: true },
 
   // Информация об авторе (денормализация)

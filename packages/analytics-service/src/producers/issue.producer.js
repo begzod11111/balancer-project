@@ -12,6 +12,7 @@ const issueProducer = async (issueData) => {
           issueKey: issueData.issue.key,
           issueId: issueData.issue.id,
           assigneeAccountId: issueData.issue.fields.assignee?.accountId || null,
+          assignmentGroupId: issueData.issue.fields.customfield_18219?.[0]?.id || null,
           typeId: issueData.issue.fields.issuetype?.id || null,
           status: issueData.issue.fields.status?.name || null,
           issueStatusId: issueData.issue.fields.status?.id || null,

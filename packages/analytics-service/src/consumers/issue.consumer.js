@@ -80,7 +80,8 @@ export async function runAssignerConsumer() {
             event.assigneeAccountId,
             topic,
             event.user,
-            event.changelog
+            event.changelog,
+            event.assignmentGroupId
             )
       } catch (err) {
         console.error('[Kafka Consumer] ❌ Ошибка обработки сообщения:', err);

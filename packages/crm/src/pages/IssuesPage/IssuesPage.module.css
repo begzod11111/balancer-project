@@ -1,0 +1,437 @@
+/* packages/crm/src/pages/IssuesPage/IssuesPage.module.css */
+.page {
+  padding: 40px;
+  max-width: 1800px;
+  width: 100%;
+  margin: 0 auto;
+  min-height: 100vh;
+  background: var(--bg-primary);
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: start;
+  margin-bottom: 32px;
+  padding-bottom: 24px;
+  border-bottom: 2px solid var(--border-color);
+}
+
+.header h1 {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0 0 8px;
+}
+
+.header p {
+  color: var(--text-secondary);
+  margin: 0;
+  font-size: 15px;
+}
+
+.statsContainer {
+  display: flex;
+  gap: 24px;
+  margin-top: 16px;
+}
+
+.stat {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.statLabel {
+  font-size: 13px;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.statValue {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--accent-color);
+}
+
+.filterPanel {
+  background: var(--bg-secondary);
+  padding: 28px;
+  border-radius: 20px;
+  margin-bottom: 32px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+  border: 1px solid var(--border-color);
+  backdrop-filter: blur(10px);
+  position: relative;
+  z-index: 100; /* Фильтры должны быть выше карточек */
+}
+
+.filterHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.filterHeader h3 {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.advancedFilters {
+  padding-top: 24px;
+  border-top: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.filterRow {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 20px;
+  align-items: end;
+  position: relative; /* Для правильного позиционирования выпадающих списков */
+}
+
+.filterRow label {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  position: relative; /* Для Select внутри */
+}
+
+.filterInput {
+  padding: 12px 16px;
+  border: 2px solid var(--border-color);
+  border-radius: 12px;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-size: 15px;
+  transition: all 0.3s ease;
+  width: 100%;
+}
+
+.filterInput:focus {
+  outline: none;
+  border-color: var(--accent-color);
+  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+  transform: translateY(-2px);
+}
+
+.filterActions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  padding-top: 20px;
+  border-top: 1px solid var(--border-color);
+}
+
+.list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(420px, 1fr));
+  gap: 24px;
+  margin-bottom: 32px;
+  position: relative;
+  z-index: 1; /* Карточки должны быть ниже фильтров */
+}
+
+.card {
+  background: var(--bg-secondary);
+  border-radius: 20px;
+  padding: 28px;
+  border: 2px solid var(--border-color);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  position: relative;
+  overflow: hidden;
+  z-index: 1; /* Убираем высокий z-index */
+}
+
+.card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, var(--accent-color), #818cf8);
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 32px rgba(0,0,0,0.12);
+  border-color: var(--accent-color);
+  z-index: 2; /* При hover карточка поднимается, но всё равно ниже фильтров */
+}
+
+.card:hover::before {
+  opacity: 1;
+}
+
+.cardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: start;
+  margin-bottom: 20px;
+  padding-bottom: 20px;
+  border-bottom: 2px solid var(--border-color);
+}
+
+.issueKey {
+  font-weight: 700;
+  color: var(--accent-color);
+  font-size: 18px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.type {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  background: rgba(99, 102, 241, 0.1);
+  color: var(--accent-color);
+  border: 1px solid rgba(99, 102, 241, 0.2);
+}
+
+.cardBody {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.cardBody div {
+  display: flex;
+  align-items: center;
+  gap: 8px;padding: 10px 14px;
+  background: var(--bg-tertiary);
+  border-radius: 10px;
+  font-size: 14px;
+  color: var(--text-secondary);
+  transition: all 0.2s;
+}
+
+.cardBody div:hover {
+  background: var(--bg-primary);
+  transform: translateX(4px);
+}
+
+.cardBody strong {
+  color: var(--text-primary);
+  font-weight: 600;
+  margin-left: auto;
+}
+
+.statusBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  width: fit-content;
+  animation: fadeIn 0.3s ease;
+  margin-left: auto !important;
+}
+
+.statusBadge.created {
+  background: rgba(59, 130, 246, 0.15);
+  color: #3b82f6;
+  border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+.statusBadge.inProgress {
+  background: rgba(245, 158, 11, 0.15);
+  color: #f59e0b;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.statusBadge.completed {
+  background: rgba(16, 185, 129, 0.15);
+  color: #10b981;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 16px;
+  padding: 32px 0;
+  background: var(--bg-secondary);
+  border-radius: 20px;
+  border: 2px solid var(--border-color);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+  position: relative;
+  z-index: 1;
+}
+
+.pageNumbers {
+  display: flex;
+  gap: 8px;
+}
+
+.pageButton {
+  min-width: 44px;
+  height: 44px;
+  padding: 0 12px;
+  border: 2px solid var(--border-color);
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.pageButton:hover:not(:disabled) {
+  border-color: var(--accent-color);
+  background: var(--bg-primary);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.pageButton.active {
+  background: var(--accent-color);
+  color: white;
+  border-color: var(--accent-color);
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+}
+
+.pageButton:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.pageInfo {
+  font-size: 14px;
+  color: var(--text-secondary);
+  font-weight: 500;
+  padding: 0 16px;
+  border-left: 2px solid var(--border-color);
+}
+
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 120px 20px;
+  color: var(--text-secondary);
+  gap: 20px;
+  background: var(--bg-secondary);
+  border-radius: 20px;
+  border: 3px dashed var(--border-color);
+  animation: fadeIn 0.5s ease;
+  grid-column: 1 / -1;
+}
+
+.empty svg {
+  opacity: 0.4;
+  color: var(--accent-color);
+}
+
+.empty h3 {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.empty p {
+  margin: 0;
+  font-size: 16px;
+  color: var(--text-secondary);
+  max-width: 500px;
+  text-align: center;
+  line-height: 1.6;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 1400px) {
+  .list {
+    grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .page {
+    padding: 20px;
+  }
+
+  .header {
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .header h1 {
+    font-size: 24px;
+  }
+
+  .statsContainer {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .filterRow {
+    grid-template-columns: 1fr;
+  }
+
+  .list {
+    grid-template-columns: 1fr;
+  }
+
+  .card {
+    padding: 20px;
+  }
+
+  .pagination {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .pageNumbers {
+    order: 3;
+    width: 100%;
+    justify-content: center;
+  }
+
+  .pageInfo {
+    order: 4;
+    width: 100%;
+    text-align: center;
+    border-left: none;
+    padding-top: 12px;
+    border-top: 2px solid var(--border-color);
+  }
+}
