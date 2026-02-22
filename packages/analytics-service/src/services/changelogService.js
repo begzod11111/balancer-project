@@ -18,11 +18,11 @@ class ChangelogService {
 
         // Для issue_created используем отдельный метод
         if (eventType === 'issue_created') {
-          return await this._saveIssueCreated(issueId, issueKey, assigneeAccountId, eventType, user, changelogItem);
+          return await this._saveIssueCreated(issueId, issueKey, assigneeAccountId, eventType, user, changelogItem, departmentId);
         }
 
         // Для всех остальных событий сохраняем каждое изменение отдельно
-        return await this._saveRegularChangelog(issueId, issueKey, assigneeAccountId, eventType, user, changelogItem);
+        return await this._saveRegularChangelog(issueId, issueKey, assigneeAccountId, eventType, user, changelogItem, departmentId);
 
       } catch (error) {
         console.error('[Changelog] ❌ Ошибка сохранения:', error);
@@ -33,7 +33,7 @@ class ChangelogService {
     /**
      * Приватный метод: сохранение события создания задачи (агрегация)
      */
-    async _saveIssueCreated(issueId, issueKey, assigneeAccountId, eventType, user, changelogItem) {
+    async _saveIssueCreated(issueId, issueKey, assigneeAccountId, eventType, user, changelogItem, departmentId) {
       const createdFields = {};
 
       for (const item of changelogItem.items) {
@@ -49,7 +49,7 @@ class ChangelogService {
         historyId: changelogItem.id,
         issueId,
         issueKey,
-        departmentId: assigneeAccountId,
+        departmentId,
         eventType,
         authorAccountId: user.accountId,
         authorDisplayName: user.displayName,
@@ -84,28 +84,29 @@ class ChangelogService {
     /**
      * Приватный метод: сохранение обычных событий (отдельные записи)
      */
-    async _saveRegularChangelog(issueId, issueKey, assigneeAccountId, eventType, user, changelogItem) {
-      const events = changelogItem.items.map(item => ({
-        historyId: `${changelogItem.id}_${item.field}`,
-        issueId,
-        issueKey,
-        eventType,
-        authorAccountId: user.accountId,
-        authorDisplayName: user.displayName,
-        authorEmail: user.emailAddress || null,
-        authorActive: user.active !== false,
-        authorTimeZone: user.timeZone,
-        created: new Date(),
-        field: item.field,
-        fieldtype: item.fieldtype,
-        fieldId: item.fieldId,
-        from: item.from,
-        fromString: item.fromString,
-        to: item.to,
-        toString: item.toString,
-        fromAccountId: item.tmpFromAccountId || null,
-        toAccountId: item.tmpToAccountId || null
-      }));
+    async _saveRegularChangelog(issueId, issueKey, assigneeAccountId, eventType, user, changelogItem, departmentId) {
+        const events = changelogItem.items.map(item => ({
+            historyId: `${changelogItem.id}_${item.field}`,
+            issueId,
+            issueKey,
+            eventType,
+            departmentId,
+            authorAccountId: user.accountId,
+            authorDisplayName: user.displayName,
+            authorEmail: user.emailAddress || null,
+            authorActive: user.active !== false,
+            authorTimeZone: user.timeZone,
+            created: new Date(),
+            field: item.field,
+            fieldtype: item.fieldtype,
+            fieldId: item.fieldId,
+            from: item.from,
+            fromString: item.fromString,
+            to: item.to,
+            toString: item.toString,
+            fromAccountId: item.tmpFromAccountId || null,
+            toAccountId: item.tmpToAccountId || null
+        }));
 
       try {
         const result = await ChangelogEvent.insertMany(events, { ordered: false });
