@@ -148,3 +148,17 @@ export const URLS = {
     SEARCH_CHANGELOGS: `${BASE_URL}/api/analytics/changelog/search`,
     SEARCH_MULTIPLE_AUTHORS: `${BASE_URL}/api/analytics/changelog/search-multiple-authors`,
 
+    // Поиск по критериям
+    FIND_BY_AUTHOR: (authorAccountId) => `${BASE_URL}/api/analytics/changelog/by-author/${authorAccountId}`,
+    FIND_BY_DEPARTMENT: (departmentId) => `${BASE_URL}/api/analytics/changelog/by-department/${departmentId}`,
+    FIND_BY_ISSUE_KEY: (issueKey) => `${BASE_URL}/api/analytics/changelog/by-issue-key/${issueKey}`,
+    FIND_BY_EVENT_TYPE: (eventType) => `${BASE_URL}/api/analytics/changelog/by-event-type/${eventType}`,
+    FIND_BY_DATE_RANGE: `${BASE_URL}/api/analytics/changelog/by-date-range`,
+
+    // Общие методы
+    GET_ALL_CHANGELOGS: `${BASE_URL}/api/analytics/changelog/all`,
+    COUNT_CHANGELOGS: `${BASE_URL}/api/analytics/changelog/count`,
+    GET_CHANGELOG_STATS: `${BASE_URL}/api/analytics/changelog/stats`,
+
+
+};
