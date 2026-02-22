@@ -7,7 +7,7 @@ class ChangelogService {
     /**
      * Сохранение новых логов изменений
      */
-    async saveChangelog(issueId, issueKey, assigneeAccountId, eventType, user, changelogItem) {
+    async saveChangelog(issueId, issueKey, assigneeAccountId,  eventType, user, changelogItem, departmentId) {
       try {
         if (!changelogItem?.items?.length) {
           console.log(`[Changelog] ℹ️ Нет изменений для ${issueKey}`);
