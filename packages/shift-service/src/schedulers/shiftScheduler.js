@@ -2,9 +2,9 @@ import * as cron from "node-cron";
 import moment from "moment-timezone";
 import { models } from "../models/db.js";
 import assigneePoolService from "../services/assigneePoolService.js";
-import {
-    sendShiftCreatedEvent,
-    sendShiftExpiredEvent, sendShiftUpdatedEvent,
+import {sendShiftCreatedEvent,
+  sendShiftExpiredEvent,
+  sendShiftUpdatedEvent,
 } from "../producers/shift.producer.js";
 
 class ShiftScheduler {
@@ -49,7 +49,9 @@ class ShiftScheduler {
             stats.added++;
             stats.kafkaEvents++;
           } else if (result.updated) {
-            stats.updated++;} else {
+            stats.updated++;
+            stats.kafkaEvents++;
+          } else {
             stats.skipped++;
           }
         } catch (error) {
@@ -93,22 +95,23 @@ class ShiftScheduler {
             const { accountId, remainingTTL, assigneeName, assigneeEmail } = assignee;
 
             if (remainingTTL > 0 && remainingTTL <= this.EXPIRATION_THRESHOLD) {
-
-              // Отправляем событие в Kafka
+              // Только отправляем событие в Kafka, не удаляем из Redis
               await sendShiftExpiredEvent({
                 departmentId: department._id.toString(),
                 departmentObjectId: department.ObjectId,
                 accountId,
                 assigneeEmail,
                 assigneeName,
-                removedAt: moment().tz(this.TIMEZONE).toISOString(),
-                reason: 'shift_expiring'
+                remainingTTL,
+                expiredAt: moment().tz(this.TIMEZONE).toISOString()
+              }).catch((err) => {
+                console.error(`[ShiftScheduler] ❌ Ошибка отправки события shift_expired для ${assigneeName}:`, err.message);
               });
 
               stats.removed++;
               stats.kafkaEvents++;
 
-              console.log(`[ShiftScheduler] ⏰ Удалена истекающая смена ${assigneeName} (осталось ${remainingTTL}с), событие отправлено в Kafka`);
+              console.log(`[ShiftScheduler] ⏰ Отправлено событие истекающей смены ${assigneeName} (осталось ${remainingTTL}с)`);
             }
           }
         } catch (error) {
@@ -136,8 +139,8 @@ class ShiftScheduler {
       return { skipped: true, reason: 'no_shift_today' };
     }
 
-    if (!shift.department?.jiraId) {
-      console.warn(`[ShiftScheduler] У сотрудника ${shift.assigneeName} нет jiraId отдела`);
+    if (!shift.department?.ObjectId) {
+      console.warn(`[ShiftScheduler] У сотрудника ${shift.assigneeName} нет ObjectId отдела`);
       return { skipped: true, reason: 'no_department' };
     }
 
@@ -155,13 +158,10 @@ class ShiftScheduler {
       return { skipped: true, reason: 'shift_expired' };
     }
 
-    const metadata = this._buildMetadata(shift, todayShift, currentDayOfWeek, currentTime);
-
-    const result = await this._addOrUpdateInPool(
+    const result = await this._sendShiftEvent(
       shift.department.ObjectId,
       shift,
       ttlSeconds,
-      metadata,
       shiftStart,
       shiftEnd
     );
@@ -201,51 +201,40 @@ class ShiftScheduler {
     };
   }
 
-  _buildMetadata(shift, todayShift, dayOfWeek, currentTime) {
-    return {
-      assigneeName: shift.assigneeName,
-      assigneeEmail: shift.assigneeEmail,
-      shiftStart: todayShift.startTime,
-      shiftEnd: todayShift.endTime,
-      dayOfWeek,
-      date: currentTime.format('YYYY-MM-DD'),
-      addedBy: 'scheduler',
-      limits: shift.limits || { maxDailyIssues: 30, maxActiveIssues: 30, preferredLoadPercent: 80 },
-      departmentId: shift.department._id
-    };
-  }
-
-  async _addOrUpdateInPool(departmentObjectId, shift, ttlSeconds, metadata, shiftStart, shiftEnd) {
+  async _sendShiftEvent(departmentObjectId, shift, ttlSeconds, shiftStart, shiftEnd) {
     const isInPool = await assigneePoolService.hasAssignee(departmentObjectId, shift.accountId);
+
     const dataForEvent = {
-        departmentId: shift.department._id.toString(),
-        departmentObjectId: departmentObjectId,
-        accountId: shift.accountId,
-        assigneeEmail: shift.assigneeEmail,
-        assigneeName: shift.assigneeName,
-        taskTypeWeights: shift.department.taskTypeWeights || [],
-        loadCalculationFormula: shift.department.loadCalculationFormula || 'sum(taskWeights) / maxLoad',
-        defaultMaxLoad: shift.department.defaultMaxLoad || 100,
-        priorityMultiplier: shift.department.priorityMultiplier || 1,
-        completedTasksCount: shift.department.completedTasksCount || 0,
-        shiftStartTime: shiftStart.toISOString(),
-        shiftEndTime: shiftEnd.toISOString(),
-        limits: shift.limits || { maxDailyIssues: 30, maxActiveIssues: 30, preferredLoadPercent: 80 },
-        ttl: ttlSeconds,
-        updatedAt: moment().tz(this.TIMEZONE).toISOString()
-    }
+      departmentId: shift.department._id.toString(),
+      departmentObjectId: departmentObjectId,
+      accountId: shift.accountId,
+      assigneeEmail: shift.assigneeEmail,
+      assigneeName: shift.assigneeName,
+      taskTypeWeights: shift.department.taskTypeWeights || [],
+      loadCalculationFormula: shift.department.loadCalculationFormula || 'sum(taskWeights) / maxLoad',
+      defaultMaxLoad: shift.department.defaultMaxLoad || 100,
+      priorityMultiplier: shift.department.priorityMultiplier || 1,
+      completedTasksCount: shift.department.completedTasksCount || 0,
+      shiftStartTime: shiftStart.toISOString(),
+      shiftEndTime: shiftEnd.toISOString(),
+      limits: shift.limits || { maxDailyIssues: 30, maxActiveIssues: 30, preferredLoadPercent: 80 },
+      ttl: ttlSeconds,
+      updatedAt: moment().tz(this.TIMEZONE).toISOString()
+    };
 
     if (isInPool) {
       sendShiftUpdatedEvent(dataForEvent).catch((err) => {
         console.error(`[ShiftScheduler] ❌ Ошибка отправки события shift_updated для ${shift.assigneeName}:`, err.message);
-      })
+      });
+
+      console.log(`[ShiftScheduler] ✅ Отправлено событие обновления для ${shift.assigneeName} (TTL: ${Math.floor(ttlSeconds / 60)} мин)`);
       return { updated: true };
     } else {
       sendShiftCreatedEvent(dataForEvent).catch((err) => {
         console.error(`[ShiftScheduler] ❌ Ошибка отправки события shift_created для ${shift.assigneeName}:`, err.message);
-      })
+      });
 
-      console.log(`[ShiftScheduler] ✅ Добавлен ${shift.assigneeName} в пул на ${Math.floor(ttlSeconds / 60)} мин, событие отправлено в Kafka`);
+      console.log(`[ShiftScheduler] ✅ Отправлено событие создания для ${shift.assigneeName} (TTL: ${Math.floor(ttlSeconds / 60)} мин)`);
       return { added: true };
     }
   }
