@@ -3,8 +3,8 @@ import moment from "moment-timezone";
 import { models } from "../models/db.js";
 import assigneePoolService from "../services/assigneePoolService.js";
 import {
-  sendShiftCreatedEvent,
-  sendShiftExpiredEvent,
+    sendShiftCreatedEvent,
+    sendShiftExpiredEvent, sendShiftUpdatedEvent,
 } from "../producers/shift.producer.js";
 
 class ShiftScheduler {
@@ -50,7 +50,8 @@ class ShiftScheduler {
             stats.kafkaEvents++;
           } else if (result.updated) {
             stats.updated++;} else {
-            stats.skipped++;}
+            stats.skipped++;
+          }
         } catch (error) {
           stats.errors++;
           console.error(`[ShiftScheduler] Ошибка обработки смены ${shift.assigneeName}:`, error.message);
@@ -84,7 +85,7 @@ class ShiftScheduler {
 
       for (const department of departments) {
         try {
-          const assignees = await assigneePoolService.getAllAssigneesInDepartment(department.jiraId);
+          const assignees = await assigneePoolService.getAllAssigneesInDepartment(department.ObjectId);
 
           stats.checked += assignees.length;
 
@@ -92,25 +93,22 @@ class ShiftScheduler {
             const { accountId, remainingTTL, assigneeName, assigneeEmail } = assignee;
 
             if (remainingTTL > 0 && remainingTTL <= this.EXPIRATION_THRESHOLD) {
-              console.log(`[ShiftScheduler] ⚠️ Смена ${assigneeName} истекает через ${Math.floor(remainingTTL / 60)} мин`);
-
-              // Удаляем из пула
-              await assigneePoolService.removeAssignee(department.jiraId, accountId);
-              stats.removed++;
 
               // Отправляем событие в Kafka
               await sendShiftExpiredEvent({
+                departmentId: department._id.toString(),
+                departmentObjectId: department.ObjectId,
                 accountId,
-                assigneeName,
                 assigneeEmail,
-                department: department.name,
-                departmentJiraId: department.jiraId,
-                remainingTTL,
-                expiredAt: moment().tz(this.TIMEZONE).format('YYYY-MM-DD HH:mm:ss')
+                assigneeName,
+                removedAt: moment().tz(this.TIMEZONE).toISOString(),
+                reason: 'shift_expiring'
               });
+
+              stats.removed++;
               stats.kafkaEvents++;
 
-              console.log(`[ShiftScheduler] ✅ Смена ${assigneeName} удалена, событие отправлено в Kafka`);
+              console.log(`[ShiftScheduler] ⏰ Удалена истекающая смена ${assigneeName} (осталось ${remainingTTL}с), событие отправлено в Kafka`);
             }
           }
         } catch (error) {
@@ -160,11 +158,12 @@ class ShiftScheduler {
     const metadata = this._buildMetadata(shift, todayShift, currentDayOfWeek, currentTime);
 
     const result = await this._addOrUpdateInPool(
-      shift.department.jiraId,
-      shift.accountId,
+      shift.department.ObjectId,
+      shift,
       ttlSeconds,
       metadata,
-      shift.assigneeName
+      shiftStart,
+      shiftEnd
     );
 
     return result;
@@ -197,8 +196,8 @@ class ShiftScheduler {
     return {
       isActive,
       ttlSeconds,
-      shiftStart: shiftStart.format('HH:mm'),
-      shiftEnd: shiftEnd.format('HH:mm')
+      shiftStart,
+      shiftEnd
     };
   }
 
@@ -211,44 +210,42 @@ class ShiftScheduler {
       dayOfWeek,
       date: currentTime.format('YYYY-MM-DD'),
       addedBy: 'scheduler',
-      limits: shift.limits || {},
+      limits: shift.limits || { maxDailyIssues: 30, maxActiveIssues: 30, preferredLoadPercent: 80 },
       departmentId: shift.department._id
     };
   }
 
-  async _addOrUpdateInPool(departmentJiraId, accountId, ttlSeconds, metadata, assigneeName) {
-    const isInPool = await assigneePoolService.hasAssignee(departmentJiraId, accountId);
+  async _addOrUpdateInPool(departmentObjectId, shift, ttlSeconds, metadata, shiftStart, shiftEnd) {
+    const isInPool = await assigneePoolService.hasAssignee(departmentObjectId, shift.accountId);
+    const dataForEvent = {
+        departmentId: shift.department._id.toString(),
+        departmentObjectId: departmentObjectId,
+        accountId: shift.accountId,
+        assigneeEmail: shift.assigneeEmail,
+        assigneeName: shift.assigneeName,
+        taskTypeWeights: shift.department.taskTypeWeights || [],
+        loadCalculationFormula: shift.department.loadCalculationFormula || 'sum(taskWeights) / maxLoad',
+        defaultMaxLoad: shift.department.defaultMaxLoad || 100,
+        priorityMultiplier: shift.department.priorityMultiplier || 1,
+        completedTasksCount: shift.department.completedTasksCount || 0,
+        shiftStartTime: shiftStart.toISOString(),
+        shiftEndTime: shiftEnd.toISOString(),
+        limits: shift.limits || { maxDailyIssues: 30, maxActiveIssues: 30, preferredLoadPercent: 80 },
+        ttl: ttlSeconds,
+        updatedAt: moment().tz(this.TIMEZONE).toISOString()
+    }
 
     if (isInPool) {
-      await assigneePoolService.updateAssigneeTTL(
-        departmentJiraId,
-        accountId,
-        ttlSeconds,
-        metadata
-      );console.log(`[ShiftScheduler] ✅ Обновлен TTL для ${assigneeName} на ${Math.floor(ttlSeconds / 60)} мин`);
+      sendShiftUpdatedEvent(dataForEvent).catch((err) => {
+        console.error(`[ShiftScheduler] ❌ Ошибка отправки события shift_updated для ${shift.assigneeName}:`, err.message);
+      })
       return { updated: true };
     } else {
-      await assigneePoolService.addAssignee(
-        departmentJiraId,
-        accountId,
-        ttlSeconds,
-        metadata
-      );
+      sendShiftCreatedEvent(dataForEvent).catch((err) => {
+        console.error(`[ShiftScheduler] ❌ Ошибка отправки события shift_created для ${shift.assigneeName}:`, err.message);
+      })
 
-      // Отправляем событие в Kafka при добавлении нового сотрудника
-      await sendShiftCreatedEvent({
-        accountId,
-        assigneeName: metadata.assigneeName,
-        assigneeEmail: metadata.assigneeEmail,
-        department: departmentJiraId,
-        shiftStart: metadata.shiftStart,
-        shiftEnd: metadata.shiftEnd,
-        ttlSeconds,
-        date: metadata.date,
-        addedAt: moment().tz(this.TIMEZONE).format('YYYY-MM-DD HH:mm:ss')
-      });
-
-      console.log(`[ShiftScheduler] ✅ Добавлен ${assigneeName} в пул на ${Math.floor(ttlSeconds / 60)} мин, событие отправлено в Kafka`);
+      console.log(`[ShiftScheduler] ✅ Добавлен ${shift.assigneeName} в пул на ${Math.floor(ttlSeconds / 60)} мин, событие отправлено в Kafka`);
       return { added: true };
     }
   }
