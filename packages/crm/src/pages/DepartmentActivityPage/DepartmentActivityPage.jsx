@@ -2,13 +2,19 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import { URLS } from '../../utilities/urls';
+import { useNavigate } from 'react-router-dom';
 import {
   FaChartLine,
   FaCalendarAlt,
   FaUsers,
   FaRedo,
-  FaChevronDown,
-  FaChevronUp
+  FaFilter,
+  FaTimes,
+  FaUser,
+  FaClock,
+  FaCode,
+  FaExchangeAlt,
+  FaChartBar
 } from 'react-icons/fa';
 import Select from '../../components/Select/Select';
 import Button from '../../components/Button/Button';
@@ -19,27 +25,56 @@ import classes from './DepartmentActivityPage.module.css';
 const DepartmentActivityPage = () => {
   const { showLoader, hideLoader } = useLoader();
   const { notify } = useNotification();
+  const navigate = useNavigate();
 
   const [departments, setDepartments] = useState([]);
   const [selectedDepartment, setSelectedDepartment] = useState(null);
   const [activityData, setActivityData] = useState(null);
-  const [expandedEmployees, setExpandedEmployees] = useState({});
+  const [logs, setLogs] = useState([]);
+  const [showFilters, setShowFilters] = useState(false);
+  const [selectedLog, setSelectedLog] = useState(null);
+
+  const [filters, setFilters] = useState({
+    dateRange: 7, // дней назад
+    eventType: 'all',
+    authorAccountId: 'all',
+    limit: 50,
+    skip: 0
+  });
+
   const [dateRange, setDateRange] = useState({
     startDate: null,
     endDate: null
   });
 
-  // Получаем последние 7 дней
+  // Опции для фильтров
+  const dateRangeOptions = [
+    { value: 1, label: 'Сегодня' },
+    { value: 3, label: 'Последние 3 дня' },
+    { value: 7, label: 'Последние 7 дней' },
+    { value: 14, label: 'Последние 2 недели' },
+    { value: 30, label: 'Последний месяц' }
+  ];
+
+  const eventTypeOptions = [
+    { value: 'all', label: 'Все события' },
+    { value: 'issue_assigned', label: 'Назначения' },
+    { value: 'issue_created', label: 'Создания' },
+    { value: 'issue_updated', label: 'Обновления' },
+    { value: 'issue_generic', label: 'Общие изменения' }
+  ];
+
+  // Рассчитываем dateRange на основе фильтров
   useEffect(() => {
     const end = new Date();
     const start = new Date();
-    start.setDate(start.getDate() - 6); // последние 7 дней включая сегодня
+    start.setDate(start.getDate() - filters.dateRange);
 
     setDateRange({
-      startDate: start.toISOString(),
-      endDate: end.toISOString()
+      startDate: start.getTime(),
+      endDate: end.getTime()
     });
-  }, []);
+  }, [filters.dateRange]);
 
   const fetchDepartments = useCallback(async () => {
     try {
@@ -64,7 +99,9 @@ const DepartmentActivityPage = () => {
     showLoader();
     try {
       const token = localStorage.getItem('accessToken');
-      const response = await axios.get(
+
+      // Получаем активность департамента
+      const activityResponse = await axios.get(
         URLS.GET_DEPARTMENT_ACTIVITY(selectedDepartment),
         {
           headers: { Authorization: `Bearer ${token}` },
@@ -75,14 +112,41 @@ const DepartmentActivityPage = () => {
         }
       );
 
-      setActivityData(response.data.data);
+      setActivityData(activityResponse.data);
+
+      // Получаем логи с фильтрами
+      const searchParams = {
+        departmentId: selectedDepartment,
+        startDate: dateRange.startDate,
+        endDate: dateRange.endDate,
+        limit: filters.limit,
+        skip: filters.skip
+      };
+
+      if (filters.eventType !== 'all') {
+        searchParams.eventType = filters.eventType;
+      }
+
+      if (filters.authorAccountId !== 'all') {
+        searchParams.authorAccountId = filters.authorAccountId;
+      }
+
+      const logsResponse = await axios.get(
+        URLS.SEARCH_CHANGELOGS,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+          params: searchParams
+        }
+      );
+
+      setLogs(logsResponse.data.data || []);
     } catch (error) {
       console.error('Ошибка загрузки активности:', error);
       notify.error('Не удалось загрузить данные об активности');
     } finally {
       hideLoader();
     }
-  }, [selectedDepartment, dateRange, showLoader, hideLoader, notify]);
+  }, [selectedDepartment, dateRange, filters, showLoader, hideLoader, notify]);
 
   useEffect(() => {
     fetchDepartments();
@@ -92,69 +156,116 @@ const DepartmentActivityPage = () => {
     if (selectedDepartment && dateRange.startDate) {
       fetchActivityData();
     }
-  }, [selectedDepartment, dateRange.startDate]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedDepartment, dateRange.startDate, filters]);
 
-  const toggleEmployeeExpand = (accountId) => {
-    setExpandedEmployees(prev => ({
+  useEffect(() => {
+    if (selectedDepartment && dateRange.startDate) {
+      fetchActivityData();
+    }
+  }, [selectedDepartment, dateRange.startDate, filters]);
+
+  const handleFilterChange = (key, value) => {
+    setFilters(prev => ({
       ...prev,
-      [accountId]: !prev[accountId]
+      [key]: value,
+      skip: 0 // Сброс пагинации при изменении фильтра
     }));
   };
 
-  const formatDate = (dateString) => {
-    const date = new Date(dateString);
-    const options = { day: '2-digit', month: '2-digit', weekday: 'short' };
-    return date.toLocaleDateString('ru-RU', options);
-  };
-
-  const getLast7Days = () => {
-    const days = [];
-    for (let i = 6; i >= 0; i--) {
-      const date = new Date();
-      date.setDate(date.getDate() - i);
-      days.push(date.toISOString().split('T')[0]);
-    }
-    return days;
-  };
-
-  const getActivityForDay = (activities, day) => {
-    if (!activities) return { count: 0, types: {} };
-    const activity = activities.find(a => {
-      const activityDate = new Date(a.date).toISOString().split('T')[0];
-      return activityDate === day;
+  const resetFilters = () => {
+    setFilters({
+      dateRange: 7,
+      eventType: 'all',
+      authorAccountId: 'all',
+      limit: 50,
+      skip: 0
     });
-    return activity || { count: 0, types: {} };
   };
 
-  const getActivityColor = (count) => {
-    if (count === 0) return classes.activityNone;
-    if (count <= 5) return classes.activityLow;
-    if (count <= 15) return classes.activityMedium;
-    if (count <= 30) return classes.activityHigh;
-    return classes.activityVeryHigh;
+  const formatDate = (timestamp) => {
+    const date = new Date(timestamp);
+    return date.toLocaleString('ru-RU', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
+  const formatDateShort = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('ru-RU', {
+      day: '2-digit',
+      month: '2-digit',
+      weekday: 'short'
+    });
+  };
+
+  const getEventTypeLabel = (eventType) => {
+    const labels = {
+      'issue_assigned': 'Назначение',
+      'issue_created': 'Создание',
+      'issue_updated': 'Обновление',
+      'issue_generic': 'Изменение'
+    };
+    return labels[eventType] || eventType;
+  };
+
+  const getEventTypeColor = (eventType) => {
+    const colors = {
+      'issue_assigned': classes.eventAssigned,
+      'issue_created': classes.eventCreated,
+      'issue_updated': classes.eventUpdated,
+      'issue_generic': classes.eventGeneric
+    };
+    return colors[eventType] || classes.eventDefault;
   };
 
   const departmentOptions = departments.map(d => ({
-    value: d._id,
+    value: d.jiraId,
     label: d.name
   }));
 
-  const last7Days = getLast7Days();
+  // Опции авторов из топа сотрудников
+  const authorOptions = [
+    { value: 'all', label: 'Все сотрудники' },
+    ...(activityData?.topEmployees?.map(emp => ({
+      value: emp.authorAccountId,
+      label: emp.displayName
+    })) || [])
+  ];
+
 
   return (
     <div className={classes.page}>
       <header className={classes.header}>
-        <div>
+        <div className={classes.headerInfo}>
           <h1><FaChartLine /> Активность отдела</h1>
-          <p>Статистика действий сотрудников за последние 7 дней</p>
+          <p>Мониторинг действий сотрудников в реальном времени</p>
         </div>
-        <div className={classes.controls}>
+        <div className={classes.headerControls}>
           <Select
             options={departmentOptions}
             value={selectedDepartment}
             onChange={setSelectedDepartment}
             placeholder="Выберите отдел"
           />
+          <Button
+            variant="primary"
+            icon={<FaClock />}
+            onClick={() => navigate('/hourly-activity')}
+          >
+            График по часам
+          </Button>
+          <Button
+            variant="secondary"
+            icon={showFilters ? <FaTimes /> : <FaFilter />}
+            onClick={() => setShowFilters(!showFilters)}
+          >
+            {showFilters ? 'Скрыть фильтры' : 'Фильтры'}
+          </Button>
           <Button
             variant="secondary"
             icon={<FaRedo />}
@@ -165,201 +276,306 @@ const DepartmentActivityPage = () => {
         </div>
       </header>
 
+      {/* Панель фильтров */}
+      {showFilters && (
+        <div className={classes.filtersPanel}>
+          <div className={classes.filterRow}>
+            <div className={classes.filterGroup}>
+              <label><FaCalendarAlt /> Период</label>
+              <Select
+                options={dateRangeOptions}
+                value={filters.dateRange}
+                onChange={(value) => handleFilterChange('dateRange', value)}
+              />
+            </div>
+
+            <div className={classes.filterGroup}>
+              <label><FaCode /> Тип события</label>
+              <Select
+                options={eventTypeOptions}
+                value={filters.eventType}
+                onChange={(value) => handleFilterChange('eventType', value)}
+              />
+            </div>
+
+            <div className={classes.filterGroup}>
+              <label><FaUser /> Сотрудник</label>
+              <Select
+                options={authorOptions}
+                value={filters.authorAccountId}
+                onChange={(value) => handleFilterChange('authorAccountId', value)}
+              />
+            </div>
+
+            <div className={classes.filterActions}>
+              <Button
+                variant="secondary"
+                icon={<FaTimes />}
+                onClick={resetFilters}
+              >
+                Сбросить
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {activityData && (
         <>
           {/* Общая статистика отдела */}
-          <div className={classes.departmentSummary}>
-            <div className={classes.summaryCard}>
-              <FaUsers className={classes.icon} />
-              <div>
-                <span className={classes.label}>Всего сотрудников</span>
-                <span className={classes.value}>
-                  {activityData.employeeActivities?.length || 0}
+          <div className={classes.statsGrid}>
+            <div className={classes.statCard}>
+              <div className={classes.statIcon}>
+                <FaChartLine />
+              </div>
+              <div className={classes.statContent}>
+                <span className={classes.statLabel}>Всего событий</span>
+                <span className={classes.statValue}>
+                  {activityData.summary?.totalEvents || 0}
                 </span>
               </div>
             </div>
-            <div className={classes.summaryCard}>
-              <FaChartLine className={classes.icon} />
-              <div>
-                <span className={classes.label}>Всего действий</span>
-                <span className={classes.value}>
-                  {activityData.totalActions || 0}
+
+            <div className={classes.statCard}>
+              <div className={classes.statIcon}>
+                <FaUsers />
+              </div>
+              <div className={classes.statContent}>
+                <span className={classes.statLabel}>Активных сотрудников</span>
+                <span className={classes.statValue}>
+                  {activityData.summary?.uniqueAuthorsCount || 0}
                 </span>
               </div>
             </div>
-            <div className={classes.summaryCard}>
-              <FaCalendarAlt className={classes.icon} />
-              <div>
-                <span className={classes.label}>Средняя активность в день</span>
-                <span className={classes.value}>
-                  {activityData.averagePerDay?.toFixed(1) || 0}
+
+            <div className={classes.statCard}>
+              <div className={classes.statIcon}>
+                <FaCode />
+              </div>
+              <div className={classes.statContent}>
+                <span className={classes.statLabel}>Обработано задач</span>
+                <span className={classes.statValue}>
+                  {activityData.summary?.uniqueIssuesCount || 0}
+                </span>
+              </div>
+            </div>
+
+            <div className={classes.statCard}>
+              <div className={classes.statIcon}>
+                <FaCalendarAlt />
+              </div>
+              <div className={classes.statContent}>
+                <span className={classes.statLabel}>Типов событий</span>
+                <span className={classes.statValue}>
+                  {activityData.summary?.eventTypesCount || 0}
                 </span>
               </div>
             </div>
           </div>
 
-          {/* Сводная таблица по дням */}
-          <div className={classes.section}>
-            <h2>Активность отдела по дням</h2>
-            <div className={classes.departmentGrid}>
-              <div className={classes.gridHeader}>
-                <div className={classes.headerCell}>День недели</div>
-                {last7Days.map(day => (
-                  <div key={day} className={classes.headerCell}>
-                    {formatDate(day)}
+          {/* Топ активных сотрудников */}
+          {activityData.topEmployees && activityData.topEmployees.length > 0 && (
+            <div className={classes.section}>
+              <h2><FaUsers /> Топ активных сотрудников</h2>
+              <div className={classes.topEmployees}>
+                {activityData.topEmployees.slice(0, 5).map((employee, index) => (
+                  <div key={employee.authorAccountId} className={classes.topEmployeeCard}>
+                    <div className={classes.topRank}>#{index + 1}</div>
+                    <div className={classes.topEmployeeInfo}>
+                      <h3>{employee.displayName}</h3>
+                      <span className={classes.topEmployeeStats}>
+                        {employee.eventsCount} событий • {employee.uniqueIssuesCount} задач
+                      </span>
+                    </div>
+                    <div className={classes.topEmployeeBadge}>
+                      {employee.eventsCount}
+                    </div>
                   </div>
                 ))}
-                <div className={classes.headerCell}>Итого</div>
-              </div>
-              <div className={classes.gridRow}>
-                <div className={classes.rowLabel}>Действий</div>
-                {last7Days.map(day => {
-                  const activity = getActivityForDay(activityData.dailyActivity, day);
-                  return (
-                    <div
-                      key={day}
-                      className={`${classes.cell} ${getActivityColor(activity.count)}`}
-                    >
-                      {activity.count}
-                    </div>
-                  );
-                })}
-                <div className={classes.cellTotal}>
-                  {activityData.totalActions || 0}
-                </div>
               </div>
             </div>
-          </div>
+          )}
 
-          {/* Детальная активность по сотрудникам */}
-          <div className={classes.section}>
-            <h2>Активность сотрудников</h2>
-            <div className={classes.employeeList}>
-              {activityData.employeeActivities?.map((employee) => {
-                const isExpanded = expandedEmployees[employee.accountId];
-                const totalActions = employee.activities?.reduce(
-                  (sum, act) => sum + act.count,
-                  0
-                ) || 0;
-
-                return (
-                  <div key={employee.accountId} className={classes.employeeCard}>
+          {/* Активность по дням */}
+          {activityData.dailyActivity && activityData.dailyActivity.length > 0 && (
+            <div className={classes.section}>
+              <h2><FaCalendarAlt /> Активность по дням</h2>
+              <div className={classes.dailyChart}>
+                {activityData.dailyActivity.map((day) => (
+                  <div key={day.date} className={classes.dayColumn}>
                     <div
-                      className={classes.employeeHeader}
-                      onClick={() => toggleEmployeeExpand(employee.accountId)}
+                      className={classes.dayBar}
+                      style={{
+                        height: `${Math.min((day.totalEvents / Math.max(...activityData.dailyActivity.map(d => d.totalEvents))) * 100, 100)}%`
+                      }}
                     >
-                      <div className={classes.employeeInfo}>
-                        <h3>{employee.displayName || 'Неизвестный сотрудник'}</h3>
-                        <span className={classes.employeeEmail}>
-                          {employee.email || employee.accountId}
-                        </span>
-                      </div>
-                      <div className={classes.employeeStats}>
-                        <span className={classes.totalActions}>
-                          Всего: {totalActions}
-                        </span>
-                        {isExpanded ? <FaChevronUp /> : <FaChevronDown />}
-                      </div>
+                      <span className={classes.dayValue}>{day.totalEvents}</span>
+                    </div>
+                    <div className={classes.dayLabel}>
+                      {formatDateShort(day.date)}
+                    </div>
+                    <div className={classes.daySubLabel}>
+                      {day.uniqueAuthorsCount} чел.
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+          {/* Логи действий */}
+          <div className={classes.section}>
+            <h2><FaClock /> Последние действия</h2>
+            {logs.length > 0 ? (
+              <div className={classes.logsGrid}>
+                {logs.map((log) => (
+                  <div
+                    key={log._id}
+                    className={`${classes.logCard} ${getEventTypeColor(log.eventType)}`}
+                    onClick={() => setSelectedLog(log)}
+                  >
+                    <div className={classes.logHeader}>
+                      <span className={classes.logBadge}>
+                        {getEventTypeLabel(log.eventType)}
+                      </span>
+                      <span className={classes.logTime}>
+                        <FaClock /> {formatDate(new Date(log.created).getTime())}
+                      </span>
                     </div>
 
-                    {isExpanded && (
-                      <div className={classes.employeeDetails}>
-                        <div className={classes.activityGrid}>
-                          <div className={classes.gridHeader}>
-                            <div className={classes.headerCell}>Тип события</div>
-                            {last7Days.map(day => (
-                              <div key={day} className={classes.headerCell}>
-                                {formatDate(day)}
-                              </div>
-                            ))}
-                            <div className={classes.headerCell}>Итого</div>
+                    <div className={classes.logBody}>
+                      <div className={classes.logIssue}>
+                        <strong>{log.issueKey}</strong>
+                      </div>
+
+                      <div className={classes.logField}>
+                        <span className={classes.fieldLabel}>Поле:</span>
+                        <span className={classes.fieldValue}>{log.field}</span>
+                      </div>
+
+                      {log.field === 'assignee' && (
+                        <div className={classes.logChange}>
+                          <div className={classes.changeFrom}>
+                            {log.fromString || 'Не назначено'}
                           </div>
-
-                          {/* Группировка по типам событий */}
-                          {employee.eventTypeSummary?.map((eventType) => (
-                            <div key={eventType.type} className={classes.gridRow}>
-                              <div className={classes.rowLabel}>
-                                {eventType.type}
-                              </div>
-                              {last7Days.map(day => {
-                                const activity = getActivityForDay(employee.activities, day);
-                                const count = activity.types?.[eventType.type] || 0;
-                                return (
-                                  <div
-                                    key={day}
-                                    className={`${classes.cell} ${getActivityColor(count)}`}
-                                  >
-                                    {count > 0 ? count : '-'}
-                                  </div>
-                                );
-                              })}
-                              <div className={classes.cellTotal}>
-                                {eventType.count}
-                              </div>
-                            </div>
-                          ))}
-
-                          {/* Итоговая строка */}
-                          <div className={`${classes.gridRow} ${classes.totalRow}`}>
-                            <div className={classes.rowLabel}>Всего</div>
-                            {last7Days.map(day => {
-                              const activity = getActivityForDay(employee.activities, day);
-                              return (
-                                <div
-                                  key={day}
-                                  className={`${classes.cellTotal} ${getActivityColor(activity.count)}`}
-                                >
-                                  {activity.count > 0 ? activity.count : '-'}
-                                </div>
-                              );
-                            })}
-                            <div className={classes.cellTotal}>
-                              {totalActions}
-                            </div>
+                          <div className={classes.changeArrow}>
+                            <FaExchangeAlt />
+                          </div>
+                          <div className={classes.changeTo}>
+                            {log.toString || 'Не назначено'}
                           </div>
                         </div>
+                      )}
+
+                      {log.field === 'status' && (
+                        <div className={classes.logChange}>
+                          <div className={classes.changeFrom}>
+                            {log.fromString || 'Новый'}
+                          </div>
+                          <div className={classes.changeArrow}>
+                            <FaExchangeAlt />
+                          </div>
+                          <div className={classes.changeTo}>
+                            {log.toString}
+                          </div>
+                        </div>
+                      )}
+
+                      {log.field !== 'assignee' && log.field !== 'status' && log.toString && (
+                        <div className={classes.logValue}>
+                          {log.toString}
+                        </div>
+                      )}
+                    </div>
+
+                    <div className={classes.logFooter}>
+                      <div className={classes.logAuthor}>
+                        <FaUser />
+                        <span>{log.authorDisplayName}</span>
                       </div>
-                    )}
+                    </div>
                   </div>
-                );
-              })}
+                ))}
+              </div>
+            ) : (
+              <div className={classes.empty}>
+                <FaClock size={64} />
+                <h3>Нет логов</h3>
+                <p>За выбранный период не найдено действий</p>
+              </div>
+            )}
+          </div>
 
-              {(!activityData.employeeActivities || activityData.employeeActivities.length === 0) && (
-                <div className={classes.empty}>
-                  <FaUsers size={64} />
-                  <h3>Нет данных об активности</h3>
-                  <p>За выбранный период не найдено действий сотрудников</p>
+          {/* Модальное окно с деталями лога */}
+          {selectedLog && (
+            <div className={classes.modal} onClick={() => setSelectedLog(null)}>
+              <div className={classes.modalContent} onClick={(e) => e.stopPropagation()}>
+                <div className={classes.modalHeader}>
+                  <h2>Детали события</h2>
+                  <button
+                    className={classes.modalClose}
+                    onClick={() => setSelectedLog(null)}
+                  >
+                    <FaTimes />
+                  </button>
                 </div>
-              )}
-            </div>
-          </div>
 
-          {/* Легенда */}
-          <div className={classes.legend}>
-            <h3>Уровень активности:</h3>
-            <div className={classes.legendItems}>
-              <div className={classes.legendItem}>
-                <div className={`${classes.legendBox} ${classes.activityNone}`}></div>
-                <span>Нет активности (0)</span>
-              </div>
-              <div className={classes.legendItem}>
-                <div className={`${classes.legendBox} ${classes.activityLow}`}></div>
-                <span>Низкая (1-5)</span>
-              </div>
-              <div className={classes.legendItem}>
-                <div className={`${classes.legendBox} ${classes.activityMedium}`}></div>
-                <span>Средняя (6-15)</span>
-              </div>
-              <div className={classes.legendItem}>
-                <div className={`${classes.legendBox} ${classes.activityHigh}`}></div>
-                <span>Высокая (16-30)</span>
-              </div>
-              <div className={classes.legendItem}>
-                <div className={`${classes.legendBox} ${classes.activityVeryHigh}`}></div>
-                <span>Очень высокая (30+)</span>
+                <div className={classes.modalBody}>
+                  <div className={classes.detailRow}>
+                    <span className={classes.detailLabel}>Задача:</span>
+                    <span className={classes.detailValue}>
+                      <strong>{selectedLog.issueKey}</strong> (ID: {selectedLog.issueId})
+                    </span>
+                  </div>
+
+                  <div className={classes.detailRow}>
+                    <span className={classes.detailLabel}>Тип события:</span>
+                    <span className={`${classes.detailBadge} ${getEventTypeColor(selectedLog.eventType)}`}>
+                      {getEventTypeLabel(selectedLog.eventType)}
+                    </span>
+                  </div>
+
+                  <div className={classes.detailRow}>
+                    <span className={classes.detailLabel}>Поле:</span>
+                    <span className={classes.detailValue}>{selectedLog.field}</span>
+                  </div>
+
+                  <div className={classes.detailRow}>
+                    <span className={classes.detailLabel}>Автор:</span>
+                    <span className={classes.detailValue}>
+                      {selectedLog.authorDisplayName}
+                      {selectedLog.authorEmail && ` (${selectedLog.authorEmail})`}
+                    </span>
+                  </div>
+
+                  <div className={classes.detailRow}>
+                    <span className={classes.detailLabel}>Время:</span>
+                    <span className={classes.detailValue}>
+                      {formatDate(new Date(selectedLog.created).getTime())}
+                    </span>
+                  </div>
+
+                  {selectedLog.fromString && (
+                    <div className={classes.detailRow}>
+                      <span className={classes.detailLabel}>Было:</span>
+                      <span className={classes.detailValue}>{selectedLog.fromString}</span>
+                    </div>
+                  )}
+
+                  {selectedLog.toString && (
+                    <div className={classes.detailRow}>
+                      <span className={classes.detailLabel}>Стало:</span>
+                      <span className={classes.detailValue}>{selectedLog.toString}</span>
+                    </div>
+                  )}
+
+                  <div className={classes.detailRow}>
+                    <span className={classes.detailLabel}>History ID:</span>
+                    <span className={classes.detailValue}>{selectedLog.historyId}</span>
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
+          )}
         </>
       )}
     </div>

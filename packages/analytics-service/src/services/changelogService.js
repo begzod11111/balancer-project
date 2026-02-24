@@ -2,12 +2,11 @@ import {models} from '../models/db.js';
 
 const { ChangelogEvent } = models;
 
-
 class ChangelogService {
     /**
      * Сохранение новых логов изменений
      */
-    async saveChangelog(issueId, issueKey, assigneeAccountId,  eventType, user, changelogItem, departmentId) {
+    async saveChangelog(issueId, issueKey, assigneeAccountId, eventType, user, changelogItem, departmentId) {
       try {
         if (!changelogItem?.items?.length) {
           console.log(`[Changelog] ℹ️ Нет изменений для ${issueKey}`);
@@ -16,12 +15,10 @@ class ChangelogService {
 
         console.log(`[Changelog] 📝 Обработка события "${eventType}" для ${issueKey}`);
 
-        // Для issue_created используем отдельный метод
         if (eventType === 'issue_created') {
           return await this._saveIssueCreated(issueId, issueKey, assigneeAccountId, eventType, user, changelogItem, departmentId);
         }
 
-        // Для всех остальных событий сохраняем каждое изменение отдельно
         return await this._saveRegularChangelog(issueId, issueKey, assigneeAccountId, eventType, user, changelogItem, departmentId);
 
       } catch (error) {
@@ -114,7 +111,6 @@ class ChangelogService {
         return { added: result.length, total: events.length };
       } catch (error) {
         if (error.code === 11000 && error.writeErrors) {
-          // Подсчитываем успешно добавленные записи
           const addedCount = events.length - error.writeErrors.length;
           console.log(`[Changelog] ⚠️ Некоторые события уже существуют для ${issueKey}. Добавлено: ${addedCount}/${events.length}`);
           return { added: addedCount, total: events.length };
@@ -123,65 +119,564 @@ class ChangelogService {
       }
     }
 
+    /**
+     * Пакетное сохранение логов
+     */
+    async saveBulkChangelogs(issueId, issueKey, departmentId, histories) {
+      try {
+        if (!histories?.length) return null;
 
-  /**
-   * Пакетное сохранение логов
-   */
-  async saveBulkChangelogs(issueId, issueKey, departmentId, histories) {
-    try {
-      if (!histories?.length) return null;
+        let totalAdded = 0;
 
-      let totalAdded = 0;
+        for (const history of histories) {
+          const result = await this.saveChangelog(
+            issueId,
+            issueKey,
+            departmentId,
+            history.eventType || 'unknown',
+            history.author,
+            { id: history.id, items: history.items }
+          );
 
-      for (const history of histories) {
-        const result = await this.saveChangelog(
-          issueId,
-          issueKey,
-          departmentId,
-          history.eventType || 'unknown',
-          history.author,
-          { id: history.id, items: history.items }
-        );
+          if (result) totalAdded += result.added;
+        }
 
-        if (result) totalAdded += result.added;
+        return { added: totalAdded, total: totalAdded };
+      } catch (error) {
+        console.error('[Changelog] ❌ Ошибка пакетного сохранения:', error);
+        throw error;
+      }
+    }
+
+    // ========== НОВАЯ СИСТЕМА ПОИСКА ==========
+
+    /**
+     * Построение MongoDB query из фильтров (поддержка миллисекунд)
+     */
+    _buildQuery(filters = {}) {
+      const query = {};
+
+      // Фильтры по ID и ключам
+      if (filters.authorAccountId) query.authorAccountId = filters.authorAccountId;
+      if (filters.toAccountId) query.toAccountId = filters.toAccountId;
+      if (filters.fromAccountId) query.fromAccountId = filters.fromAccountId;
+      if (filters.departmentId) query.departmentId = filters.departmentId;
+      if (filters.issueKey) query.issueKey = filters.issueKey;
+      if (filters.issueId) query.issueId = filters.issueId;
+
+      // Фильтры по типам и полям
+      if (filters.eventType) query.eventType = filters.eventType;
+      if (filters.field) query.field = filters.field;
+      if (filters.fieldtype) query.fieldtype = filters.fieldtype;
+
+      // Фильтры по автору
+      if (filters.authorDisplayName) {
+        query.authorDisplayName = new RegExp(filters.authorDisplayName, 'i');
+      }
+      if (filters.authorEmail) query.authorEmail = filters.authorEmail;
+      if (filters.authorActive !== undefined) query.authorActive = filters.authorActive;
+
+      // Временные фильтры (миллисекунды)
+      if (filters.startDate || filters.endDate) {
+        query.created = {};
+        if (filters.startDate) {
+          query.created.$gte = new Date(parseInt(filters.startDate));
+        }
+        if (filters.endDate) {
+          query.created.$lte = new Date(parseInt(filters.endDate));
+        }
       }
 
-      return { added: totalAdded, total: totalAdded };
-    } catch (error) {
-      console.error('[Changelog] ❌ Ошибка пакетного сохранения:', error);
-      throw error;
+      // Поиск по значениям изменений
+      if (filters.toString) {
+        query.toString = new RegExp(filters.toString, 'i');
+      }
+      if (filters.fromString) {
+        query.fromString = new RegExp(filters.fromString, 'i');
+      }
+
+      return query;
     }
-  }
 
-  /**
-   * Получение истории изменений задачи
-   */
-  async getChangelog(issueId) {
-    try {
-      const events = await ChangelogEvent.find({ issueId })
-        .sort({ created: 1 })
-        .lean();
+    /**
+     * Универсальный поиск логов (миллисекунды)
+     * @param {Object} filters - Фильтры поиска
+     * @param {string} filters.authorAccountId - ID автора
+     * @param {string} filters.departmentId - ID департамента
+     * @param {string} filters.issueKey - Ключ задачи
+     * @param {string} filters.issueId - ID задачи
+     * @param {string} filters.eventType - Тип события
+     * @param {string} filters.field - Поле изменения
+     * @param {number} filters.startDate - Начало периода (миллисекунды)
+     * @param {number} filters.endDate - Конец периода (миллисекунды)
+     * @param {number} filters.limit - Лимит (по умолчанию 100)
+     * @param {number} filters.skip - Пропустить записей
+     * @param {string} filters.sort - Сортировка (по умолчанию '-created')
+     */
+    async search(filters = {}) {
+      try {
+        const query = this._buildQuery(filters);
 
-      return events;
-    } catch (error) {
-      console.error('[Changelog] ❌ Ошибка получения changelog:', error);
-      throw error;
+        const limit = parseInt(filters.limit) || 100;
+        const skip = parseInt(filters.skip) || 0;
+        const sort = filters.sort || '-created';
+
+        const [events, total] = await Promise.all([
+          ChangelogEvent.find(query)
+            .sort(sort)
+            .limit(limit)
+            .skip(skip)
+            .lean(),
+          ChangelogEvent.countDocuments(query)
+        ]);
+
+        return {
+          success: true,
+          data: events,
+          pagination: {
+            total,
+            limit,
+            skip,
+            page: Math.floor(skip / limit) + 1,
+            totalPages: Math.ceil(total / limit),
+            hasMore: total > skip + limit
+          }
+        };
+      } catch (error) {
+        console.error('[Changelog] ❌ Ошибка поиска:', error);
+        throw error;
+      }
     }
-  }
 
-  /**
-   * Получение истории назначений
-   */
-  async getAssignmentHistory(issueId) {
-    try {
-      const events = await ChangelogEvent.find({
-        issueId,
-        field: 'assignee'
-      })
-        .sort({ created: 1 })
-        .lean();
+    /**
+     * Активность по сотруднику (миллисекунды)
+     */
+    async getEmployeeActivity(authorAccountId, startDate, endDate, options = {}) {
+      try {
+        const match = {
+          authorAccountId,
+          created: {
+            $gte: new Date(parseInt(startDate)),
+            $lte: new Date(parseInt(endDate))
+          }
+        };
 
-      return events.map(e => ({
+        if (options.departmentId) match.departmentId = options.departmentId;
+        if (options.eventType) match.eventType = options.eventType;
+
+        const stats = await ChangelogEvent.aggregate([
+          { $match: match },
+          {
+            $group: {
+              _id: {
+                date: { $dateToString: { format: '%Y-%m-%d', date: '$created' } },
+                eventType: '$eventType',
+                field: '$field'
+              },
+              count: { $sum: 1 },
+              uniqueIssues: { $addToSet: '$issueKey' }
+            }
+          },
+          {
+            $group: {
+              _id: '$_id.date',
+              events: {
+                $push: {
+                  eventType: '$_id.eventType',
+                  field: '$_id.field',
+                  count: '$count',
+                  uniqueIssuesCount: { $size: '$uniqueIssues' }
+                }
+              },
+              totalEvents: { $sum: '$count' }
+            }
+          },
+          {
+            $project: {
+              _id: 0,
+              date: '$_id',
+              events: 1,
+              totalEvents: 1
+            }
+          },
+          { $sort: { date: 1 } }
+        ]);
+
+        // Общая статистика
+        const summary = await ChangelogEvent.aggregate([
+          { $match: match },
+          {
+            $group: {
+              _id: null,
+              totalEvents: { $sum: 1 },
+              uniqueIssues: { $addToSet: '$issueKey' },
+              eventTypes: { $addToSet: '$eventType' },
+              fields: { $addToSet: '$field' }
+            }
+          }
+        ]);
+
+        return {
+          success: true,
+          authorAccountId,
+          period: {
+            startDate: parseInt(startDate),
+            endDate: parseInt(endDate)
+          },
+          dailyActivity: stats,
+          summary: summary[0] ? {
+            totalEvents: summary[0].totalEvents,
+            uniqueIssuesCount: summary[0].uniqueIssues.length,
+            eventTypesCount: summary[0].eventTypes.length,
+            fieldsCount: summary[0].fields.length
+          } : null
+        };
+      } catch (error) {
+        console.error('[Changelog] ❌ Ошибка получения активности сотрудника:', error);
+        throw error;
+      }
+    }
+
+    /**
+     * Активность по департаменту (миллисекунды)
+     */
+    async getDepartmentActivity(departmentId, startDate, endDate, options = {}) {
+      try {
+        const match = {
+          departmentId,
+          created: {
+            $gte: new Date(parseInt(startDate)),
+            $lte: new Date(parseInt(endDate))
+          }
+        };
+
+        if (options.eventType) match.eventType = options.eventType;
+
+        // Активность по дням
+        const dailyStats = await ChangelogEvent.aggregate([
+          { $match: match },
+          {
+            $group: {
+              _id: {
+                date: { $dateToString: { format: '%Y-%m-%d', date: '$created' } },
+                author: '$authorAccountId'
+              },
+              count: { $sum: 1 },
+              issues: { $addToSet: '$issueKey' }
+            }
+          },
+          {
+            $group: {
+              _id: '$_id.date',
+              totalEvents: { $sum: '$count' },
+              uniqueAuthors: { $addToSet: '$_id.author' },
+              uniqueIssues: { $addToSet: { $arrayElemAt: ['$issues', 0] } }
+            }
+          },
+          {
+            $project: {
+              _id: 0,
+              date: '$_id',
+              totalEvents: 1,
+              uniqueAuthorsCount: { $size: '$uniqueAuthors' },
+              uniqueIssuesCount: { $size: '$uniqueIssues' }
+            }
+          },
+          { $sort: { date: 1 } }
+        ]);
+
+        // Топ активных сотрудников
+        const topEmployees = await ChangelogEvent.aggregate([
+          { $match: match },
+          {
+            $group: {
+              _id: '$authorAccountId',
+              displayName: { $first: '$authorDisplayName' },
+              count: { $sum: 1 },
+              uniqueIssues: { $addToSet: '$issueKey' }
+            }
+          },
+          {
+            $project: {
+              _id: 0,
+              authorAccountId: '$_id',
+              displayName: 1,
+              eventsCount: '$count',
+              uniqueIssuesCount: { $size: '$uniqueIssues' }
+            }
+          },
+          { $sort: { eventsCount: -1 } },
+          { $limit: 10 }
+        ]);
+
+        // Общая статистика
+        const summary = await ChangelogEvent.aggregate([
+          { $match: match },
+          {
+            $group: {
+              _id: null,
+              totalEvents: { $sum: 1 },
+              uniqueAuthors: { $addToSet: '$authorAccountId' },
+              uniqueIssues: { $addToSet: '$issueKey' },
+              eventTypes: { $addToSet: '$eventType' }
+            }
+          }
+        ]);
+
+        return {
+          success: true,
+          departmentId,
+          period: {
+            startDate: parseInt(startDate),
+            endDate: parseInt(endDate)
+          },
+          dailyActivity: dailyStats,
+          topEmployees,
+          summary: summary[0] ? {
+            totalEvents: summary[0].totalEvents,
+            uniqueAuthorsCount: summary[0].uniqueAuthors.length,
+            uniqueIssuesCount: summary[0].uniqueIssues.length,
+            eventTypesCount: summary[0].eventTypes.length
+          } : null
+        };
+      } catch (error) {
+        console.error('[Changelog] ❌ Ошибка получения активности департамента:', error);
+        throw error;
+      }
+    }
+
+    /**
+     * Активность группы сотрудников (миллисекунды)
+     */
+    async getTeamActivity(accountIds, startDate, endDate, options = {}) {
+      try {
+        if (!Array.isArray(accountIds) || accountIds.length === 0) {
+          throw new Error('accountIds должен быть непустым массивом');
+        }
+
+        const match = {
+          authorAccountId: { $in: accountIds },
+          created: {
+            $gte: new Date(parseInt(startDate)),
+            $lte: new Date(parseInt(endDate))
+          }
+        };
+
+        if (options.departmentId) match.departmentId = options.departmentId;
+        if (options.eventType) match.eventType = options.eventType;
+
+        // Активность по сотрудникам
+        const employeeStats = await ChangelogEvent.aggregate([
+          { $match: match },
+          {
+            $group: {
+              _id: '$authorAccountId',
+              displayName: { $first: '$authorDisplayName' },
+              totalEvents: { $sum: 1 },
+              uniqueIssues: { $addToSet: '$issueKey' },
+              eventTypes: { $push: '$eventType' }
+            }
+          },
+          {
+            $project: {
+              _id: 0,
+              authorAccountId: '$_id',
+              displayName: 1,
+              totalEvents: 1,
+              uniqueIssuesCount: { $size: '$uniqueIssues' },
+              eventTypesCount: { $size: { $setUnion: ['$eventTypes'] } }
+            }
+          },
+          { $sort: { totalEvents: -1 } }
+        ]);
+
+        // Сравнительная активность по дням
+        const dailyComparison = await ChangelogEvent.aggregate([
+          { $match: match },
+          {
+            $group: {
+              _id: {
+                date: { $dateToString: { format: '%Y-%m-%d', date: '$created' } },
+                author: '$authorAccountId'
+              },
+              count: { $sum: 1 }
+            }
+          },
+          {
+            $group: {
+              _id: '$_id.date',
+              employees: {
+                $push: {
+                  authorAccountId: '$_id.author',
+                  count: '$count'
+                }
+              },
+              totalEvents: { $sum: '$count' }
+            }
+          },
+          {
+            $project: {
+              _id: 0,
+              date: '$_id',
+              employees: 1,
+              totalEvents: 1
+            }
+          },
+          { $sort: { date: 1 } }
+        ]);
+
+        return {
+          success: true,
+          teamSize: accountIds.length,
+          period: {
+            startDate: parseInt(startDate),
+            endDate: parseInt(endDate)
+          },
+          employeeStats,
+          dailyComparison
+        };
+      } catch (error) {
+        console.error('[Changelog] ❌ Ошибка получения активности команды:', error);
+        throw error;
+      }
+    }
+
+    /**
+     * Получить все логи с пагинацией (миллисекунды)
+     */
+    async getAllLogs(filters = {}) {
+      try {
+        return await this.search(filters);
+      } catch (error) {
+        console.error('[Changelog] ❌ Ошибка получения всех логов:', error);
+        throw error;
+      }
+    }
+
+    /**
+     * Статистика по временному периоду (миллисекунды)
+     */
+    async getTimeRangeStats(startDate, endDate, filters = {}) {
+      try {
+        const match = {
+          created: {
+            $gte: new Date(parseInt(startDate)),
+            $lte: new Date(parseInt(endDate))
+          }
+        };
+
+        if (filters.departmentId) match.departmentId = filters.departmentId;
+        if (filters.eventType) match.eventType = filters.eventType;
+        if (filters.authorAccountId) match.authorAccountId = filters.authorAccountId;
+
+        const stats = await ChangelogEvent.aggregate([
+          { $match: match },
+          {
+            $group: {
+              _id: null,
+              totalEvents: { $sum: 1 },
+              uniqueAuthors: { $addToSet: '$authorAccountId' },
+              uniqueIssues: { $addToSet: '$issueKey' },
+              uniqueDepartments: { $addToSet: '$departmentId' },
+              eventTypes: { $push: '$eventType' },
+              fields: { $push: '$field' },
+              firstEvent: { $min: '$created' },
+              lastEvent: { $max: '$created' }
+            }
+          },
+          {
+            $project: {
+              _id: 0,
+              totalEvents: 1,
+              uniqueAuthorsCount: { $size: '$uniqueAuthors' },
+              uniqueIssuesCount: { $size: '$uniqueIssues' },
+              uniqueDepartmentsCount: { $size: '$uniqueDepartments' },
+              eventTypesDistribution: {
+                $arrayToObject: {
+                  $map: {
+                    input: { $setUnion: ['$eventTypes'] },
+                    as: 'type',
+                    in: {
+                      k: '$$type',
+                      v: {
+                        $size: {
+                          $filter: {
+                            input: '$eventTypes',
+                            cond: { $eq: ['$$this', '$$type'] }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              fieldsDistribution: {
+                $arrayToObject: {
+                  $map: {
+                    input: { $setUnion: ['$fields'] },
+                    as: 'field',
+                    in: {
+                      k: '$$field',
+                      v: {
+                        $size: {
+                          $filter: {
+                            input: '$fields',
+                            cond: { $eq: ['$$this', '$$field'] }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              firstEvent: 1,
+              lastEvent: 1
+            }
+          }
+        ]);
+
+        return {
+          success: true,
+          period: {
+            startDate: parseInt(startDate),
+            endDate: parseInt(endDate)
+          },
+          stats: stats[0] || {
+            totalEvents: 0,
+            uniqueAuthorsCount: 0,
+            uniqueIssuesCount: 0,
+            uniqueDepartmentsCount: 0
+          }
+        };
+      } catch (error) {
+        console.error('[Changelog] ❌ Ошибка получения статистики по периоду:', error);
+        throw error;
+      }
+    }
+
+    /**
+     * Подсчет событий
+     */
+    async count(filters = {}) {
+      try {
+        const query = this._buildQuery(filters);
+        const count = await ChangelogEvent.countDocuments(query);
+        return { success: true, count };
+      } catch (error) {
+        console.error('[Changelog] ❌ Ошибка подсчета:', error);
+        throw error;
+      }
+    }
+
+    // ========== СТАРЫЕ МЕТОДЫ (совместимость) ==========
+
+    async getChangelog(issueId) {
+      return (await this.search({ issueId, limit: 1000 })).data;
+    }
+
+    async getAssignmentHistory(issueId) {
+      const result = await this.search({ issueId, field: 'assignee', limit: 1000 });
+      return result.data.map(e => ({
         date: e.created,
         eventType: e.eventType,
         author: e.authorDisplayName,
@@ -191,25 +686,11 @@ class ChangelogService {
         fromAccountId: e.fromAccountId,
         toAccountId: e.toAccountId
       }));
-    } catch (error) {
-      console.error('[Changelog] ❌ Ошибка получения истории назначений:', error);
-      throw error;
     }
-  }
 
-  /**
-   * Получение истории изменений статусов
-   */
-  async getStatusHistory(issueId) {
-    try {
-      const events = await ChangelogEvent.find({
-        issueId,
-        field: 'status'
-      })
-        .sort({ created: 1 })
-        .lean();
-
-      return events.map(e => ({
+    async getStatusHistory(issueId) {
+      const result = await this.search({ issueId, field: 'status', limit: 1000 });
+      return result.data.map(e => ({
         date: e.created,
         author: e.authorDisplayName,
         from: e.fromString,
@@ -217,604 +698,71 @@ class ChangelogService {
         fromId: e.from,
         toId: e.to
       }));
-    } catch (error) {
-      console.error('[Changelog] ❌ Ошибка получения истории статусов:', error);
-      throw error;
     }
-  }
 
-  /**
-   * Статистика по сотруднику
-   */
-  async getEmployeeStats(accountId, startDate, endDate) {
-    try {
-        return await ChangelogEvent.aggregate([
-          {
-              $match: {
-                  authorAccountId: accountId,
-                  created: {
-                      $gte: new Date(startDate),
-                      $lte: new Date(endDate)
-                  }
-              }
-          },
-          {
-              $group: {
-                  _id: '$field',
-                  count: {$sum: 1},
-                  lastChange: {$max: '$created'}
-              }
-          },
-          {$sort: {count: -1}}
-      ]);
-    } catch (error) {
-      console.error('[Changelog] ❌ Ошибка получения статистики:', error);
-      throw error;
+    async getEmployeeStats(accountId, startDate, endDate) {
+      const activity = await this.getEmployeeActivity(accountId, startDate, endDate);
+      return activity.dailyActivity;
     }
-  }
 
-  /**
-   * Получение активности по департаменту
-   */
-  async getDepartmentActivity(departmentId, startDate, endDate) {
-    try {
-        return await ChangelogEvent.aggregate([
-          {
-              $match: {
-                  departmentId: departmentId,
-                  created: {
-                      $gte: new Date(startDate),
-                      $lte: new Date(endDate)
-                  }
-              }
-          },
-          {
-              $group: {
-                  _id: {
-                      date: {$dateToString: {format: '%Y-%m-%d', date: '$created'}},
-                      author: '$authorAccountId'
-                  },
-                  count: {$sum: 1}
-              }
-          },
-          {
-              $group: {
-                  _id: '$_id.date',
-                  totalChanges: {$sum: '$count'},
-                  uniqueAuthors: {$addToSet: '$_id.author'}
-              }
-          },
-          {
-              $project: {
-                  _id: 0,
-                  date: '$_id',
-                  totalChanges: 1,
-                  uniqueAuthorsCount: {$size: '$uniqueAuthors'}
-              }
-          },
-          {$sort: {date: 1}}
-      ]);
-    } catch (error) {
-      console.error('[Changelog] ❌ Ошибка получения активности департамента:', error);
-      throw error;
+    async getHistoryByEventType(issueId, eventType) {
+      return (await this.search({ issueId, eventType, limit: 1000 })).data;
     }
-  }
 
-  /**
-   * Получение истории по типу события
-   */
-  async getHistoryByEventType(issueId, eventType) {
-    try {
-      const events = await ChangelogEvent.find({
-        issueId,
-        eventType
-      })
-        .sort({ created: 1 })
-        .lean();
-
-      return events;
-    } catch (error) {
-      console.error('[Changelog] ❌ Ошибка получения истории по типу события:', error);
-      throw error;
+    async getEventTypeStats(startDate, endDate) {
+      const stats = await this.getTimeRangeStats(startDate, endDate);
+      return stats.stats.eventTypesDistribution || {};
     }
-  }
 
-  /**
-   * Статистика по типам событий
-   */
-  async getEventTypeStats(startDate, endDate) {
-    try {
-      const result = await ChangelogEvent.aggregate([
-        {
-          $match: {
-            created: {
-              $gte: new Date(startDate),
-              $lte: new Date(endDate)
-            }
-          }
-        },
-        {
-          $group: {
-            _id: '$eventType',
-            count: { $sum: 1 },
-            uniqueIssues: { $addToSet: '$issueKey' }
-          }
-        },
-        {
-          $project: {
-            _id: 0,
-            eventType: '$_id',
-            count: 1,
-            uniqueIssuesCount: { $size: '$uniqueIssues' }
-          }
-        },
-        { $sort: { count: -1 } }
-      ]);
-
-      return result;
-    } catch (error) {
-      console.error('[Changelog] ❌ Ошибка получения статистики по типам событий:', error);
-      throw error;
+    async getAuthorActions(authorAccountId, startDate, endDate) {
+      return (await this.search({ authorAccountId, startDate, endDate, limit: 1000 })).data;
     }
-  }
 
-  /**
-   * Действия автора за период
-   */
-  async getAuthorActions(authorAccountId, startDate, endDate) {
-    try {
-      return await ChangelogEvent.find({
-        authorAccountId,
-        created: {
-          $gte: new Date(startDate),
-          $lte: new Date(endDate)
-        }
-      })
-        .sort({ created: -1 })
-        .lean();
-    } catch (error) {
-      console.error('[Changelog] ❌ Ошибка получения действий автора:', error);
-      throw error;
+    async getGroupActions(accountIds, startDate, endDate) {
+      return (await this.getTeamActivity(accountIds, startDate, endDate)).employeeStats;
     }
-  }
 
-  /**
-   * Действия группы людей
-   */
-  async getGroupActions(accountIds, startDate, endDate) {
-    try {
-      return await ChangelogEvent.find({
-        authorAccountId: { $in: accountIds },
-        created: {
-          $gte: new Date(startDate),
-          $lte: new Date(endDate)
-        }
-      })
-        .sort({ created: -1 })
-        .lean();
-    } catch (error) {
-      console.error('[Changelog] ❌ Ошибка получения действий группы:', error);
-      throw error;
+    async getAuthorStats(authorAccountId, startDate, endDate) {
+      const activity = await this.getEmployeeActivity(authorAccountId, startDate, endDate);
+      return activity.dailyActivity;
     }
-  }
 
-  /**
-   * Статистика активности автора
-   */
-  async getAuthorStats(authorAccountId, startDate, endDate) {
-    try {
-      return await ChangelogEvent.aggregate([
-        {
-          $match: {
-            authorAccountId,
-            created: {
-              $gte: new Date(startDate),
-              $lte: new Date(endDate)
-            }
-          }
-        },
-        {
-          $group: {
-            _id: {
-              date: { $dateToString: { format: '%Y-%m-%d', date: '$created' } },
-              eventType: '$eventType'
-            },
-            count: { $sum: 1 },
-            uniqueIssues: { $addToSet: '$issueKey' }
-          }
-        },
-        {
-          $project: {
-            _id: 0,
-            date: '$_id.date',
-            eventType: '$_id.eventType',
-            count: 1,
-            uniqueIssuesCount: { $size: '$uniqueIssues' }
-          }
-        },
-        { $sort: { date: 1 } }
-      ]);
-    } catch (error) {
-      console.error('[Changelog] ❌ Ошибка получения статистики автора:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Матрица назначений
-   */
-  async getAssignmentMatrix(startDate, endDate, departmentId = null) {
-    try {
+    async getAssignmentMatrix(startDate, endDate, departmentId = null) {
       const match = {
         field: 'assignee',
         toAccountId: { $ne: null },
         created: {
-          $gte: new Date(startDate),
-          $lte: new Date(endDate)
+          $gte: new Date(parseInt(startDate)),
+          $lte: new Date(parseInt(endDate))
         }
       };
 
       if (departmentId) match.departmentId = departmentId;
 
-      return await ChangelogEvent.aggregate([
-        { $match: match },
-        {
-          $group: {
-            _id: {
-              from: '$authorAccountId',
-              to: '$toAccountId'
-            },
-            count: { $sum: 1 },
-            issues: { $addToSet: '$issueKey' }
-          }
-        },
-        {
-          $project: {
-            _id: 0,
-            assignerAccountId: '$_id.from',
-            assigneeAccountId: '$_id.to',
-            count: 1,
-            issueKeys: '$issues'
-          }
-        },
-        { $sort: { count: -1 } }
+      return ChangelogEvent.aggregate([
+          {$match: match},
+          {
+              $group: {
+                  _id: {
+                      from: '$authorAccountId',
+                      to: '$toAccountId'
+                  },
+                  count: {$sum: 1},
+                  issues: {$addToSet: '$issueKey'}
+              }
+          },
+          {
+              $project: {
+                  _id: 0,
+                  assignerAccountId: '$_id.from',
+                  assigneeAccountId: '$_id.to',
+                  count: 1,
+                  issueKeys: '$issues'
+              }
+          },
+          {$sort: {count: -1}}
       ]);
-    } catch (error) {
-      console.error('[Changelog] ❌ Ошибка получения матрицы назначений:', error);
-      throw error;
     }
-  }
-
-  /**
-   * Универсальный поиск с гибкими фильтрами
-   * @param {Object} filters - Объект с фильтрами
-   * @param {string} filters.authorAccountId - ID автора
-   * @param {string} filters.departmentId - ID департамента
-   * @param {string} filters.issueKey - Ключ задачи
-   * @param {string} filters.issueId - ID задачи
-   * @param {string} filters.eventType - Тип события
-   * @param {string} filters.field - Поле изменения
-   * @param {Date|string} filters.startDate - Начало периода
-   * @param {Date|string} filters.endDate - Конец периода
-   * @param {number} filters.limit - Лимит результатов (по умолчанию 100)
-   * @param {number} filters.skip - Пропустить записей (пагинация)
-   * @param {string} filters.sort - Сортировка (по умолчанию '-created')
-   */
-  async findChangelogs(filters = {}) {
-    try {
-      const query = {};
-
-      // Фильтр по автору
-      if (filters.authorAccountId) {
-        query.authorAccountId = filters.authorAccountId;
-      }
-
-      // Фильтр по департаменту
-      if (filters.departmentId) {
-        query.departmentId = filters.departmentId;
-      }
-
-      // Фильтр по ключу задачи
-      if (filters.issueKey) {
-        query.issueKey = filters.issueKey;
-      }
-
-      // Фильтр по ID задачи
-      if (filters.issueId) {
-        query.issueId = filters.issueId;
-      }
-
-      // Фильтр по типу события
-      if (filters.eventType) {
-        query.eventType = filters.eventType;
-      }
-
-      // Фильтр по полю
-      if (filters.field) {
-        query.field = filters.field;
-      }
-
-      // Фильтр по времени
-      if (filters.startDate || filters.endDate) {
-        query.created = {};
-        if (filters.startDate) {
-          query.created.$gte = new Date(filters.startDate);
-        }
-        if (filters.endDate) {
-          query.created.$lte = new Date(filters.endDate);
-        }
-      }
-
-      const limit = parseInt(filters.limit) || 100;
-      const skip = parseInt(filters.skip) || 0;
-      const sort = filters.sort || '-created';
-
-      const events = await ChangelogEvent.find(query)
-        .sort(sort)
-        .limit(limit)
-        .skip(skip)
-        .lean();
-
-      const total = await ChangelogEvent.countDocuments(query);
-
-      return {
-        events,
-        pagination: {
-          total,
-          limit,
-          skip,
-          hasMore: total > skip + limit
-        }
-      };
-    } catch (error) {
-      console.error('[Changelog] ❌ Ошибка поиска:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Поиск по нескольким сотрудникам
-   * @param {string[]} accountIds - Массив ID сотрудников
-   * @param {Object} filters - Дополнительные фильтры
-   */
-  async findByMultipleAuthors(accountIds, filters = {}) {
-    try {
-      if (!Array.isArray(accountIds) || accountIds.length === 0) {
-        throw new Error('accountIds должен быть непустым массивом');
-      }
-
-      const query = {
-        authorAccountId: { $in: accountIds }
-      };
-
-      // Добавляем дополнительные фильтры
-      if (filters.departmentId) {
-        query.departmentId = filters.departmentId;
-      }
-
-      if (filters.eventType) {
-        query.eventType = filters.eventType;
-      }
-
-      if (filters.field) {
-        query.field = filters.field;
-      }
-
-      if (filters.startDate || filters.endDate) {
-        query.created = {};
-        if (filters.startDate) {
-          query.created.$gte = new Date(filters.startDate);
-        }
-        if (filters.endDate) {
-          query.created.$lte = new Date(filters.endDate);
-        }
-      }
-
-      const limit = parseInt(filters.limit) || 100;
-      const skip = parseInt(filters.skip) || 0;
-      const sort = filters.sort || '-created';
-
-      const events = await ChangelogEvent.find(query)
-        .sort(sort)
-        .limit(limit)
-        .skip(skip)
-        .lean();
-
-      const total = await ChangelogEvent.countDocuments(query);
-
-      return {
-        events,
-        pagination: {
-          total,
-          limit,
-          skip,
-          hasMore: total > skip + limit
-        }
-      };
-    } catch (error) {
-      console.error('[Changelog] ❌ Ошибка поиска по нескольким авторам:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Поиск по автору
-   */
-  async findByAuthor(authorAccountId, filters = {}) {
-    try {
-      return await this.findChangelogs({
-        authorAccountId,
-        ...filters
-      });
-    } catch (error) {
-      console.error('[Changelog] ❌ Ошибка поиска по автору:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Поиск по департаменту
-   */
-  async findByDepartment(departmentId, filters = {}) {
-    try {
-      return await this.findChangelogs({
-        departmentId,
-        ...filters
-      });
-    } catch (error) {
-      console.error('[Changelog] ❌ Ошибка поиска по департаменту:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Поиск по ключу задачи
-   */
-  async findByIssueKey(issueKey, filters = {}) {
-    try {
-      return await this.findChangelogs({
-        issueKey,
-        ...filters
-      });
-    } catch (error) {
-      console.error('[Changelog] ❌ Ошибка поиска по ключу задачи:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Поиск по типу события
-   */
-  async findByEventType(eventType, filters = {}) {
-    try {
-      return await this.findChangelogs({
-        eventType,
-        ...filters
-      });
-    } catch (error) {
-      console.error('[Changelog] ❌ Ошибка поиска по типу события:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Поиск по периоду времени
-   */
-  async findByDateRange(startDate, endDate, filters = {}) {
-    try {
-      return await this.findChangelogs({
-        startDate,
-        endDate,
-        ...filters
-      });
-    } catch (error) {
-      console.error('[Changelog] ❌ Ошибка поиска по периоду:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Получить все события (с пагинацией)
-   */
-  async getAllChangelogs(filters = {}) {
-    try {
-      return await this.findChangelogs(filters);
-    } catch (error) {
-      console.error('[Changelog] ❌ Ошибка получения всех событий:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Подсчет событий с фильтрами
-   */
-  async countChangelogs(filters = {}) {
-    try {
-      const query = {};
-
-      if (filters.authorAccountId) query.authorAccountId = filters.authorAccountId;
-      if (filters.departmentId) query.departmentId = filters.departmentId;
-      if (filters.issueKey) query.issueKey = filters.issueKey;
-      if (filters.issueId) query.issueId = filters.issueId;
-      if (filters.eventType) query.eventType = filters.eventType;
-      if (filters.field) query.field = filters.field;
-
-      if (filters.startDate || filters.endDate) {
-        query.created = {};
-        if (filters.startDate) query.created.$gte = new Date(filters.startDate);
-        if (filters.endDate) query.created.$lte = new Date(filters.endDate);
-      }
-
-      const count = await ChangelogEvent.countDocuments(query);
-      return { count };
-    } catch (error) {
-      console.error('[Changelog] ❌ Ошибка подсчета событий:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Агрегированная статистика по фильтрам
-   */
-  async getAggregatedStats(filters = {}) {
-    try {
-      const match = {};
-
-      if (filters.authorAccountId) match.authorAccountId = filters.authorAccountId;
-      if (filters.departmentId) match.departmentId = filters.departmentId;
-      if (filters.eventType) match.eventType = filters.eventType;
-
-      if (filters.startDate || filters.endDate) {
-        match.created = {};
-        if (filters.startDate) match.created.$gte = new Date(filters.startDate);
-        if (filters.endDate) match.created.$lte = new Date(filters.endDate);
-      }
-
-      const stats = await ChangelogEvent.aggregate([
-        { $match: match },
-        {
-          $group: {
-            _id: null,
-            totalEvents: { $sum: 1 },
-            uniqueIssues: { $addToSet: '$issueKey' },
-            uniqueAuthors: { $addToSet: '$authorAccountId' },
-            uniqueDepartments: { $addToSet: '$departmentId' },
-            eventTypes: { $addToSet: '$eventType' },
-            fields: { $addToSet: '$field' },
-            firstEvent: { $min: '$created' },
-            lastEvent: { $max: '$created' }
-          }
-        },
-        {
-          $project: {
-            _id: 0,
-            totalEvents: 1,
-            uniqueIssuesCount: { $size: '$uniqueIssues' },
-            uniqueAuthorsCount: { $size: '$uniqueAuthors' },
-            uniqueDepartmentsCount: { $size: '$uniqueDepartments' },
-            eventTypesCount: { $size: '$eventTypes' },
-            fieldsCount: { $size: '$fields' },
-            firstEvent: 1,
-            lastEvent: 1,
-            eventTypes: 1,
-            fields: 1
-          }
-        }
-      ]);
-
-      return stats[0] || {
-        totalEvents: 0,
-        uniqueIssuesCount: 0,
-        uniqueAuthorsCount: 0,
-        uniqueDepartmentsCount: 0,
-        eventTypesCount: 0,
-        fieldsCount: 0
-      };
-    } catch (error) {
-      console.error('[Changelog] ❌ Ошибка получения агрегированной статистики:', error);
-      throw error;
-    }
-  }
 }
 
 export default new ChangelogService();

@@ -1,4 +1,3 @@
-// packages/crm/src/pages/IssuesPage/IssuesPage.jsx
 import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import { URLS } from '../../utilities/urls';
@@ -23,11 +22,11 @@ const IssuesPage = () => {
   const [currentPage, setCurrentPage] = useState(1);
 
   const [filters, setFilters] = useState({
-    status: null,
-    assigneeAccountId: null,
-    assignmentGroupId: null,
-    typeId: null,
-    issueStatusId: null,
+    status: '',
+    assigneeAccountId: '',
+    assignmentGroupId: '',
+    typeId: '',
+    issueStatusId: '',
     limit: 20,
     skip: 0,
     sort: 'createdAt'
@@ -76,13 +75,35 @@ const IssuesPage = () => {
     showLoader();
     try {
       const token = localStorage.getItem('accessToken');
-      const params = { ...filters };
+
+      // Формируем параметры, исключая пустые значения
+      const params = {
+        limit: filters.limit,
+        skip: filters.skip,
+        sort: filters.sort
+      };
+
+      if (filters.status && filters.status.trim()) {
+        params.status = filters.status.trim();
+      }
+      if (filters.assigneeAccountId) {
+        params.assigneeAccountId = filters.assigneeAccountId;
+      }
+      if (filters.assignmentGroupId) {
+        params.assignmentGroupId = filters.assignmentGroupId;
+      }
+      if (filters.typeId) {
+        params.typeId = filters.typeId;
+      }
+      if (filters.issueStatusId) {
+        params.issueStatusId = filters.issueStatusId;
+      }
 
       const response = await axios.get(URLS.GET_ISSUES, {
         headers: { Authorization: `Bearer ${token}` },
         params
       });
-        console.log(response.data)
+
       setIssues(response.data.data || []);
       setTotal(response.data.total || 0);
     } catch (error) {
@@ -100,7 +121,7 @@ const IssuesPage = () => {
 
   useEffect(() => {
     fetchIssues();
-  }, []);
+  }, [filters.skip, filters.limit, filters.sort]);
 
   const getDepartmentName = (jiraId) => {
     const dept = departments.find(d => d.jiraId === jiraId);
@@ -124,10 +145,10 @@ const IssuesPage = () => {
     return shift?.assigneeName || accountId;
   };
 
-  const searchFilters = () => {
-    setFilters(prev => ({ ...prev, skip: 0 }))
-      fetchIssues()
-  }
+  const handleSearch = () => {
+    setCurrentPage(1);
+    setFilters(prev => ({ ...prev, skip: 0 }));
+  };
 
   const getStatusClass = (status) => {
     const lowerStatus = status?.toLowerCase() || '';
@@ -141,11 +162,11 @@ const IssuesPage = () => {
 
   const handleReset = () => {
     setFilters({
-      status: null,
-      assigneeAccountId: null,
-      assignmentGroupId: null,
-      typeId: null,
-      issueStatusId: null,
+      status: '',
+      assigneeAccountId: '',
+      assignmentGroupId: '',
+      typeId: '',
+      issueStatusId: '',
       limit: 20,
       skip: 0,
       sort: 'createdAt'
@@ -159,18 +180,27 @@ const IssuesPage = () => {
     setCurrentPage(newPage);
   };
 
+  const handleFilterChange = (key, value) => {
+    setFilters(prev => ({
+      ...prev,
+      [key]: value,
+      skip: 0
+    }));
+    setCurrentPage(1);
+  };
+
   const departmentOptions = [
-    { value: null, label: 'Все отделы' },
+    { value: '', label: 'Все отделы' },
     ...departments.map(d => ({ value: d.jiraId, label: d.name }))
   ];
 
   const typeOptions = [
-    { value: null, label: 'Все типы' },
+    { value: '', label: 'Все типы' },
     ...types.map(t => ({ value: t.typeId, label: t.name }))
   ];
 
   const assigneeOptions = [
-    { value: null, label: 'Все исполнители' },
+    { value: '', label: 'Все исполнители' },
     ...shifts.map(s => ({ value: s.accountId, label: s.assigneeName }))
   ];
 
@@ -179,6 +209,13 @@ const IssuesPage = () => {
     { value: '-createdAt', label: 'По дате создания (старые)' },
     { value: 'updatedAt', label: 'По обновлению (новые)' },
     { value: '-updatedAt', label: 'По обновлению (старые)' }
+  ];
+
+  const limitOptions = [
+    { value: 10, label: '10' },
+    { value: 20, label: '20' },
+    { value: 50, label: '50' },
+    { value: 100, label: '100' }
   ];
 
   const totalPages = Math.ceil(total / filters.limit);
@@ -222,7 +259,7 @@ const IssuesPage = () => {
                 <Select
                   options={departmentOptions}
                   value={filters.assignmentGroupId}
-                  onChange={(value) => setFilters(prev => ({ ...prev, assignmentGroupId: value, skip: 0 }))}
+                  onChange={(value) => handleFilterChange('assignmentGroupId', value)}
                   placeholder="Выберите отдел"
                 />
               </label>
@@ -232,7 +269,7 @@ const IssuesPage = () => {
                 <Select
                   options={typeOptions}
                   value={filters.typeId}
-                  onChange={(value) => setFilters(prev => ({ ...prev, typeId: value, skip: 0 }))}
+                  onChange={(value) => handleFilterChange('typeId', value)}
                   placeholder="Выберите тип"
                 />
               </label>
@@ -244,7 +281,7 @@ const IssuesPage = () => {
                 <Select
                   options={assigneeOptions}
                   value={filters.assigneeAccountId}
-                  onChange={(value) => setFilters(prev => ({ ...prev, assigneeAccountId: value, skip: 0 }))}
+                  onChange={(value) => handleFilterChange('assigneeAccountId', value)}
                   placeholder="Выберите исполнителя"
                 />
               </label>
@@ -264,8 +301,8 @@ const IssuesPage = () => {
                 <span>Статус заявки</span>
                 <input
                   type="text"
-                  value={filters.status || ''}
-                  onChange={(e) => setFilters(prev => ({ ...prev, status: e.target.value, skip: 0 }))}
+                  value={filters.status}
+                  onChange={(e) => setFilters(prev => ({ ...prev, status: e.target.value }))}
                   placeholder="Введите статус"
                   className={classes.filterInput}
                 />
@@ -273,19 +310,16 @@ const IssuesPage = () => {
 
               <label>
                 <span>Записей на странице</span>
-                <input
-                  type="number"
-                  min="5"
-                  max="100"
+                <Select
+                  options={limitOptions}
                   value={filters.limit}
-                  onChange={(e) => setFilters(prev => ({ ...prev, limit: parseInt(e.target.value, 10) || 20, skip: 0 }))}
-                  className={classes.filterInput}
+                  onChange={(value) => handleFilterChange('limit', value)}
                 />
               </label>
             </div>
 
             <div className={classes.filterActions}>
-              <Button onClick={searchFilters} icon={<FaSearch />}>
+              <Button onClick={handleSearch} icon={<FaSearch />}>
                 Применить
               </Button>
               <Button variant="secondary" onClick={handleReset} icon={<FaRedo />}>

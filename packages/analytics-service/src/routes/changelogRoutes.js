@@ -10,7 +10,7 @@ const router = express.Router();
  */
 router.post('/save', async (req, res) => {
   try {
-    const { issueId, issueKey, assigneeAccountId, eventType, user, changelogItem } = req.body;
+    const { issueId, issueKey, assigneeAccountId, eventType, user, changelogItem, departmentId } = req.body;
 
     if (!issueId || !issueKey || !eventType || !user || !changelogItem) {
       return res.status(400).json({
@@ -25,7 +25,8 @@ router.post('/save', async (req, res) => {
       assigneeAccountId,
       eventType,
       user,
-      changelogItem
+      changelogItem,
+      departmentId
     );
 
     res.status(201).json({
@@ -75,9 +76,236 @@ router.post('/bulk', async (req, res) => {
   }
 });
 
+// ========== НОВАЯ СИСТЕМА ПОИСКА ==========
+
+/**
+ * GET /api/changelog/search
+ * Универсальный поиск с фильтрами (миллисекунды)
+ * Query params: authorAccountId, departmentId, issueKey, eventType, field, startDate, endDate, limit, skip, sort
+ */
+router.get('/search', async (req, res) => {
+  try {
+    const filters = {};
+
+    // Основные фильтры
+    if (req.query.authorAccountId) filters.authorAccountId = req.query.authorAccountId;
+    if (req.query.toAccountId) filters.toAccountId = req.query.toAccountId;
+    if (req.query.fromAccountId) filters.fromAccountId = req.query.fromAccountId;
+    if (req.query.departmentId) filters.departmentId = req.query.departmentId;
+    if (req.query.issueKey) filters.issueKey = req.query.issueKey;
+    if (req.query.issueId) filters.issueId = req.query.issueId;
+    if (req.query.eventType) filters.eventType = req.query.eventType;
+    if (req.query.field) filters.field = req.query.field;
+
+    // Временные фильтры (миллисекунды)
+    if (req.query.startDate) filters.startDate = req.query.startDate;
+    if (req.query.endDate) filters.endDate = req.query.endDate;
+
+    // Пагинация и сортировка
+    if (req.query.limit) filters.limit = req.query.limit;
+    if (req.query.skip) filters.skip = req.query.skip;
+    if (req.query.sort) filters.sort = req.query.sort;
+
+    const result = await changelogService.search(filters);
+
+    res.status(200).json(result);
+  } catch (error) {
+    console.error('[GET /changelog/search] Ошибка:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Ошибка при поиске',
+      error: error.message
+    });
+  }
+});
+
+/**
+ * GET /api/changelog/employee-activity/:accountId
+ * Детальная активность сотрудника (миллисекунды)
+ * Query params: startDate, endDate (обязательны, в миллисекундах)
+ */
+router.get('/employee-activity/:accountId', async (req, res) => {
+  try {
+    const { accountId } = req.params;
+    const { startDate, endDate, departmentId, eventType } = req.query;
+
+    if (!startDate || !endDate) {
+      return res.status(400).json({
+        success: false,
+        message: 'Параметры startDate и endDate обязательны (в миллисекундах)'
+      });
+    }
+
+    const result = await changelogService.getEmployeeActivity(
+      accountId,
+      startDate,
+      endDate,
+      { departmentId, eventType }
+    );
+
+    res.status(200).json(result);
+  } catch (error) {
+    console.error(`[GET /changelog/employee-activity/${req.params.accountId}] Ошибка:`, error);
+    res.status(500).json({
+      success: false,
+      message: 'Ошибка при получении активности сотрудника',
+      error: error.message
+    });
+  }
+});
+
+/**
+ * GET /api/changelog/department-activity/:departmentId
+ * Детальная активность департамента (миллисекунды)
+ * Query params: startDate, endDate (обязательны, в миллисекундах)
+ */
+router.get('/department-activity/:departmentId', async (req, res) => {
+  try {
+    const { departmentId } = req.params;
+    const { startDate, endDate, eventType } = req.query;
+
+    if (!startDate || !endDate) {
+      return res.status(400).json({
+        success: false,
+        message: 'Параметры startDate и endDate обязательны (в миллисекундах)'
+      });
+    }
+
+    const result = await changelogService.getDepartmentActivity(
+      departmentId,
+      startDate,
+      endDate,
+      { eventType }
+    );
+
+    res.status(200).json(result);
+  } catch (error) {
+    console.error(`[GET /changelog/department-activity/${req.params.departmentId}] Ошибка:`, error);
+    res.status(500).json({
+      success: false,
+      message: 'Ошибка при получении активности департамента',
+      error: error.message
+    });
+  }
+});
+
+/**
+ * POST /api/changelog/team-activity
+ * Активность команды (миллисекунды)
+ * Body: { accountIds: string[], startDate: number, endDate: number, departmentId?, eventType? }
+ */
+router.post('/team-activity', async (req, res) => {
+  try {
+    const { accountIds, startDate, endDate, departmentId, eventType } = req.body;
+
+    if (!Array.isArray(accountIds) || accountIds.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'accountIds должен быть непустым массивом'
+      });
+    }
+
+    if (!startDate || !endDate) {
+      return res.status(400).json({
+        success: false,
+        message: 'Параметры startDate и endDate обязательны (в миллисекундах)'
+      });
+    }
+
+    const result = await changelogService.getTeamActivity(
+      accountIds,
+      startDate,
+      endDate,
+      { departmentId, eventType }
+    );
+
+    res.status(200).json(result);
+  } catch (error) {
+    console.error('[POST /changelog/team-activity] Ошибка:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Ошибка при получении активности команды',
+      error: error.message
+    });
+  }
+});
+
+/**
+ * GET /api/changelog/all
+ * Все логи с пагинацией (миллисекунды)
+ * Query params: startDate, endDate, departmentId, eventType, limit, skip, sort
+ */
+router.get('/all', async (req, res) => {
+  try {
+    const result = await changelogService.getAllLogs(req.query);
+    res.status(200).json(result);
+  } catch (error) {
+    console.error('[GET /changelog/all] Ошибка:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Ошибка при получении всех логов',
+      error: error.message
+    });
+  }
+});
+
+/**
+ * GET /api/changelog/stats
+ * Статистика по периоду (миллисекунды)
+ * Query params: startDate, endDate (обязательны), departmentId, eventType, authorAccountId
+ */
+router.get('/stats', async (req, res) => {
+  try {
+    const { startDate, endDate, departmentId, eventType, authorAccountId } = req.query;
+
+    if (!startDate || !endDate) {
+      return res.status(400).json({
+        success: false,
+        message: 'Параметры startDate и endDate обязательны (в миллисекундах)'
+      });
+    }
+
+    const result = await changelogService.getTimeRangeStats(
+      startDate,
+      endDate,
+      { departmentId, eventType, authorAccountId }
+    );
+
+    res.status(200).json(result);
+  } catch (error) {
+    console.error('[GET /changelog/stats] Ошибка:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Ошибка при получении статистики',
+      error: error.message
+    });
+  }
+});
+
+/**
+ * GET /api/changelog/count
+ * Подсчет событий
+ * Query params: любые фильтры (authorAccountId, departmentId, issueKey, eventType, startDate, endDate)
+ */
+router.get('/count', async (req, res) => {
+  try {
+    const result = await changelogService.count(req.query);
+    res.status(200).json(result);
+  } catch (error) {
+    console.error('[GET /changelog/count] Ошибка:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Ошибка при подсчете событий',
+      error: error.message
+    });
+  }
+});
+
+// ========== СТАРЫЕ МЕТОДЫ (для обратной совместимости) ==========
+
 /**
  * GET /api/changelog/issue/:issueId
- * Получение истории изменений задачи
+ * История изменений задачи
  */
 router.get('/issue/:issueId', async (req, res) => {
   try {
@@ -101,7 +329,7 @@ router.get('/issue/:issueId', async (req, res) => {
 
 /**
  * GET /api/changelog/assignment-history/:issueId
- * Получение истории назначений
+ * История назначений
  */
 router.get('/assignment-history/:issueId', async (req, res) => {
   try {
@@ -125,7 +353,7 @@ router.get('/assignment-history/:issueId', async (req, res) => {
 
 /**
  * GET /api/changelog/status-history/:issueId
- * Получение истории изменений статусов
+ * История статусов
  */
 router.get('/status-history/:issueId', async (req, res) => {
   try {
@@ -148,72 +376,8 @@ router.get('/status-history/:issueId', async (req, res) => {
 });
 
 /**
- * GET /api/changelog/employee-stats/:accountId
- * Статистика по сотруднику
- */
-router.get('/employee-stats/:accountId', async (req, res) => {
-  try {
-    const { accountId } = req.params;
-    const { startDate, endDate } = req.query;
-
-    if (!startDate || !endDate) {
-      return res.status(400).json({
-        success: false,
-        message: 'Не указаны обязательные параметры: startDate, endDate'
-      });
-    }
-
-    const stats = await changelogService.getEmployeeStats(accountId, startDate, endDate);
-
-    res.status(200).json({
-      success: true,
-      data: stats
-    });
-  } catch (error) {
-    console.error(`[GET /changelog/employee-stats/${req.params.accountId}] Ошибка:`, error);
-    res.status(500).json({
-      success: false,
-      message: 'Ошибка при получении статистики сотрудника',
-      error: error.message
-    });
-  }
-});
-
-/**
- * GET /api/changelog/department-activity/:departmentId
- * Получение активности по департаменту
- */
-router.get('/department-activity/:departmentId', async (req, res) => {
-  try {
-    const { departmentId } = req.params;
-    const { startDate, endDate } = req.query;
-
-    if (!startDate || !endDate) {
-      return res.status(400).json({
-        success: false,
-        message: 'Не указаны обязательные параметры: startDate, endDate'
-      });
-    }
-
-    const activity = await changelogService.getDepartmentActivity(departmentId, startDate, endDate);
-
-    res.status(200).json({
-      success: true,
-      data: activity
-    });
-  } catch (error) {
-    console.error(`[GET /changelog/department-activity/${req.params.departmentId}] Ошибка:`, error);
-    res.status(500).json({
-      success: false,
-      message: 'Ошибка при получении активности департамента',
-      error: error.message
-    });
-  }
-});
-
-/**
  * GET /api/changelog/event-type/:issueId/:eventType
- * Получение истории по типу события
+ * История по типу события
  */
 router.get('/event-type/:issueId/:eventType', async (req, res) => {
   try {
@@ -236,143 +400,8 @@ router.get('/event-type/:issueId/:eventType', async (req, res) => {
 });
 
 /**
- * GET /api/changelog/event-type-stats
- * Статистика по типам событий
- */
-router.get('/event-type-stats', async (req, res) => {
-  try {
-    const { startDate, endDate } = req.query;
-
-    if (!startDate || !endDate) {
-      return res.status(400).json({
-        success: false,
-        message: 'Не указаны обязательные параметры: startDate, endDate'
-      });
-    }
-
-    const stats = await changelogService.getEventTypeStats(startDate, endDate);
-
-    res.status(200).json({
-      success: true,
-      data: stats
-    });
-  } catch (error) {
-    console.error('[GET /changelog/event-type-stats] Ошибка:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Ошибка при получении статистики по типам событий',
-      error: error.message
-    });
-  }
-});
-
-/**
- * GET /api/changelog/author-actions/:authorAccountId
- * Действия автора за период
- */
-router.get('/author-actions/:authorAccountId', async (req, res) => {
-  try {
-    const { authorAccountId } = req.params;
-    const { startDate, endDate } = req.query;
-
-    if (!startDate || !endDate) {
-      return res.status(400).json({
-        success: false,
-        message: 'Не указаны обязательные параметры: startDate, endDate'
-      });
-    }
-
-    const actions = await changelogService.getAuthorActions(authorAccountId, startDate, endDate);
-
-    res.status(200).json({
-      success: true,
-      data: actions,
-      count: actions.length
-    });
-  } catch (error) {
-    console.error(`[GET /changelog/author-actions/${req.params.authorAccountId}] Ошибка:`, error);
-    res.status(500).json({
-      success: false,
-      message: 'Ошибка при получении действий автора',
-      error: error.message
-    });
-  }
-});
-
-/**
- * POST /api/changelog/group-actions
- * Действия группы людей
- */
-router.post('/group-actions', async (req, res) => {
-  try {
-    const { accountIds, startDate, endDate } = req.body;
-
-    if (!Array.isArray(accountIds) || accountIds.length === 0) {
-      return res.status(400).json({
-        success: false,
-        message: 'accountIds должен быть массивом с элементами'
-      });
-    }
-
-    if (!startDate || !endDate) {
-      return res.status(400).json({
-        success: false,
-        message: 'Не указаны обязательные параметры: startDate, endDate'
-      });
-    }
-
-    const actions = await changelogService.getGroupActions(accountIds, startDate, endDate);
-
-    res.status(200).json({
-      success: true,
-      data: actions,
-      count: actions.length
-    });
-  } catch (error) {
-    console.error('[POST /changelog/group-actions] Ошибка:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Ошибка при получении действий группы',
-      error: error.message
-    });
-  }
-});
-
-/**
- * GET /api/changelog/author-stats/:authorAccountId
- * Статистика активности автора
- */
-router.get('/author-stats/:authorAccountId', async (req, res) => {
-  try {
-    const { authorAccountId } = req.params;
-    const { startDate, endDate } = req.query;
-
-    if (!startDate || !endDate) {
-      return res.status(400).json({
-        success: false,
-        message: 'Не указаны обязательные параметры: startDate, endDate'
-      });
-    }
-
-    const stats = await changelogService.getAuthorStats(authorAccountId, startDate, endDate);
-
-    res.status(200).json({
-      success: true,
-      data: stats
-    });
-  } catch (error) {
-    console.error(`[GET /changelog/author-stats/${req.params.authorAccountId}] Ошибка:`, error);
-    res.status(500).json({
-      success: false,
-      message: 'Ошибка при получении статистики автора',
-      error: error.message
-    });
-  }
-});
-
-/**
  * GET /api/changelog/assignment-matrix
- * Матрица назначений
+ * Матрица назначений (миллисекунды)
  */
 router.get('/assignment-matrix', async (req, res) => {
   try {
@@ -381,7 +410,7 @@ router.get('/assignment-matrix', async (req, res) => {
     if (!startDate || !endDate) {
       return res.status(400).json({
         success: false,
-        message: 'Не указаны обязательные параметры: startDate, endDate'
+        message: 'Параметры startDate и endDate обязательны (в миллисекундах)'
       });
     }
 
@@ -396,368 +425,6 @@ router.get('/assignment-matrix', async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Ошибка при получении матрицы назначений',
-      error: error.message
-    });
-  }
-});
-
-/**
- * GET /api/changelog/search
- * Универсальный поиск с фильтрами
- */
-router.get('/search', async (req, res) => {
-  try {
-    const filters = {
-      authorAccountId: req.query.authorAccountId,
-      departmentId: req.query.departmentId,
-      issueKey: req.query.issueKey,
-      issueId: req.query.issueId,
-      eventType: req.query.eventType,
-      field: req.query.field,
-      startDate: req.query.startDate,
-      endDate: req.query.endDate,
-      limit: req.query.limit,
-      skip: req.query.skip,
-      sort: req.query.sort
-    };
-
-    // Удаляем undefined значения
-    Object.keys(filters).forEach(key => filters[key] === undefined && delete filters[key]);
-
-    const result = await changelogService.findChangelogs(filters);
-
-    res.status(200).json({
-      success: true,
-      data: result.events,
-      pagination: result.pagination
-    });
-  } catch (error) {
-    console.error('[GET /changelog/search] Ошибка:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Ошибка поиска событий',
-      error: error.message
-    });
-  }
-});
-
-/**
- * POST /api/changelog/search-multiple-authors
- * Поиск по нескольким сотрудникам
- */
-router.post('/search-multiple-authors', async (req, res) => {
-  try {
-    const { accountIds, filters } = req.body;
-
-    if (!Array.isArray(accountIds) || accountIds.length === 0) {
-      return res.status(400).json({
-        success: false,
-        message: 'accountIds должен быть непустым массивом'
-      });
-    }
-
-    const result = await changelogService.findByMultipleAuthors(accountIds, filters || {});
-
-    res.status(200).json({
-      success: true,
-      data: result.events,
-      pagination: result.pagination
-    });
-  } catch (error) {
-    console.error('[POST /changelog/search-multiple-authors] Ошибка:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Ошибка поиска по нескольким авторам',
-      error: error.message
-    });
-  }
-});
-
-/**
- * GET /api/changelog/by-author/:authorAccountId
- * Поиск по автору
- */
-router.get('/by-author/:authorAccountId', async (req, res) => {
-  try {
-    const { authorAccountId } = req.params;
-    const filters = {
-      departmentId: req.query.departmentId,
-      eventType: req.query.eventType,
-      field: req.query.field,
-      startDate: req.query.startDate,
-      endDate: req.query.endDate,
-      limit: req.query.limit,
-      skip: req.query.skip,
-      sort: req.query.sort
-    };
-
-    Object.keys(filters).forEach(key => filters[key] === undefined && delete filters[key]);
-
-    const result = await changelogService.findByAuthor(authorAccountId, filters);
-
-    res.status(200).json({
-      success: true,
-      data: result.events,
-      pagination: result.pagination
-    });
-  } catch (error) {
-    console.error(`[GET /changelog/by-author/${req.params.authorAccountId}] Ошибка:`, error);
-    res.status(500).json({
-      success: false,
-      message: 'Ошибка поиска по автору',
-      error: error.message
-    });
-  }
-});
-
-/**
- * GET /api/changelog/by-department/:departmentId
- * Поиск по департаменту
- */
-router.get('/by-department/:departmentId', async (req, res) => {
-  try {
-    const { departmentId } = req.params;
-    const filters = {
-      authorAccountId: req.query.authorAccountId,
-      eventType: req.query.eventType,
-      field: req.query.field,
-      startDate: req.query.startDate,
-      endDate: req.query.endDate,
-      limit: req.query.limit,
-      skip: req.query.skip,
-      sort: req.query.sort
-    };
-
-    Object.keys(filters).forEach(key => filters[key] === undefined && delete filters[key]);
-
-    const result = await changelogService.findByDepartment(departmentId, filters);
-
-    res.status(200).json({
-      success: true,
-      data: result.events,
-      pagination: result.pagination
-    });
-  } catch (error) {
-    console.error(`[GET /changelog/by-department/${req.params.departmentId}] Ошибка:`, error);
-    res.status(500).json({
-      success: false,
-      message: 'Ошибка поиска по департаменту',
-      error: error.message
-    });
-  }
-});
-
-/**
- * GET /api/changelog/by-issue-key/:issueKey
- * Поиск по ключу задачи
- */
-router.get('/by-issue-key/:issueKey', async (req, res) => {
-  try {
-    const { issueKey } = req.params;
-    const filters = {
-      eventType: req.query.eventType,
-      field: req.query.field,
-      startDate: req.query.startDate,
-      endDate: req.query.endDate,
-      limit: req.query.limit,
-      skip: req.query.skip,
-      sort: req.query.sort
-    };
-
-    Object.keys(filters).forEach(key => filters[key] === undefined && delete filters[key]);
-
-    const result = await changelogService.findByIssueKey(issueKey, filters);
-
-    res.status(200).json({
-      success: true,
-      data: result.events,
-      pagination: result.pagination
-    });
-  } catch (error) {
-    console.error(`[GET /changelog/by-issue-key/${req.params.issueKey}] Ошибка:`, error);
-    res.status(500).json({
-      success: false,
-      message: 'Ошибка поиска по ключу задачи',
-      error: error.message
-    });
-  }
-});
-
-/**
- * GET /api/changelog/by-event-type/:eventType
- * Поиск по типу события
- */
-router.get('/by-event-type/:eventType', async (req, res) => {
-  try {
-    const { eventType } = req.params;
-    const filters = {
-      authorAccountId: req.query.authorAccountId,
-      departmentId: req.query.departmentId,
-      issueKey: req.query.issueKey,
-      field: req.query.field,
-      startDate: req.query.startDate,
-      endDate: req.query.endDate,
-      limit: req.query.limit,
-      skip: req.query.skip,
-      sort: req.query.sort
-    };
-
-    Object.keys(filters).forEach(key => filters[key] === undefined && delete filters[key]);
-
-    const result = await changelogService.findByEventType(eventType, filters);
-
-    res.status(200).json({
-      success: true,
-      data: result.events,
-      pagination: result.pagination
-    });
-  } catch (error) {
-    console.error(`[GET /changelog/by-event-type/${req.params.eventType}] Ошибка:`, error);
-    res.status(500).json({
-      success: false,
-      message: 'Ошибка поиска по типу события',
-      error: error.message
-    });
-  }
-});
-
-/**
- * GET /api/changelog/by-date-range
- * Поиск по периоду времени
- */
-router.get('/by-date-range', async (req, res) => {
-  try {
-    const { startDate, endDate } = req.query;
-
-    if (!startDate || !endDate) {
-      return res.status(400).json({
-        success: false,
-        message: 'Не указаны обязательные параметры: startDate, endDate'
-      });
-    }
-
-    const filters = {
-      authorAccountId: req.query.authorAccountId,
-      departmentId: req.query.departmentId,
-      eventType: req.query.eventType,
-      field: req.query.field,
-      limit: req.query.limit,
-      skip: req.query.skip,
-      sort: req.query.sort
-    };
-
-    Object.keys(filters).forEach(key => filters[key] === undefined && delete filters[key]);
-
-    const result = await changelogService.findByDateRange(startDate, endDate, filters);
-
-    res.status(200).json({
-      success: true,
-      data: result.events,
-      pagination: result.pagination
-    });
-  } catch (error) {
-    console.error('[GET /changelog/by-date-range] Ошибка:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Ошибка поиска по периоду',
-      error: error.message
-    });
-  }
-});
-
-/**
- * GET /api/changelog/all
- * Получить все события (с пагинацией)
- */
-router.get('/all', async (req, res) => {
-  try {
-    const filters = {
-      limit: req.query.limit,
-      skip: req.query.skip,
-      sort: req.query.sort
-    };
-
-    Object.keys(filters).forEach(key => filters[key] === undefined && delete filters[key]);
-
-    const result = await changelogService.getAllChangelogs(filters);
-
-    res.status(200).json({
-      success: true,
-      data: result.events,
-      pagination: result.pagination
-    });
-  } catch (error) {
-    console.error('[GET /changelog/all] Ошибка:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Ошибка получения всех событий',
-      error: error.message
-    });
-  }
-});
-
-/**
- * GET /api/changelog/count
- * Подсчет событий с фильтрами
- */
-router.get('/count', async (req, res) => {
-  try {
-    const filters = {
-      authorAccountId: req.query.authorAccountId,
-      departmentId: req.query.departmentId,
-      issueKey: req.query.issueKey,
-      issueId: req.query.issueId,
-      eventType: req.query.eventType,
-      field: req.query.field,
-      startDate: req.query.startDate,
-      endDate: req.query.endDate
-    };
-
-    Object.keys(filters).forEach(key => filters[key] === undefined && delete filters[key]);
-
-    const result = await changelogService.countChangelogs(filters);
-
-    res.status(200).json({
-      success: true,
-      data: result
-    });
-  } catch (error) {
-    console.error('[GET /changelog/count] Ошибка:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Ошибка подсчета событий',
-      error: error.message
-    });
-  }
-});
-
-/**
- * GET /api/changelog/stats
- * Агрегированная статистика
- */
-router.get('/stats', async (req, res) => {
-  try {
-    const filters = {
-      authorAccountId: req.query.authorAccountId,
-      departmentId: req.query.departmentId,
-      eventType: req.query.eventType,
-      startDate: req.query.startDate,
-      endDate: req.query.endDate
-    };
-
-    Object.keys(filters).forEach(key => filters[key] === undefined && delete filters[key]);
-
-    const stats = await changelogService.getAggregatedStats(filters);
-
-    res.status(200).json({
-      success: true,
-      data: stats
-    });
-  } catch (error) {
-    console.error('[GET /changelog/stats] Ошибка:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Ошибка получения статистики',
       error: error.message
     });
   }

@@ -13,6 +13,7 @@ import NotReadyYet from "./components/NotReadyYet/NotReadyYet";
 import IssuesPage from "./pages/IssuesPage/IssuesPage";
 import ScheduleTablePage from "./pages/ScheduleTablePage/ScheduleTablePage";
 import DepartmentActivityPage from "./pages/DepartmentActivityPage/DepartmentActivityPage";
+import HourlyActivityPage from "./pages/HourlyActivityPage/HourlyActivityPage";
 
 const AppRouter = () => {
   return (
@@ -88,6 +89,14 @@ const AppRouter = () => {
               <ProtectedRoute>
                   <MainContainer>
                       <DepartmentActivityPage/>
+                  </MainContainer>
+              </ProtectedRoute>
+          }/>
+
+          <Route path='/hourly-activity' element={
+              <ProtectedRoute>
+                  <MainContainer>
+                      <HourlyActivityPage/>
                   </MainContainer>
               </ProtectedRoute>
           }/>

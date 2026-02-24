@@ -116,49 +116,28 @@ export const URLS = {
     GET_ISSUES_STATS_BY_ASSIGNEE: `${BASE_URL}/api/analytics/issues/stats/by-assignee`,
     GET_ISSUES_STATS_BY_GROUP: `${BASE_URL}/api/analytics/issues/stats/by-group`,
 
-    // ========== CHANGELOG SERVICE ==========
-    // Сохранение changelog событий
+   // ========== CHANGELOG SERVICE ==========
+// Сохранение
     SAVE_CHANGELOG: `${BASE_URL}/api/analytics/changelog/save`,
     SAVE_BULK_CHANGELOGS: `${BASE_URL}/api/analytics/changelog/bulk`,
 
-    // Получение истории изменений
+// Новая система поиска (миллисекунды)
+    SEARCH_CHANGELOGS: `${BASE_URL}/api/analytics/changelog/search`,
+    GET_ALL_CHANGELOGS: `${BASE_URL}/api/analytics/changelog/all`,
+    COUNT_CHANGELOGS: `${BASE_URL}/api/analytics/changelog/count`,
+    GET_CHANGELOG_STATS: `${BASE_URL}/api/analytics/changelog/stats`,
+
+// Активность (миллисекунды)
+    GET_EMPLOYEE_ACTIVITY: (accountId) => `${BASE_URL}/api/analytics/changelog/employee-activity/${accountId}`,
+    GET_DEPARTMENT_ACTIVITY: (departmentId) => `${BASE_URL}/api/analytics/changelog/department-activity/${departmentId}`,
+    GET_TEAM_ACTIVITY: `${BASE_URL}/api/analytics/changelog/team-activity`,
+
+// Старые методы (совместимость)
     GET_CHANGELOG_BY_ISSUE: (issueId) => `${BASE_URL}/api/analytics/changelog/issue/${issueId}`,
     GET_ASSIGNMENT_HISTORY: (issueId) => `${BASE_URL}/api/analytics/changelog/assignment-history/${issueId}`,
     GET_STATUS_HISTORY: (issueId) => `${BASE_URL}/api/analytics/changelog/status-history/${issueId}`,
     GET_HISTORY_BY_EVENT_TYPE: (issueId, eventType) => `${BASE_URL}/api/analytics/changelog/event-type/${issueId}/${eventType}`,
-
-    // Статистика по сотрудникам
-    GET_EMPLOYEE_STATS: (accountId) => `${BASE_URL}/api/analytics/changelog/employee-stats/${accountId}`,
-    GET_AUTHOR_ACTIONS: (authorAccountId) => `${BASE_URL}/api/analytics/changelog/author-actions/${authorAccountId}`,
-    GET_AUTHOR_STATS: (authorAccountId) => `${BASE_URL}/api/analytics/changelog/author-stats/${authorAccountId}`,
-
-    // Статистика по департаментам
-    GET_DEPARTMENT_ACTIVITY: (departmentId) => `${BASE_URL}/api/analytics/changelog/department-activity/${departmentId}`,
-
-    // Статистика по типам событий
-    GET_EVENT_TYPE_STATS: `${BASE_URL}/api/analytics/changelog/event-type-stats`,
-
-    // Действия группы людей
-    GET_GROUP_ACTIONS: `${BASE_URL}/api/analytics/changelog/group-actions`,
-
-    // Матрица назначений
-    GET_ASSIGNMENT_MATRIX: `${BASE_URL}/api/analytics/changelog/assignment-matrix`,
-
-    // Универсальный поиск
-    SEARCH_CHANGELOGS: `${BASE_URL}/api/analytics/changelog/search`,
-    SEARCH_MULTIPLE_AUTHORS: `${BASE_URL}/api/analytics/changelog/search-multiple-authors`,
-
-    // Поиск по критериям
-    FIND_BY_AUTHOR: (authorAccountId) => `${BASE_URL}/api/analytics/changelog/by-author/${authorAccountId}`,
-    FIND_BY_DEPARTMENT: (departmentId) => `${BASE_URL}/api/analytics/changelog/by-department/${departmentId}`,
-    FIND_BY_ISSUE_KEY: (issueKey) => `${BASE_URL}/api/analytics/changelog/by-issue-key/${issueKey}`,
-    FIND_BY_EVENT_TYPE: (eventType) => `${BASE_URL}/api/analytics/changelog/by-event-type/${eventType}`,
-    FIND_BY_DATE_RANGE: `${BASE_URL}/api/analytics/changelog/by-date-range`,
-
-    // Общие методы
-    GET_ALL_CHANGELOGS: `${BASE_URL}/api/analytics/changelog/all`,
-    COUNT_CHANGELOGS: `${BASE_URL}/api/analytics/changelog/count`,
-    GET_CHANGELOG_STATS: `${BASE_URL}/api/analytics/changelog/stats`,
+    GET_ASSIGNMENT_MATRIX: `${BASE_URL}/api/analytics/changelog/assignment-matrix`
 
 
 };

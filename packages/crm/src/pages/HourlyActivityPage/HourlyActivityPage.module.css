@@ -1,0 +1,710 @@
+/* packages/crm/src/pages/HourlyActivityPage/HourlyActivityPage.module.css */
+
+
+
+.page {
+  width: 100%;
+  padding: 1rem;
+  background: var(--bg-secondary);
+  min-height: 100vh;
+}
+
+/* Заголовок */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  padding: 1rem 1.5rem;
+  background: var(--bg-primary);
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border: 1px solid var(--border-color);
+}
+
+.headerInfo {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.headerInfo h1 {
+  font-size: 1.5rem;
+  color: var(--text-primary);
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.headerInfo p {
+  color: var(--text-secondary);
+  margin: 0.25rem 0 0 0;
+  font-size: 0.875rem;
+}
+
+.headerControls {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+/* Панель фильтров */
+.filtersPanel {
+  background: var(--bg-primary);
+  padding: 1rem;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border: 1px solid var(--border-color);
+  margin-bottom: 1rem;
+  animation: slideDown 0.2s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.filterRow {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1rem;
+  align-items: end;
+}
+
+.filterGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.filterGroup label {
+  font-weight: 600;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: 0.8125rem;
+}
+
+.filterActions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+/* Сетка статистики */
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.statCard {
+  background: var(--bg-primary);
+  padding: 1rem;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  transition: all 0.2s ease;
+}
+
+.statCard:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(var(--color-primary-rgb), 0.15);
+  border-color: var(--accent-color);
+}
+
+.statIcon {
+  font-size: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  background: var(--accent-color);
+  border-radius: 8px;
+  color: white;
+  flex-shrink: 0;
+}
+
+.statContent {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  min-width: 0;
+}
+
+.statLabel {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.statValue {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: var(--text-primary);
+  line-height: 1;
+}
+
+/* Секции */
+.section {
+  background: var(--bg-primary);
+  padding: 1.5rem;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border: 1px solid var(--border-color);
+  margin-bottom: 1rem;
+}
+
+.section h2 {
+  margin: 0 0 1rem 0;
+  color: var(--text-primary);
+  font-size: 1.125rem;
+  border-bottom: 2px solid var(--accent-color);
+  padding-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* График по часам */
+.chartContainer {
+  position: relative;
+  padding: 1rem 0;
+}
+
+.hourlyChart {
+  display: grid;
+  grid-template-columns: repeat(24, 1fr);
+  gap: 0.5rem;
+  min-height: 400px;
+  align-items: flex-end;
+  padding: 1rem 0;
+  position: relative;
+}
+
+.hourColumn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  height: 100%;
+}
+
+.barContainer {
+  flex: 1;
+  width: 100%;
+  display: flex;
+  align-items: flex-end;
+  position: relative;
+  min-height: 350px;
+}
+
+.hourBar {
+  width: 100%;
+  background: var(--bg-tertiary);
+  border-radius: 6px 6px 0 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  overflow: hidden;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.hourBar:hover {
+  transform: scaleY(1.05);
+  box-shadow: 0 4px 12px rgba(var(--color-primary-rgb), 0.3);
+}
+
+.barSegment {
+  width: 100%;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.barSegment:first-child {
+  border-radius: 6px 6px 0 0;
+}
+
+.barValue {
+  position: absolute;
+  top: -25px;
+  left: 50%;
+  transform: translateX(-50%);
+  color: var(--text-primary);
+  font-weight: bold;
+  font-size: 0.875rem;
+  white-space: nowrap;
+  background: var(--bg-primary);
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  z-index: 10;
+}
+
+.hourLabel {
+  font-weight: 600;
+  color: var(--text-primary);
+  font-size: 0.75rem;
+  text-align: center;
+  white-space: nowrap;
+}
+
+/* Таблица */
+.tableContainer {
+  overflow-x: auto;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+.table thead {
+  background: var(--bg-tertiary);
+}
+
+.table th {
+  padding: 0.75rem;
+  text-align: left;
+  font-weight: 600;
+  color: var(--text-primary);
+  border-bottom: 2px solid var(--border-color);
+}
+
+.table tbody tr {
+  transition: background 0.2s;
+}
+
+.table tbody tr:hover {
+  background: var(--bg-hover);
+}
+
+.table tbody tr:not(:last-child) {
+  border-bottom: 1px solid var(--border-color);
+}
+
+.table td {
+  padding: 0.75rem;
+  color: var(--text-secondary);
+}
+
+.hourCell {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.totalCell {
+  color: var(--accent-color);
+  font-size: 1rem;
+}
+
+.percentBar {
+  position: relative;
+  width: 100%;
+  height: 24px;
+  background: var(--bg-tertiary);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.percentFill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent-color), var(--color-primary-light));
+  transition: width 0.3s ease;
+}
+
+.percentText {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-weight: 600;
+  font-size: 0.75rem;
+  color: var(--text-primary);
+  z-index: 1;
+}
+
+/* Легенда */
+.legend {
+  background: var(--bg-primary);
+  padding: 1rem 1.5rem;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border: 1px solid var(--border-color);
+}
+
+.legend h3 {
+  margin: 0 0 0.75rem 0;
+  color: var(--text-primary);
+  font-size: 1rem;
+}
+
+.legendItems {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+}
+
+.legendItem {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.legendBox {
+  width: 32px;
+  height: 20px;
+  border-radius: 4px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Адаптивность */
+@media (max-width: 1200px) {
+  .statsGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .hourlyChart {
+    gap: 0.375rem;
+  }
+
+  .barValue {
+    font-size: 0.75rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .page {
+    padding: 0.75rem;
+  }
+
+  .header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 1rem;
+  }
+
+  .headerInfo {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .headerInfo h1 {
+    font-size: 1.25rem;
+  }
+
+  .headerControls {
+    width: 100%;
+    flex-direction: column;
+  }
+
+  .filtersPanel {
+    padding: 0.75rem;
+  }
+
+  .filterRow {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+
+  .statsGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .section {
+    padding: 1rem;
+  }
+
+  .hourlyChart {
+    overflow-x: auto;
+    gap: 0.25rem;
+    padding-bottom: 2rem;
+  }
+
+  .hourColumn {
+    min-width: 30px;
+  }
+
+  .hourLabel {
+    font-size: 0.625rem;
+    transform: rotate(-45deg);
+    transform-origin: center;
+    white-space: nowrap;
+  }
+
+  .barValue {
+    font-size: 0.625rem;
+    padding: 0.125rem 0.25rem;
+  }
+
+  .table {
+    font-size: 0.75rem;
+  }
+
+  .table th,
+  .table td {
+    padding: 0.5rem;
+  }
+
+  .legendItems {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .page {
+    padding: 0.5rem;
+  }
+
+  .section {
+    padding: 0.75rem;
+  }
+
+  .statCard {
+    padding: 0.75rem;
+  }
+
+  .statIcon {
+    width: 40px;
+    height: 40px;
+    font-size: 1.5rem;
+  }
+
+  .statValue {
+    font-size: 1.25rem;
+  }
+
+  .barContainer {
+    min-height: 250px;
+  }
+}
+
+/* Активность по дням */
+.dailyChart {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 400px;
+    width: 100%;
+  padding: 2rem 1rem 1rem;
+  position: relative;
+}
+
+.dailyChart::before {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: var(--border-color);
+}
+
+.dayColumn {
+  flex: 1;
+    width: 30%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.dayColumn:hover {
+  transform: translateY(-6px);
+}
+
+.dayColumn:hover .dayBar {
+  box-shadow: 0 6px 20px rgba(var(--color-primary-rgb), 0.25);
+}
+
+.dayColumn::before {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 1px;
+  height: calc(100% - 30px);
+  background: var(--border-color);
+  opacity: 0.3;
+  z-index: 0;
+}
+
+.dayBar {
+  width: 100%;
+  min-height: 40px;
+  border-radius: 8px 8px 0 0;
+  background: linear-gradient(to top, var(--bg-tertiary), var(--bg-secondary));
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  transition: all 0.3s ease;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  z-index: 1;
+}
+
+.dayBar::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg,
+    rgba(var(--color-primary-rgb), 0.8),
+    rgba(var(--color-primary), 0.8)
+  );
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.dayColumn:hover .dayBar::after {
+  opacity: 1;
+}
+
+.dayLabel {
+  margin-top: 0.5rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  transition: all 0.2s ease;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.dayColumn:hover .dayLabel {
+  color: var(--accent-color);
+  font-weight: 700;
+}
+
+.barValue {
+  position: absolute;
+  top: -32px;
+  left: 50%;
+  transform: translateX(-50%);
+  color: var(--text-primary);
+  font-weight: 700;
+  font-size: 0.9375rem;
+  white-space: nowrap;
+  background: var(--bg-primary);
+  padding: 0.375rem 0.75rem;
+  border-radius: 6px;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.12);
+  z-index: 10;
+  border: 1px solid var(--border-color);
+  transition: all 0.2s ease;
+}
+
+.dayColumn:hover .barValue {
+  background: var(--accent-color);
+  color: white;
+  border-color: var(--accent-color);
+  transform: translateX(-50%) scale(1.1);
+}
+
+/* Адаптивность для дневного графика */
+@media (max-width: 1200px) {
+  .dailyChart {
+    gap: 8px;
+    padding: 1.5rem 0.75rem 1rem;
+  }
+
+  .barValue {
+    font-size: 0.875rem;
+    padding: 0.25rem 0.5rem;
+  }
+
+  .dayLabel {
+    font-size: 0.75rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .dailyChart {
+    gap: 6px;
+    min-height: 300px;
+    overflow-x: auto;
+    padding: 1.25rem 0.5rem 1rem;
+  }
+
+  .dayColumn {
+    min-width: 45px;
+  }
+
+  .dayColumn::before {
+    display: none;
+  }
+
+  .dayBar {
+    min-height: 30px;
+    border-radius: 6px 6px 0 0;
+  }
+
+  .barValue {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.375rem;
+    top: -28px;
+  }
+
+  .dayLabel {
+    font-size: 0.6875rem;
+    margin-top: 0.375rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .dailyChart {
+    gap: 4px;
+    min-height: 250px;
+    padding: 1rem 0.25rem 0.75rem;
+  }
+
+  .dayColumn {
+    min-width: 35px;
+  }
+
+  .dayBar {
+    min-height: 25px;
+  }
+
+  .barValue {
+    font-size: 0.6875rem;
+    padding: 0.125rem 0.25rem;
+    top: -24px;
+  }
+
+  .dayLabel {
+    font-size: 0.625rem;
+  }
+}
+
