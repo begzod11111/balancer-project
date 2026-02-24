@@ -3,6 +3,13 @@ import employeeWeightService from "../services/EmployeeWeightService.js";
 
 const shiftConsumer = kafka.consumer({ groupId: 'analytics-shiftConsumer' });
 
+const TOPICS = {
+    SHIFT_CREATED: 'shift_created',
+    SHIFT_EXPIRED: 'shift_expired',
+    SHIFT_UPDATED: 'shift_updated'
+};
+
+
 export async function runShiftCreatedConsumer() {
   const maxRetries = 30;
   let retries = 0;
@@ -27,17 +34,17 @@ export async function runShiftCreatedConsumer() {
   }
 
   try {
-    await shiftConsumer.subscribe({
-      topic: 'shift_created',
-      fromBeginning: true
-    });
-    await shiftConsumer.subscribe({
-        topic: 'shift_expired',
-        fromBeginning: true
-    })
-    console.log('[Kafka Consumer] ✅ Успешно подписан на topic "shift_created"');
+      for (const topic of Object.values(TOPICS)) {
+          await shiftConsumer.subscribe({
+              topic,
+              fromBeginning: true
+          });
+          console.log(`[Kafka Consumer] ✅ Успешно подписан на topic "${topic}"`);
+      }
+    console.log('[Kafka Consumer] ✅ Успешно подписан на topic "issue_created"');
   } catch (error) {
-    console.error('[Kafka Consumer] ❌ Ошибка подписки на topic "shift_created":', error);
+    console.error('[Kafka Consumer] ❌ Ошибка подписки на topic "issue_created":', error);
+    throw error;
   }
 
   await shiftConsumer.run({
