@@ -11,6 +11,56 @@ async function connectProducer() {
   }
 }
 
+export async function sendShiftExpiredEvent(shiftData) {
+  try {
+    await connectProducer();
+
+    await producer.send({
+      topic: 'shift_expired',
+      messages: [
+        {
+          key: shiftData.assigneeEmail,
+          value: JSON.stringify({
+            event: 'shift_expired',
+            timestamp: new Date().toISOString(),
+            data: shiftData
+          })
+        }
+      ]
+    });
+
+    console.log(`[Shift Producer] ✅ Событие shift_expired отправлено для ${shiftData.assigneeEmail}`);
+  } catch (error) {
+    console.error('[Shift Producer] ❌ Ошибка отправки события:', error);
+    // Не бросаем ошибку, чтобы не прерывать удаление смены
+  }
+}
+
+export async function sendShiftUpdatedEvent(shiftData) {
+  try {
+    await connectProducer();
+
+    await producer.send({
+      topic: 'shift_updated',
+      messages: [
+        {
+          key: shiftData.assigneeEmail,
+          value: JSON.stringify({
+            event: 'shift_updated',
+            timestamp: new Date().toISOString(),
+            data: shiftData
+          })
+        }
+      ]
+    });
+
+    console.log(`[Shift Producer] ✅ Событие shift_updated отправлено для ${shiftData.assigneeEmail}`);
+  } catch (error) {
+    console.error('[Shift Producer] ❌ Ошибка отправки события:', error);
+    // Не бросаем ошибку, чтобы не прерывать обновление смены
+  }
+}
+
 export async function sendShiftCreatedEvent(shiftData) {
   try {
     await connectProducer();

@@ -9,7 +9,7 @@ import {models} from "../models/db.js";
 
 class AssigneePoolService {
   constructor() {
-    this.keyPrefix = 'department:';
+    this.keyPrefix = 'Department:';
     this.DEFAULT_TTL = 9 * 60 * 60; // 9 часа по умолчанию
   }
 

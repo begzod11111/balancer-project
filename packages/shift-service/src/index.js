@@ -6,6 +6,7 @@ import {connectDB, models} from "./models/db.js";
 import departmentRoutes from "./routes/departmentRoutes.js";
 import departmentService from "./services/departmentService.js";
 import redisShiftRoutes from "./routes/redisShiftRoutes.js";
+import shiftScheduler from "./schedulers/shiftScheduler.js";
 
 
 
@@ -41,6 +42,7 @@ app.listen(PORT, '0.0.0.0', () => {
 async function startScheduler() {
   try {
     await connectDB();
+    shiftScheduler.start()
   } catch (error) {
     console.error('Ошибка при запуске планировщика:', {
       message: error.message,

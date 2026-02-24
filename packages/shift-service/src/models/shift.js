@@ -16,7 +16,7 @@ const Shift = new Schema({
     department: {
         type: Schema.Types.ObjectId,
         required: true,
-        ref: "Department",
+        ref: "department",
     },
     accountId: {
         type: String,

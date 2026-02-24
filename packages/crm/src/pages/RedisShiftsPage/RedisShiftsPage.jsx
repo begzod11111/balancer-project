@@ -2,7 +2,7 @@
 import React, {useEffect, useState} from 'react';
 import axios from 'axios';
 import {URLS} from '../../utilities/urls';
-import {FaChartBar, FaClock, FaFilter, FaPlus, FaSearch, FaTimes} from 'react-icons/fa';
+import {FaChartBar, FaFilter, FaPlus} from 'react-icons/fa';
 import {useNotification} from '../../contexts/NotificationProvider';
 import {useLoader} from '../../contexts/LoaderProvider';
 import Button from '../../../src/components/Button/Button';
@@ -137,18 +137,6 @@ const RedisShiftsPage = () => {
         }
     };
 
-    const formatTTLDuration = (seconds) => {
-        const days = Math.floor(seconds / 86400);
-        const hours = Math.floor((seconds % 86400) / 3600);
-        const minutes = Math.floor((seconds % 3600) / 60);
-
-        const parts = [];
-        if (days > 0) parts.push(`${days} дн`);
-        if (hours > 0) parts.push(`${hours} ч`);
-        if (minutes > 0) parts.push(`${minutes} м`);
-
-        return parts.length > 0 ? parts.join(' ') : `${seconds} сек`;
-    };
 
     const fetchShifts = async (depId) => {
         try {
@@ -201,180 +189,6 @@ const RedisShiftsPage = () => {
             completedTasksCount: 0,
             ttl: 86400
         });
-    };
-
-    const handleCloseCreateModal = () => {
-        setShowCreateModal(false);
-        setCreateMode('department');
-    };
-
-    // Поиск сотрудника по email через API
-    const handleSearchByEmail = async () => {
-        if (!newShift.assigneeEmail) {
-            setNotification({
-                type: 'warning',
-                message: 'Введите email сотрудника',
-                has: true
-            });
-            return;
-        }
-
-        try {
-            showLoader('Поиск сотрудника...');
-            const token = localStorage.getItem('accessToken') || "3333";
-
-            // Ищем расписание по email
-            const response = await axios.get(
-                URLS.GET_WORK_SCHEDULES,
-                {headers: {Authorization: `Bearer ${token}`}}
-            );
-
-            const schedule = response.data.find(s =>
-                s.assigneeEmail === newShift.assigneeEmail && s.isActive
-            );
-
-            if (!schedule) {
-                setNotification({
-                    type: 'error',
-                    message: 'Сотрудник не найден или неактивен',
-                    has: true
-                });
-                return;
-            }
-
-            // Получаем данные департамента
-            const deptResponse = await axios.get(
-                URLS.GET_DEPARTMENT_BY_ID(schedule.department),
-                {headers: {Authorization: `Bearer ${token}`}}
-            );
-
-            const dept = deptResponse.data.data;
-
-            setNewShift(prev => ({
-                ...prev,
-                accountId: schedule.accountId,
-                assigneeName: schedule.assigneeName,
-                departmentId: dept._id,
-                departmentObjectId: dept.ObjectId,
-                taskTypeWeights: dept.taskTypeWeights || [],
-                loadCalculationFormula: dept.loadCalculationFormula || '',
-                defaultMaxLoad: dept.defaultMaxLoad || 100,
-                priorityMultiplier: dept.priorityMultiplier || 1.0
-            }));
-
-            setNotification({
-                type: 'success',
-                message: `Найден: ${schedule.assigneeName} (${dept.name})`,
-                has: true
-            });
-        } catch (error) {
-            console.error('Ошибка поиска сотрудника:', error);
-            setNotification({
-                type: 'error',
-                message: 'Не удалось найти сотрудника',
-                has: true
-            });
-        } finally {
-            hideLoader();
-        }
-    };
-
-    const handleDepartmentChange = (deptId) => {
-        const dept = departments.find(d => d.value === deptId);
-        if (!dept) return;
-
-        setNewShift(prev => ({
-            ...prev,
-            departmentId: dept.value,
-            departmentObjectId: dept.objectId,
-            taskTypeWeights: dept.taskTypeWeights || [],
-            loadCalculationFormula: dept.loadCalculationFormula || '',
-            defaultMaxLoad: dept.defaultMaxLoad || 100,
-            priorityMultiplier: dept.priorityMultiplier || 1.0
-        }));
-
-        fetchAssigneesByDepartment(deptId);
-    };
-
-    const handleAssigneeChange = (accountId) => {
-        const assignee = assignees.find(a => a.value === accountId);
-        if (!assignee) return;
-        console.log(assignee)
-        setNewShift(prev => ({
-            ...prev,
-            accountId: assignee.value,
-            assigneeName: assignee.label,
-            assigneeEmail: assignee.email,
-            limits: assignee.limits,
-        }));
-    };
-
-    const handleCreateShift = async () => {
-        // Валидация
-        if (!newShift.departmentObjectId || !newShift.accountId || !newShift.assigneeEmail) {
-            setNotification({
-                type: 'warning',
-                message: 'Заполните обязательные поля',
-                has: true
-            });
-            return;
-        }
-
-        if (!newShift.shiftStartTime || !newShift.shiftEndTime) {
-            setNotification({
-                type: 'warning',
-                message: 'Укажите время начала и окончания смены',
-                has: true
-            });
-            return;
-        }
-
-        try {
-            showLoader('Создание смены...');
-            const token = localStorage.getItem('accessToken') || "3333";
-
-            const payload = {
-                departmentObjectId: newShift.departmentObjectId,
-                accountId: newShift.accountId,
-                departmentId: newShift.departmentId,
-                assigneeEmail: newShift.assigneeEmail,
-                assigneeName: newShift.assigneeName,
-                taskTypeWeights: newShift.taskTypeWeights,
-                limits: newShift.limits,
-                loadCalculationFormula: newShift.loadCalculationFormula,
-                defaultMaxLoad: parseInt(newShift.defaultMaxLoad),
-                priorityMultiplier: parseFloat(newShift.priorityMultiplier),
-                completedTasksCount: 0,
-                shiftStartTime: new Date(newShift.shiftStartTime).toISOString(),
-                shiftEndTime: new Date(newShift.shiftEndTime).toISOString(),
-                ttl: parseInt(newShift.ttl)
-            };
-
-            await axios.post(URLS.CREATE_REDIS_SHIFT, payload, {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                }
-            });
-
-            setNotification({
-                type: 'success',
-                message: 'Смена успешно создана',
-                has: true
-            });
-
-            handleCloseCreateModal();
-            fetchShifts();
-        } catch (error) {
-            console.error('Ошибка создания смены:', error);
-            setNotification({
-                type: 'error',
-                message: error.response?.data?.message || 'Не удалось создать смену',
-                has: true
-            });
-        } finally {
-            hideLoader();
-        }
     };
 
     const handleUpdateShift = (updatedShift) => {
@@ -463,6 +277,7 @@ const RedisShiftsPage = () => {
             return !shiftExists;
         });
     }
+
 
     const formatDate = (dateString) => {
         return new Date(dateString).toLocaleString('ru-RU');
