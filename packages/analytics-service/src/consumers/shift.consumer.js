@@ -57,6 +57,7 @@ export async function runShiftCreatedConsumer() {
 
         // Обработка события создания смены
         if (event.event === 'shift_created' && event.data) {
+            console.log('[Kafka Consumer] ✅ Смена создана, добавляем в Redis', event.data);
           employeeWeightService.createShiftInRedis(event.data).then(
             () => console.log('[Kafka Consumer] ✅ Смена обработана успешно'),
           );
