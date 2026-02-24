@@ -31,6 +31,10 @@ export async function runShiftCreatedConsumer() {
       topic: 'shift_created',
       fromBeginning: true
     });
+    await shiftConsumer.subscribe({
+        topic: 'shift_expired',
+        fromBeginning: true
+    })
     console.log('[Kafka Consumer] ✅ Успешно подписан на topic "shift_created"');
   } catch (error) {
     console.error('[Kafka Consumer] ❌ Ошибка подписки на topic "shift_created":', error);
@@ -56,6 +60,8 @@ export async function runShiftCreatedConsumer() {
           employeeWeightService.createShiftInRedis(event.data).then(
             () => console.log('[Kafka Consumer] ✅ Смена обработана успешно'),
           );
+        } else if (event.event === 'shift_expired' && event.data) {
+            console.log('[Kafka Consumer] 🔥 Смена истекла, удаляем из Redis', event.data);
         }
 
         console.log('────────────────────────────────────────\n');
