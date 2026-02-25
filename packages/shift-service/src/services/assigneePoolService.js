@@ -159,10 +159,31 @@ class AssigneePoolService {
    * Получение всех сотрудников в пуле отдела
    */
   async getPoolAssignees() {
-    // Получаем все ключи для отдела
-    const keys = await redis.keys(`*`);
-    // Извлекаем только accountId из ключа
-    return keys.map(key => key.split(':').slice(-2).join(':'));
+      try {
+          const result = [];
+          // Получаем все ключи для отдела
+          const keys = await redis.keys(`Department:*`);
+          // Извлекаем только accountId из ключа
+          for (const key of keys) {
+              const data = await redis.get(key);
+              if (!data) continue;
+              try {
+                  const ttl = await redis.ttl(key)
+                  const parsedData = JSON.parse(data);
+                  result.push({
+                      ...parsedData,
+                      remainingTTL: ttl
+                  });
+              } catch (e) {
+                  console.warn(`Невозможно распарсить данные для ключа ${key}`);
+              }
+          }
+          return result
+      } catch (e) {
+          console.log(`Ошибка при получении сотрудников из пула: ${e.message}`);
+          return [];
+      }
+
   }
 
   /**
@@ -172,7 +193,6 @@ class AssigneePoolService {
    */
   async getAllAssigneesInDepartment(department) {
     const pattern = `${this.keyPrefix}${department}:*`;
-
     try {
       const keys = await redis.keys(pattern);
       if (!keys.length) return [];
@@ -386,6 +406,8 @@ class AssigneePoolService {
       throw error;
     }
   }
+
+
 }
 
 export default new AssigneePoolService();

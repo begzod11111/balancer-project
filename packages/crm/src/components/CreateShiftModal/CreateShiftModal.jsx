@@ -1,15 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import React, {useEffect, useState} from 'react';
 import axios from 'axios';
-import { URLS } from '../../utilities/urls';
-import { FaTimes, FaSearch } from 'react-icons/fa';
-import { useNotification } from '../../contexts/NotificationProvider';
-import { useLoader } from '../../contexts/LoaderProvider';
+import {URLS} from '../../utilities/urls';
+import {FaSearch, FaTimes} from 'react-icons/fa';
+import {useNotification} from '../../contexts/NotificationProvider';
+import {useLoader} from '../../contexts/LoaderProvider';
 import Button from '../../components/Button/Button';
 import Input from '../../components/Input/Input';
 import Select from '../../components/Select/Select';
 import classes from './CreateShiftModal.module.css';
 
-const CreateShiftModal = ({ isOpen, onClose, onSuccess, departments }) => {
+const CreateShiftModal = ({ isOpen, onClose, onSuccess, departments, assigneesInPool }) => {
   const { setNotification } = useNotification();
   const { showLoader, hideLoader } = useLoader();
 
@@ -250,6 +250,12 @@ const CreateShiftModal = ({ isOpen, onClose, onSuccess, departments }) => {
     }
   };
 
+  const getAssigneeNotInPool = () => {
+    return assignees.filter(assignee => {
+        return !assigneesInPool.some(poolAssignee => poolAssignee.accountId === assignee.value)
+    })
+  }
+
   const handleClose = () => {
     setNewShift({
       departmentId: null,
@@ -320,7 +326,7 @@ const CreateShiftModal = ({ isOpen, onClose, onSuccess, departments }) => {
               {newShift.departmentId && (
                 <Select
                   label="Сотрудник"
-                  options={assignees}
+                  options={getAssigneeNotInPool()}
                   value={newShift.accountId}
                   onChange={handleAssigneeChange}
                   placeholder="Выберите сотрудника"

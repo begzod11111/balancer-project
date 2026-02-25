@@ -290,6 +290,11 @@ const RedisShiftsPage = () => {
         return true;
     });
 
+    const getDepartmentNameObjectIdById = (departmentId) => {
+        const department = departments.find(d => d.value === departmentId);
+        return department ? department.label : null;
+    }
+
     const stats = {
         total: shifts.length,
         filtered: filteredShifts.length,
@@ -389,7 +394,10 @@ const RedisShiftsPage = () => {
                     filteredShifts.map((shift, index) => (
                         <ShiftCard
                             key={`${shift.departmentObjectId}-${shift.accountId}-${index}`}
-                            shift={shift}
+                            shift={{
+                                ...shift,
+                                departmentName: getDepartmentNameObjectIdById(shift.departmentId)
+                            }}
                             onUpdate={(updatedShift) => handleUpdateShift(updatedShift)}
                             onDelete={() => handleDeleteShift(shift)}
                             onIncrement={() => handleIncrementTasks(shift)}
@@ -403,10 +411,12 @@ const RedisShiftsPage = () => {
 
 
             <CreateShiftModal
+
                 isOpen={showCreateModal}
                 onClose={() => setShowCreateModal(false)}
                 onSuccess={fetchShifts}
                 departments={departments}
+                assigneesInPool={filteredShifts}
             />
 
         </div>

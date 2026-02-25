@@ -73,64 +73,60 @@ class ShiftScheduler {
   }
 
   async checkAndRemoveExpiringShifts() {
-    try {
-      console.log('[ShiftScheduler] Начинаем проверку истекающих смен...');
-
-      const departments = await models.Department.find({ deleted: false }).lean();
-
-      const stats = {
-        checked: 0,
-        removed: 0,
-        errors: 0,
-        kafkaEvents: 0
-      };
-
-      for (const department of departments) {
+        const stats = {
+            checked: 0,
+            removed: 0,
+            kafkaEvents: 0,
+            errors: 0
+        };
         try {
-          const assignees = await assigneePoolService.getAllAssigneesInDepartment(department.ObjectId);
+            console.log('[ShiftScheduler] Начинаем проверку истекающих смен...');
 
-          stats.checked += assignees.length;
+            const assignees = await assigneePoolService.getPoolAssignees();
+            for (const index in assignees) {
+                stats.checked++;
+                const {accountId, remainingTTL, assigneeName, assigneeEmail, departmentObjectId, departmentId} = assignees[index];
+                console.log(remainingTTL)
 
-          for (const assignee of assignees) {
-            const { accountId, remainingTTL, assigneeName, assigneeEmail } = assignee;
+                if (
+                    remainingTTL > 0 &&
+                    remainingTTL <= this.EXPIRATION_THRESHOLD &&
+                    departmentObjectId
+                ) {
+                    try {
+                        await sendShiftExpiredEvent({
+                            departmentId,
+                            departmentObjectId,
+                            accountId,
+                            assigneeEmail,
+                            assigneeName,
+                            remainingTTL,
+                            expiredAt: moment().tz(this.TIMEZONE).toISOString()
+                        });
 
-            if (remainingTTL > 0 && remainingTTL <= this.EXPIRATION_THRESHOLD) {
-              // Только отправляем событие в Kafka, не удаляем из Redis
-              await sendShiftExpiredEvent({
-                departmentId: department._id.toString(),
-                departmentObjectId: department.ObjectId,
-                accountId,
-                assigneeEmail,
-                assigneeName,
-                remainingTTL,
-                expiredAt: moment().tz(this.TIMEZONE).toISOString()
-              }).catch((err) => {
-                console.error(`[ShiftScheduler] ❌ Ошибка отправки события shift_expired для ${assigneeName}:`, err.message);
-              });
+                        assigneePoolService.removeAssignee(departmentObjectId, accountId).catch(console.error);
 
-              stats.removed++;
-              stats.kafkaEvents++;
-
-              console.log(`[ShiftScheduler] ⏰ Отправлено событие истекающей смены ${assigneeName} (осталось ${remainingTTL}с)`);
+                        stats.removed++;
+                        stats.kafkaEvents++;
+                        console.log(`[ShiftScheduler] ⏰ Отправлено событие истекающей смены ${assigneeName} (осталось ${remainingTTL}с)`);
+                    } catch (err) {
+                        stats.errors++;
+                        console.error(`[ShiftScheduler] ❌ Ошибка отправки события shift_expired для ${assigneeName}:`, err.message);
+                    }
+                }
             }
-          }
+
+            console.log(`[ShiftScheduler] ✅ Проверка истекающих смен завершена:`, stats);
+            return stats;
         } catch (error) {
-          stats.errors++;
-          console.error(`[ShiftScheduler] Ошибка проверки отдела ${department.name}:`, error.message);
+            stats.errors++;
+            console.error('[ShiftScheduler] ❌ Критическая ошибка при проверке истекающих смен:', {
+                message: error.message,
+                stack: error.stack
+            });
+            throw error;
         }
-      }
-
-      console.log(`[ShiftScheduler] ✅ Проверка истекающих смен завершена:`, stats);
-
-      return stats;
-    } catch (error) {
-      console.error('[ShiftScheduler] ❌ Критическая ошибка при проверке истекающих смен:', {
-        message: error.message,
-        stack: error.stack
-      });
-      throw error;
     }
-  }
 
   async _processShift(shift, currentTime, currentDayOfWeek) {
     const todayShift = shift.shifts[currentDayOfWeek];

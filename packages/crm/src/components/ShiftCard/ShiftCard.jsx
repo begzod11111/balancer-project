@@ -194,7 +194,7 @@ const ShiftCard = ({ shift, onDelete, onIncrement, onUpdate, formatDate, ttl }) 
           <h3>{shift.assigneeName}</h3>
           <span className={classes.email}>{shift.assigneeEmail}</span>
           <span className={classes.badge}>
-            {shift.departmentObjectId}
+            {shift.departmentName}
           </span>
         </div>
       </div>

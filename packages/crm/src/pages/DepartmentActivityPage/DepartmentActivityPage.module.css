@@ -347,6 +347,8 @@
   align-items: center;
   margin-bottom: 0.75rem;
   gap: 0.5rem;
+
+
 }
 
 .logBadge {
@@ -354,8 +356,6 @@
   font-weight: 600;
   padding: 0.25rem 0.5rem;
   border-radius: 4px;
-  background: currentColor;
-  color: white;
   text-transform: uppercase;
   letter-spacing: 0.3px;
   white-space: nowrap;
@@ -598,8 +598,7 @@
   border-radius: 4px;
   font-weight: 600;
   font-size: 0.8125rem;
-  background: currentColor;
-  color: white;
+  color: currentColor;
 }
 
 /* Пустое состояние */

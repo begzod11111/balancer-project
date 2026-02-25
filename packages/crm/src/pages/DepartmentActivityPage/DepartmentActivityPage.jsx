@@ -434,7 +434,7 @@ const DepartmentActivityPage = () => {
                     onClick={() => setSelectedLog(log)}
                   >
                     <div className={classes.logHeader}>
-                      <span className={classes.logBadge}>
+                      <span className={`${classes.logBadge} ${getEventTypeColor(log.eventType)}`}>
                         {getEventTypeLabel(log.eventType)}
                       </span>
                       <span className={classes.logTime}>
