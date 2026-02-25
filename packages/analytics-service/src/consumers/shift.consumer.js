@@ -68,8 +68,9 @@ export async function runShiftCreatedConsumer() {
           employeeWeightService.createShiftInRedis(event.data).then(
             () => console.log('[Kafka Consumer] ✅ Смена обработана успешно'),
           );
-        } else if (event.event === 'shift_expired' && event.data) {
-            console.log('[Kafka Consumer] 🔥 Смена истекла, удаляем из Redis', event.data);
+        }
+        if (event.event === 'shift_expired' && event.data) {
+            console.log('[Kafka Consumer] ⏰ Смена истекла, удаляем из Redis', event.data);
         }
 
         console.log('────────────────────────────────────────\n');
