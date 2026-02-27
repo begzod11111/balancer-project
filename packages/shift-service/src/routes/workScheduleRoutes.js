@@ -278,7 +278,7 @@ router.post('/', async (req, res) => {
     // Формирование данных для создания
     const scheduleData = {
       accountId: jiraUser.accountId,
-      assigneeEmail: email.toLowerCase().trim(),
+      assigneeEmail: email.trim(),
       assigneeName: jiraUser.displayName || 'Неизвестный сотрудник',
       department: departmentId,
       shifts,
