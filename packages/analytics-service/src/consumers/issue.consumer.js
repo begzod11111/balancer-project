@@ -5,7 +5,8 @@ import changelogService from "../services/changelogService.js";
 const TOPICS = {
     ISSUE_CREATED: 'issue_created',
     ISSUE_GENERIC: 'issue_generic',
-    ISSUE_ASSIGNED: 'issue_assigned'
+    ISSUE_ASSIGNED: 'issue_assigned',
+    ISSUE_UPDATED: 'issue_updated',
 };
 
 // ['issue_created', 'issue_generic', 'issue_assigned']
@@ -69,6 +70,8 @@ export async function runAssignerConsumer() {
             await IssueService.updateIssueAssignee(event.issueId, event.assigneeAccountId)
         } else if (topic === TOPICS.ISSUE_GENERIC) {
             await IssueService.updateIssueStatus(event.issueId, event.status, event.issueStatusId)
+        } else if (topic === TOPICS.ISSUE_UPDATED) {
+            await IssueService.issueUpdate(event.issueId, event.status, event.issueStatusId)
         } else {
             console.warn(`[Kafka Consumer] ⚠️ Неизвестный topic: ${topic}`);
         }

@@ -6,7 +6,6 @@ const router = express.Router();
 router.post('/created-issue', async (req, res) => {
     try {
         const issueData = req.body;
-        console.log('[Assigner] Received created issue webhook:', issueData);
 
         await publishIssueCreated(issueData);
 

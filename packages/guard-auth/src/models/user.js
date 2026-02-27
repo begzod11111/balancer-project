@@ -191,10 +191,7 @@ userSchema.methods.linkToAssignee = async function() {
  */
 userSchema.statics.findByCredentials = async function(login, password) {
   const user = await this.findOne({
-    $or: [
-      { email: login.toLowerCase() },
-      { username: login.toLowerCase() }
-    ]
+      username: login,
   }).select('+password');
 
   if (!user) {

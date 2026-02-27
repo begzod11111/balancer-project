@@ -205,6 +205,28 @@ class IssueService {
         );
     }
 
+    async issueUpdate(issueId, issueData) {
+        const existingIssue = await models.Issue.findOne({issueId});
+
+        if (!existingIssue) {
+            throw new Error('Issue not found');
+        }
+
+        const updateFields = {};
+        if (issueData.status) updateFields.status = issueData.status;
+        if (issueData.issueStatusId) updateFields.issueStatusId = issueData.issueStatusId;
+        if (issueData.assigneeAccountId) updateFields.assigneeAccountId = issueData.assigneeAccountId;
+        if (issueData.assignmentGroupId) updateFields.assignmentGroupId = issueData.assignmentGroupId;
+
+        updateFields.updatedAt = new Date();
+
+        return models.Issue.findOneAndUpdate(
+            {issueId},
+            {$set: updateFields},
+            {new: true}
+        );
+    }
+
 // Обновление исполнителя задачи
     async updateIssueAssignee(issueId, newAssigneeAccountId) {
         const issue = await models.Issue.findOne({issueId});

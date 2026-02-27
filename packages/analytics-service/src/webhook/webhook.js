@@ -8,7 +8,6 @@ const router = express.Router();
 router.post('/change-status', async (req, res) => {
     try {
         const statusData = req.body;
-        console.log('[Analytics Service] Received change status webhook:', statusData);
         issueProducer(statusData).then(
             () => console.log('[Analytics Service] Status change published to Kafka successfully'),
         ).catch(

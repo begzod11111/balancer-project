@@ -69,7 +69,7 @@ class WorkScheduleService {
             // Создание расписания
             const newSchedule = new this.models.Shift({
                 assigneeName: assigneeName.trim(),
-                assigneeEmail: assigneeEmail.toLowerCase().trim(),
+                assigneeEmail: assigneeEmail.trim(),
                 department,
                 accountId: accountId.trim(),
                 userId: userId || null,
