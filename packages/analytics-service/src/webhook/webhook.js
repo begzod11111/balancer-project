@@ -25,7 +25,7 @@ router.post('/change-status', async (req, res) => {
 router.post('/comment-created', async (req, res) => {
     try {
         const commentData = req.body;
-        console.log('[Analytics Service] Received comment created webhook:', commentData);
+        console.log('[Analytics Service] Received comment created webhook:', JSON.stringify(commentData, null, 10));
 
         // Здесь можно добавить логику обработки созданного комментария,
         // например, анализ текста комментария или обновление статистики.
