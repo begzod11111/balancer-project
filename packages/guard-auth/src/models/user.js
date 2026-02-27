@@ -8,7 +8,6 @@ const userSchema = new Schema({
     type: String,
     required: true,
     trim: true,
-    lowercase: true
   },
   password: {
     type: String,
@@ -19,7 +18,6 @@ const userSchema = new Schema({
   email: {
     type: String,
     required: true,
-    lowercase: true,
     trim: true,
     match: [/^\S+@\S+\.\S+$/, 'Please enter a valid email address']
   },
@@ -191,9 +189,11 @@ userSchema.methods.linkToAssignee = async function() {
  */
 userSchema.statics.findByCredentials = async function(login, password) {
   const user = await this.findOne({
-      username: login,
+    $or: [
+      { email: login },
+      { username: login }
+    ]
   }).select('+password');
-
   if (!user) {
     throw new Error('Invalid login credentials');
   }
