@@ -3,7 +3,7 @@ import {models} from '../models/db.js';
 const { ChangelogEvent } = models;
 
 const AUTOMATION_ACCOUNTS = [
-    '712020:d3c8eb70-f65d-4076-94b9-ce46cfca71c0',
+    '712020:37e63ff6-f971-4d3e-8f9a-0b2f93a50abd',
     '557058:f58131cb-b67d-43c7-b30d-6b58d40bd077'
 ]
 
@@ -26,7 +26,7 @@ class ChangelogService {
         console.log(`[Changelog] 📝 Обработка события "${eventType}" для ${issueKey}`);
 
         if (AUTOMATION_ACCOUNTS.includes(user.accountId) && AUTOMATION_EVENTS.includes(eventType)) {
-          return await this._saveIssueCreated(issueId, issueKey, assigneeAccountId, eventType, user, changelogItem, departmentId);
+          return await this._saveAggregatedBotEvent(issueId, issueKey, assigneeAccountId, eventType, user, changelogItem, departmentId);
         }
 
 
@@ -38,61 +38,99 @@ class ChangelogService {
       }
     }
 
+
     /**
-     * Приватный метод: сохранение события создания задачи (агрегация)
+     * Приватный метод: агрегация событий от ботов (один issue_updated/issue_created на задачу)
      */
-    async _saveIssueCreated(issueId, issueKey, assigneeAccountId, eventType, user, changelogItem, departmentId) {
-      const createdFields = {};
+    async _saveAggregatedBotEvent(issueId, issueKey, assigneeAccountId, eventType, user, changelogItem, departmentId) {
+        try {
+            // Проверяем, есть ли уже агрегированное событие для этой задачи и типа события
+            const existingEvent = await ChangelogEvent.findOne({
+                issueKey,
+                eventType,
+                authorAccountId: user.accountId,
+                fieldtype: 'bot_aggregate'
+            });
 
-      for (const item of changelogItem.items) {
-        createdFields[item.field] = {
-          value: item.toString || item.to,
-          id: item.to,
-          fieldtype: item.fieldtype,
-          fieldId: item.fieldId
-        };
-      }
+            const changes = {};
+            for (const item of changelogItem.items) {
+                changes[item.field] = {
+                    from: item.fromString || item.from,
+                    to: item.toString || item.to,
+                    fieldtype: item.fieldtype
+                };
+            }
 
-      const aggregatedEvent = {
-        historyId: changelogItem.id,
-        issueId,
-        issueKey,
-        departmentId,
-        eventType,
-        authorAccountId: user.accountId,
-        authorDisplayName: user.displayName,
-        authorEmail: user.emailAddress || null,
-        authorActive: user.active !== false,
-        authorTimeZone: user.timeZone,
-        created: new Date(),
-        field: eventType,
-        fieldtype: 'aggregate',
-        fieldId: eventType,
-        from: null,
-        fromString: null,
-        to: JSON.stringify(createdFields),
-        toString: `Created or updated with ${changelogItem.items.length} fields`,
-        fromAccountId: null,
-        toAccountId: null
-      };
+            if (existingEvent) {
+                // Обновляем существующее событие
+                const existingChanges = JSON.parse(existingEvent.to || '{}');
+                const mergedChanges = {...existingChanges, ...changes};
 
-      try {
-        await ChangelogEvent.create(aggregatedEvent);
-        console.log(`[Changelog] ✅ Сохранено агрегированное событие создания для ${issueKey} (${changelogItem.items.length} полей)`);
-        return { added: 1, total: 1 };
-      } catch (error) {
-        if (error.code === 11000) {
-          console.log(`[Changelog] ℹ️ Событие создания уже существует для ${issueKey}`);
-          return { added: 0, total: 0 };
+                await ChangelogEvent.updateOne(
+                    {_id: existingEvent._id},
+                    {
+                        $set: {
+                            to: JSON.stringify(mergedChanges),
+                            toString: `Bot updated ${Object.keys(mergedChanges).length} fields`,
+                            updated: new Date()
+                        }
+                    }
+                );
+
+                console.log(`[Changelog] 🤖 Обновлено агрегированное событие бота для ${issueKey} (${Object.keys(mergedChanges).length} полей)`);
+                return {added: 0, updated: 1, total: 1};
+            }
+
+            // Создаем новое агрегированное событие
+            const aggregatedEvent = {
+                historyId: `${issueKey}_${eventType}_bot`,
+                issueId,
+                issueKey,
+                departmentId,
+                eventType,
+                authorAccountId: user.accountId,
+                authorDisplayName: user.displayName,
+                authorEmail: user.emailAddress || null,
+                authorActive: user.active !== false,
+                authorTimeZone: user.timeZone,
+                created: new Date(),
+                field: `${eventType}_aggregate`,
+                fieldtype: 'bot_aggregate',
+                fieldId: `${eventType}_bot`,
+                from: null,
+                fromString: null,
+                to: JSON.stringify(changes),
+                toString: `Bot ${eventType === 'issue_created' ? 'created' : 'updated'} ${changelogItem.items.length} fields`,
+                fromAccountId: null,
+                toAccountId: null
+            };
+
+            await ChangelogEvent.create(aggregatedEvent);
+            console.log(`[Changelog] 🤖 Создано агрегированное событие бота для ${issueKey} (${changelogItem.items.length} полей)`);
+            return {added: 1, total: 1};
+        } catch (error) {
+            if (error.code === 11000) {
+                console.log(`[Changelog] ℹ️ Агрегированное событие бота уже существует для ${issueKey}`);
+                return {added: 0, total: 0};
+            }
+            throw error;
         }
-        throw error;
-      }
     }
+
 
     /**
      * Приватный метод: сохранение обычных событий (отдельные записи)
      */
     async _saveRegularChangelog(issueId, issueKey, assigneeAccountId, eventType, user, changelogItem, departmentId) {
+        // Проверяем, является ли автор ботом
+        const isBot = AUTOMATION_ACCOUNTS.includes(user.accountId);
+
+        // Если это бот и событие автоматическое - агрегируем
+        if (isBot && AUTOMATION_EVENTS.includes(eventType)) {
+            return this._saveAggregatedBotEvent(issueId, issueKey, assigneeAccountId, eventType, user, changelogItem, departmentId);
+        }
+
+        // Обычная логика для людей
         const events = changelogItem.items.map(item => ({
             historyId: `${changelogItem.id}_${item.field}`,
             issueId,
@@ -116,19 +154,20 @@ class ChangelogService {
             toAccountId: item.tmpToAccountId || null
         }));
 
-      try {
-        const result = await ChangelogEvent.insertMany(events, { ordered: false });
-        console.log(`[Changelog] ✅ Сохранено событий для ${issueKey}`);
-        return { added: result.length, total: events.length };
-      } catch (error) {
-        if (error.code === 11000 && error.writeErrors) {
-          const addedCount = events.length - error.writeErrors.length;
-          console.log(`[Changelog] ⚠️ Некоторые события уже существуют для ${issueKey}. Добавлено: ${addedCount}/${events.length}`);
-          return { added: addedCount, total: events.length };
+        try {
+            const result = await ChangelogEvent.insertMany(events, {ordered: false});
+            console.log(`[Changelog] ✅ Сохранено событий для ${issueKey}`);
+            return {added: result.length, total: events.length};
+        } catch (error) {
+            if (error.code === 11000 && error.writeErrors) {
+                const addedCount = events.length - error.writeErrors.length;
+                console.log(`[Changelog] ⚠️ Некоторые события уже существуют для ${issueKey}. Добавлено: ${addedCount}/${events.length}`);
+                return {added: addedCount, total: events.length};
+            }
+            throw error;
         }
-        throw error;
-      }
     }
+
 
     /**
      * Пакетное сохранение логов
