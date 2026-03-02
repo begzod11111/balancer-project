@@ -62,8 +62,6 @@ export async function runAssignerConsumer() {
         const event = JSON.parse(value);
 
         console.log('\n[Kafka Consumer] 📨 Получено новое сообщение:');
-        console.log(`  Topic: ${topic}`);
-        console.log(`  Partition: ${partition}`);
         if (topic === TOPICS.ISSUE_CREATED) {
             await IssueService.createIssue(event)
         } else if (topic === TOPICS.ISSUE_ASSIGNED) {
@@ -76,7 +74,6 @@ export async function runAssignerConsumer() {
             console.warn(`[Kafka Consumer] ⚠️ Неизвестный topic: ${topic}`);
         }
 
-        console.log(JSON.stringify(event, null, 10), '\n', topic);
         await changelogService.saveChangelog(
             event.issueId,
             event.issueKey,

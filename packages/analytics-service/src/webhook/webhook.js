@@ -1,5 +1,6 @@
 import express from 'express';
 import issueProducer from "../producers/issue.producer.js";
+import commentService from "../services/commentService.js";
 
 
 const router = express.Router();
@@ -23,13 +24,35 @@ router.post('/change-status', async (req, res) => {
 
 router.post('/comment-created', async (req, res) => {
     try {
-        const commentData = req.body;
-        console.log('[Analytics Service] Received comment created webhook:', JSON.stringify(commentData, null, 10));
+        const webhookData = req.body;
 
-        // Здесь можно добавить логику обработки созданного комментария,
-        // например, анализ текста комментария или обновление статистики.
-        // Пример ответа
-        res.status(200).json({success: true, message: 'Comment creation processed successfully'});
+        // Валидация данных
+        if (!webhookData?.comment?.id || !webhookData?.issue?.key || !webhookData?.comment?.author?.accountId) {
+            console.warn('[Analytics Service] Неполные данные комментария:', webhookData);
+            return res.status(400).json({success: false, message: 'Missing required comment data'});
+        }
+
+        // Подготовка данных для сохранения
+        const commentData = {
+            commentId: webhookData.comment.id,
+            issueKey: webhookData.issue.key,
+            authorAccountId: webhookData.comment.author.accountId,
+            createdAt: new Date(webhookData.comment.created),
+            updatedAt: new Date(webhookData.comment.updated)
+        };
+
+
+        // Сохранение через сервис
+        await commentService.upsertComment(commentData);
+
+        res.status(200).json({
+            success: true,
+            message: 'Comment saved successfully',
+            data: {
+                commentId: commentData.commentId,
+                issueKey: commentData.issueKey
+            }
+        });
 
     } catch (error) {
         console.error('[Analytics Service] Error processing comment created webhook:', error);

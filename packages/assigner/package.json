@@ -17,6 +17,9 @@
     "dotenv": "^16.3.1",
     "cors": "^2.8.5",
     "body-parser": "^1.20.2",
-    "kafkajs": "^2.2.4"
+    "kafkajs": "^2.2.4",
+    "js-priority-queue": "^0.1.5",
+    "axios": "^1.4.0",
+    "ioredis": "^5.3.1"
   }
 }
