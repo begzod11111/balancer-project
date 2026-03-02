@@ -2,6 +2,16 @@ import {models} from '../models/db.js';
 
 const { ChangelogEvent } = models;
 
+const AUTOMATION_ACCOUNTS = [
+    '712020:d3c8eb70-f65d-4076-94b9-ce46cfca71c0',
+    '557058:f58131cb-b67d-43c7-b30d-6b58d40bd077'
+]
+
+const AUTOMATION_EVENTS = [
+    'issue_updated',
+    'issue_created',
+]
+
 class ChangelogService {
     /**
      * Сохранение новых логов изменений
@@ -15,9 +25,10 @@ class ChangelogService {
 
         console.log(`[Changelog] 📝 Обработка события "${eventType}" для ${issueKey}`);
 
-        if (eventType === 'issue_created') {
+        if (AUTOMATION_ACCOUNTS.includes(user.accountId) && AUTOMATION_EVENTS.includes(eventType)) {
           return await this._saveIssueCreated(issueId, issueKey, assigneeAccountId, eventType, user, changelogItem, departmentId);
         }
+
 
         return await this._saveRegularChangelog(issueId, issueKey, assigneeAccountId, eventType, user, changelogItem, departmentId);
 
@@ -54,13 +65,13 @@ class ChangelogService {
         authorActive: user.active !== false,
         authorTimeZone: user.timeZone,
         created: new Date(),
-        field: 'issue_created',
+        field: eventType,
         fieldtype: 'aggregate',
-        fieldId: 'issue_created',
+        fieldId: eventType,
         from: null,
         fromString: null,
         to: JSON.stringify(createdFields),
-        toString: `Created with ${changelogItem.items.length} fields`,
+        toString: `Created or updated with ${changelogItem.items.length} fields`,
         fromAccountId: null,
         toAccountId: null
       };
