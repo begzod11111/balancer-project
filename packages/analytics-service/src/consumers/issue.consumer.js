@@ -1,6 +1,7 @@
 import { kafka } from '../config/kafka.js';
 import IssueService from '../services/issueService.js';
 import changelogService from "../services/changelogService.js";
+import employeeWeightService from "../services/EmployeeWeightService.js";
 
 const TOPICS = {
     ISSUE_CREATED: 'issue_created',
@@ -67,7 +68,15 @@ export async function runAssignerConsumer() {
         } else if (topic === TOPICS.ISSUE_ASSIGNED) {
             await IssueService.updateIssueAssignee(event.issueId, event.assigneeAccountId)
         } else if (topic === TOPICS.ISSUE_GENERIC) {
+            await employeeWeightService.processIssueStatusChange(event.assigneeAccountId, {
+                issueId: event.issueId,
+                issueKey: event.issueKey,
+                typeId: event.typeId,
+                status: event.status,
+                issueStatusId: event.issueStatusId,
+            })
             await IssueService.updateIssueStatus(event.issueId, event.status, event.issueStatusId)
+
         } else if (topic === TOPICS.ISSUE_UPDATED) {
             await IssueService.issueUpdate(event.issueId, event.status, event.issueStatusId)
         } else {
