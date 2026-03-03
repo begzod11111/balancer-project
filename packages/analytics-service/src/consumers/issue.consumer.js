@@ -66,6 +66,10 @@ export async function runAssignerConsumer() {
         if (topic === TOPICS.ISSUE_CREATED) {
             await IssueService.createIssue(event)
         } else if (topic === TOPICS.ISSUE_ASSIGNED) {
+            await employeeWeightService.processIssueAssignmentChange(
+                event.issueId,
+                event.assigneeAccountId,
+            )
             await IssueService.updateIssueAssignee(event.issueId, event.assigneeAccountId)
         } else if (topic === TOPICS.ISSUE_GENERIC) {
             await employeeWeightService.processIssueStatusChange(event.assigneeAccountId, {
