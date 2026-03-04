@@ -104,7 +104,7 @@ class ShiftScheduler {
                             expiredAt: moment().tz(this.TIMEZONE).toISOString()
                         });
 
-                        assigneePoolService.removeAssignee(departmentObjectId, accountId).catch(console.error);
+                        assigneePoolService.removeAssignee(departmentObjectId, accountId, assigneeEmail).catch(console.error);
 
                         stats.removed++;
                         stats.kafkaEvents++;
@@ -198,7 +198,7 @@ class ShiftScheduler {
   }
 
   async _sendShiftEvent(departmentObjectId, shift, ttlSeconds, shiftStart, shiftEnd) {
-    const isInPool = await assigneePoolService.hasAssignee(departmentObjectId, shift.accountId);
+    const isInPool = await assigneePoolService.hasAssignee(departmentObjectId, shift.accountId, shift.assigneeEmail);
 
     const dataForEvent = {
       departmentId: shift.department._id.toString(),

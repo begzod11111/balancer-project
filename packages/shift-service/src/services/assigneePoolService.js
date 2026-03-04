@@ -56,8 +56,9 @@ class AssigneePoolService {
   /**
    * Удаление сотрудника из пула
    */
-  async removeAssignee(department, accountId) {
-    const key = `${this.keyPrefix}${department}:${accountId}`;
+  async removeAssignee(department, accountId, assigneeEmail) {
+    const key = `${this.keyPrefix}${department}:${accountId}:${assigneeEmail}`;
+    console.log(key)
     try {
       await redis.del(key);
 
@@ -72,8 +73,8 @@ class AssigneePoolService {
   /**
    * Проверка наличия сотрудника в пуле
    */
-  async hasAssignee(department, accountId) {
-    const key = `${this.keyPrefix}${department}:${accountId}`;
+  async hasAssignee(department, accountId, assigneeEmail) {
+    const key = `${this.keyPrefix}${department}:${accountId}:${assigneeEmail}`;
     try {
       const exists = await redis.exists(key);
       return exists === 1;
@@ -373,7 +374,7 @@ class AssigneePoolService {
         };
 
         // Проверяем, есть ли сотрудник уже в пуле
-        const isInPool = await this.hasAssignee(department, assignee.accountId);
+        const isInPool = await this.hasAssignee(department, assignee.accountId, assignee.assigneeEmail);
 
         if (isInPool) {
           // Обновляем TTL и метаданные
