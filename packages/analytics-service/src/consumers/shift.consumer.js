@@ -63,13 +63,13 @@ export async function runShiftCreatedConsumer() {
         console.log(`[Kafka Consumer] ⏰ Время: ${event.timestamp}`);
 
         // Обработка события создания смены
-        if (event.event === TOPICS.SHIFT_EXPIRED && event.data) {
+        if (event.event === TOPICS.SHIFT_CREATED && event.data) {
             console.log('[Kafka Consumer] ✅ Смена создана, добавляем в Redis', event.data);
           employeeWeightService.createShiftInRedis(event.data).then(
             () => console.log('[Kafka Consumer] ✅ Смена обработана успешно'),
           );
         }
-        if (event.event === 'shift_expired' && event.data) {
+        if (event.event === TOPICS.SHIFT_EXPIRED && event.data) {
             console.log('[Kafka Consumer] ⏰ Смена истекла, удаляем из Redis', event.data);
         }
 
