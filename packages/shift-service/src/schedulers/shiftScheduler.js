@@ -150,7 +150,7 @@ class ShiftScheduler {
       return { skipped: true, reason: 'shift_not_active' };
     }
 
-    if (ttlSeconds <= 0) {
+    if (ttlSeconds <= 2000) {
       return { skipped: true, reason: 'shift_expired' };
     }
 
