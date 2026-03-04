@@ -16,7 +16,7 @@ const LoginPage = () => {
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [remember, setRemember] = useState(false);
+  const [remember, setRemember] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
 
   const handleLogin = async (e) => {
