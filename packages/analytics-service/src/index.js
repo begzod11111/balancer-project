@@ -11,6 +11,7 @@ import {runShiftCreatedConsumer} from "./consumers/shift.consumer.js";
 import jira from "./services/jiraService.js";
 import {startConsumers} from "./consumers/index.js";
 import changelogRoutes from "./routes/changelogRoutes.js";
+import activityRoutes from "./routes/activityAnalytics.js";
 
 
 const app = express();
