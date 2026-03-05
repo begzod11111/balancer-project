@@ -20,6 +20,9 @@
     "kafkajs": "^2.2.4",
     "js-priority-queue": "^0.1.5",
     "axios": "^1.4.0",
-    "ioredis": "^5.3.1"
+    "ioredis": "^5.3.1",
+    "@google/genai": "^1.43.0",
+    "openai": "^6.25.0",
+    "@google/generative-ai": "^0.24.1"
   }
 }
