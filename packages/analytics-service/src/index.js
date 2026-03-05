@@ -35,6 +35,7 @@ app.use('/api/type', typeRoutes);
 app.use('/api/webhook', webhookRoutes);
 app.use('/api/issues', issueRoutes);
 app.use('/api/changelog', changelogRoutes);
+app.use('/api/activity', activityRoutes);
 
 async function startScheduler() {
   try {
