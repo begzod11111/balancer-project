@@ -7,6 +7,9 @@ import departmentRoutes from "./routes/departmentRoutes.js";
 import departmentService from "./services/departmentService.js";
 import redisShiftRoutes from "./routes/redisShiftRoutes.js";
 import shiftScheduler from "./schedulers/shiftScheduler.js";
+import assigneePoolService from "./services/assigneePoolService.js";
+import taskBufferService from "./services/taskBufferService.js";
+import departmentBufferConfigRoutes from "./routes/departmentBufferConfig.js";
 
 
 
@@ -28,6 +31,7 @@ app.use(express.json());
 app.use('/api/shift', shiftRouter)
 app.use('/api/department', departmentRoutes)
 app.use('/api/pool', redisShiftRoutes)
+app.use('/api/buffer-config', departmentBufferConfigRoutes);
 
 
 

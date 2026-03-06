@@ -14,6 +14,7 @@ import IssuesPage from "./pages/IssuesPage/IssuesPage";
 import ScheduleTablePage from "./pages/ScheduleTablePage/ScheduleTablePage";
 import DepartmentActivityPage from "./pages/DepartmentActivityPage/DepartmentActivityPage";
 import HourlyActivityPage from "./pages/HourlyActivityPage/HourlyActivityPage";
+import EmployeeActivityAnalyticsPage from "./pages/EmployeeActivityAnalyticsPage/EmployeeActivityAnalyticsPage";
 
 const AppRouter = () => {
   return (
@@ -88,7 +89,7 @@ const AppRouter = () => {
           <Route path='/activity' element={
               <ProtectedRoute>
                   <MainContainer>
-                      <DepartmentActivityPage/>
+                      <EmployeeActivityAnalyticsPage/>
                   </MainContainer>
               </ProtectedRoute>
           }/>

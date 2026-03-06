@@ -11,7 +11,7 @@ class ShiftScheduler {
   constructor() {
     this.TIMEZONE = "Asia/Tashkent";
     this.CHECK_INTERVAL = "*/10 * * * *";
-    this.EXPIRATION_THRESHOLD = 15 * 60;
+    this.EXPIRATION_THRESHOLD = 30 * 60;
     this.jobs = [];
   }
 

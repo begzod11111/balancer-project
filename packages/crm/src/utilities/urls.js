@@ -137,7 +137,13 @@ export const URLS = {
     GET_ASSIGNMENT_HISTORY: (issueId) => `${BASE_URL}/api/analytics/changelog/assignment-history/${issueId}`,
     GET_STATUS_HISTORY: (issueId) => `${BASE_URL}/api/analytics/changelog/status-history/${issueId}`,
     GET_HISTORY_BY_EVENT_TYPE: (issueId, eventType) => `${BASE_URL}/api/analytics/changelog/event-type/${issueId}/${eventType}`,
-    GET_ASSIGNMENT_MATRIX: `${BASE_URL}/api/analytics/changelog/assignment-matrix`
+    GET_ASSIGNMENT_MATRIX: `${BASE_URL}/api/analytics/changelog/assignment-matrix`,
+
+    // ========== ACTIVITY ANALYTICS SERVICE ==========
+    GET_ACTIVITY_ANALYTICS: `${BASE_URL}/api/analytics/activity/stats`,
+    GET_TASK_COMPLETION_STATS: `${BASE_URL}/api/analytics/activity/task-completion`,
+    GET_DEPARTMENT_FREQUENCY_STATS: `${BASE_URL}/api/analytics/activity/department-frequency`,
+    EXPORT_ACTIVITY_ANALYTICS_CSV: `${BASE_URL}/api/analytics/activity/export-svg`,
 
 
 };

@@ -1,5 +1,6 @@
 import Shift from "./shift.js";
 import Department from "./department.js";
+import DepartmentBufferConfig from "./departmentBufferConfig.js";
 import mongoose from "mongoose";
 
 
@@ -42,7 +43,8 @@ export async function connectDB(uri, retryCount = 3, retryDelay = 3000) {
 // Export models
 export const models = {
     Shift,
-    Department
+    Department,
+    DepartmentBufferConfig
 };
 
 
