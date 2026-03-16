@@ -10,6 +10,7 @@ import shiftScheduler from "./schedulers/shiftScheduler.js";
 import assigneePoolService from "./services/assigneePoolService.js";
 import taskBufferService from "./services/taskBufferService.js";
 import departmentBufferConfigRoutes from "./routes/departmentBufferConfig.js";
+import {startConsumers} from "./consumers/index.js";
 
 
 
@@ -41,19 +42,19 @@ app.listen(PORT, '0.0.0.0', () => {
 });
 
 
-
-
 async function startScheduler() {
-  try {
-    await connectDB();
-    shiftScheduler.start()
-  } catch (error) {
-    console.error('Ошибка при запуске планировщика:', {
-      message: error.message,
-      stack: error.stack
-    });
-    process.exit(1);
-  }
+    try {
+
+        await connectDB();
+        await startConsumers();
+        shiftScheduler.start()
+    } catch (error) {
+        console.error('Ошибка при запуске планировщика:', {
+            message: error.message,
+            stack: error.stack
+        });
+        process.exit(1);
+    }
 }
 
 
