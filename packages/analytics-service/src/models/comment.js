@@ -19,6 +19,9 @@ CommentSchema.index({ issueKey: 1, createdAt: -1 }); // Для поиска ко
 CommentSchema.index({ authorAccountId: 1, createdAt: -1 }); // Для поиска комментариев автора с сортировкой
 CommentSchema.index({ createdAt: -1 }); // Для временных запросов
 
+// TTL индекс
+CommentSchema.index({ createdAt: 1 }, { expireAfterSeconds: 604800 });
+
 const Comment = mongoose.model("Comment", CommentSchema);
 
 export default Comment;
