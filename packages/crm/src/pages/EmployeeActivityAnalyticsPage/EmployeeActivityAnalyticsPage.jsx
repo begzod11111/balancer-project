@@ -21,6 +21,7 @@ import {
 } from 'react-icons/fa';
 import Select from '../../components/Select/Select';
 import Button from '../../components/Button/Button';
+import Input from '../../components/Input/Input';
 import { useNotification } from '../../contexts/NotificationProvider';
 import { useLoader } from '../../contexts/LoaderProvider';
 import classes from './EmployeeActivityAnalyticsPage.module.css';
@@ -92,16 +93,15 @@ const EmployeeActivityAnalyticsPage = () => {
     showLoader();
     try {
       const token = localStorage.getItem('accessToken');
-      const end = new Date();
-      const start = new Date();
-      start.setDate(start.getDate() - filters.dateRange);
+      const startTimestamp = new Date(filters.startDate).getTime();
+      const endTimestamp = new Date(filters.endDate).getTime();
 
       const response = await axios.post(
         URLS.GET_ACTIVITY_ANALYTICS,
         {
           accountIds: selectedEmployees,
-          startTimestamp: Math.floor(start.getTime()),
-          endTimestamp: Math.floor(end.getTime())
+          startTimestamp,
+          endTimestamp
         },
         {
           headers: { Authorization: `Bearer ${token}` }
@@ -118,7 +118,7 @@ const EmployeeActivityAnalyticsPage = () => {
     } finally {
       hideLoader();
     }
-  }, [selectedEmployees, filters.dateRange, showLoader, hideLoader, notify]);
+  }, [selectedEmployees, filters.startDate, filters.endDate, showLoader, hideLoader, notify]);
 
   const handleExportCSV = async () => {
     if (!selectedEmployees || selectedEmployees.length === 0) {
@@ -128,16 +128,15 @@ const EmployeeActivityAnalyticsPage = () => {
 
     try {
       const token = localStorage.getItem('accessToken');
-      const end = new Date();
-      const start = new Date();
-      start.setDate(start.getDate() - filters.dateRange);
+      const startTimestamp = new Date(filters.startDate).getTime();
+      const endTimestamp = new Date(filters.endDate).getTime();
 
       const response = await axios.post(
         URLS.EXPORT_ACTIVITY_ANALYTICS_CSV,
         {
           accountIds: selectedEmployees,
-          startTimestamp: Math.floor(start.getTime()),
-          endTimestamp: Math.floor(end.getTime())
+          startTimestamp,
+          endTimestamp
         },
         {
           headers: { Authorization: `Bearer ${token}` },
@@ -227,10 +226,19 @@ const EmployeeActivityAnalyticsPage = () => {
             onChange={setSelectedDepartment}
             placeholder="Выберите отдел"
           />
-          <Select
-            options={dateRangeOptions}
-            value={filters.dateRange}
-            onChange={(value) => setFilters(prev => ({ ...prev, dateRange: value }))}
+          <Input
+            type="datetime-local"
+            label="С:"
+            value={filters.startDate}
+            onChange={(e) => setFilters(prev => ({ ...prev, startDate: e.target.value }))}
+            width="220px"
+          />
+          <Input
+            type="datetime-local"
+            label="По:"
+            value={filters.endDate}
+            onChange={(e) => setFilters(prev => ({ ...prev, endDate: e.target.value }))}
+            width="220px"
           />
           <Button
             variant="secondary"

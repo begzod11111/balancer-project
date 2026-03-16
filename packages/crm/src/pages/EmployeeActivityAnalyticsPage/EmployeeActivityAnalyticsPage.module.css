@@ -1,14 +1,14 @@
 .page {
   padding: 2rem;
-  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-tertiary) 100%);
   min-height: 100vh;
 }
 
 .header {
-  background: white;
+  background: var(--bg-primary);
   padding: 2rem;
   border-radius: 16px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 4px 20px var(--shadow-color);
   margin-bottom: 2rem;
   display: flex;
   justify-content: space-between;
@@ -20,7 +20,7 @@
 .headerInfo h1 {
   font-size: 1.75rem;
   font-weight: 700;
-  color: #2d3748;
+  color: var(--text-primary);
   display: flex;
   align-items: center;
   gap: 0.75rem;
@@ -28,14 +28,16 @@
 }
 
 .headerInfo p {
-  color: #718096;
+  color: var(--text-secondary);
   margin: 0;
   font-size: 0.95rem;
 }
 
 .headerControls {
   display: flex;
-  gap: 1rem;flex-wrap: wrap;
+  gap: 1rem;
+  flex-wrap: wrap;
+  align-items: flex-end;
 }
 
 /* Статистические карточки */
@@ -47,19 +49,19 @@
 }
 
 .statCard {
-  background: white;
+  background: var(--bg-primary);
   border-radius: 16px;
   padding: 1.5rem;
   display: flex;
   align-items: center;
   gap: 1.25rem;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 4px 20px var(--shadow-color);
   transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
 .statCard:hover {
   transform: translateY(-4px);
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+  box-shadow: 0 8px 30px var(--shadow-color);
 }
 
 .statIcon {
@@ -82,29 +84,29 @@
 
 .statLabel {
   font-size: 0.875rem;
-  color: #718096;
+  color: var(--text-secondary);
   font-weight: 500;
 }
 
 .statValue {
   font-size: 1.75rem;
   font-weight: 700;
-  color: #2d3748;
+  color: var(--text-primary);
 }
 
 /* Секции */
 .section {
-  background: white;
+  background: var(--bg-primary);
   border-radius: 16px;
   padding: 2rem;
   margin-bottom: 2rem;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 4px 20px var(--shadow-color);
 }
 
 .section h2 {
   font-size: 1.5rem;
   font-weight: 700;
-  color: #2d3748;
+  color: var(--text-primary);
   margin: 0 0 1.5rem 0;
   display: flex;
   align-items: center;
@@ -149,13 +151,13 @@
   color: white;
   font-size: 0.75rem;
   font-weight: 600;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  text-shadow: 0 1px 2px var(--shadow-color);
 }
 
 .hourLabel {
   margin-top: 0.5rem;
   font-size: 0.75rem;
-  color: #718096;
+  color: var(--text-secondary);
   font-weight: 500;
 }
 
@@ -171,13 +173,13 @@
   align-items: center;
   gap: 1rem;
   padding: 1rem;
-  background: #f7fafc;
+  background: var(--bg-secondary);
   border-radius: 12px;
   transition: all 0.3s ease;
 }
 
 .topEmployeeRow:hover {
-  background: #edf2f7;
+  background: var(--bg-tertiary);
   transform: translateX(4px);
 }
 
@@ -214,8 +216,8 @@
 
 .rank4,
 .rank5 {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+  background: linear-gradient(135deg, var(--accent-color) 0%, var(--color-primary-dark) 100%);
+  box-shadow: 0 4px 12px rgba(var(--color-primary-rgb), 0.4);
 }
 
 .employeeDetails {
@@ -230,13 +232,13 @@
   align-items: center;
   gap: 0.5rem;
   font-weight: 600;
-  color: #2d3748;
+  color: var(--text-primary);
   font-size: 1rem;
 }
 
 .progressBar {
   height: 12px;
-  background: #e2e8f0;
+  background: var(--border-color);
   border-radius: 6px;
   overflow: hidden;
   position: relative;
@@ -276,12 +278,12 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  color: #4a5568;
+  color: var(--text-secondary);
   font-weight: 600;
 }
 
 .metric svg {
-  color: #667eea;
+  color: var(--accent-color);
 }
 
 /* Карточки сотрудников */
@@ -292,15 +294,15 @@
 }
 
 .employeeCard {
-  background: white;
-  border: 1px solid #e2e8f0;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
   border-radius: 16px;
   padding: 1.5rem;
   transition: all 0.3s ease;
 }
 
 .employeeCard:hover {
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+  box-shadow: 0 8px 30px var(--shadow-color);
   transform: translateY(-4px);
 }
 
@@ -310,14 +312,14 @@
   gap: 1rem;
   margin-bottom: 1.5rem;
   padding-bottom: 1rem;
-  border-bottom: 2px solid #f7fafc;
+  border-bottom: 2px solid var(--bg-secondary);
 }
 
 .employeeAvatar {
   width: 56px;
   height: 56px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, var(--accent-color) 0%, var(--color-primary-dark) 100%);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -334,7 +336,7 @@
   margin: 0 0 0.25rem 0;
   font-size: 1.125rem;
   font-weight: 700;
-  color: #2d3748;
+  color: var(--text-primary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -342,7 +344,7 @@
 
 .employeeEmail {
   font-size: 0.875rem;
-  color: #718096;
+  color: var(--text-secondary);
 }
 
 .employeeStats {
@@ -357,7 +359,7 @@
   justify-content: space-between;
   align-items: center;
   padding: 0.5rem;
-  background: #f7fafc;
+  background: var(--bg-secondary);
   border-radius: 8px;
 }
 
@@ -366,16 +368,16 @@
   align-items: center;
   gap: 0.5rem;
   font-size: 0.875rem;
-  color: #4a5568;
+  color: var(--text-secondary);
 }
 
 .statRow .statLabel svg {
-  color: #667eea;
+  color: var(--accent-color);
 }
 
 .statRow .statValue {
   font-weight: 700;
-  color: #2d3748;
+  color: var(--text-primary);
   font-size: 1rem;
 }
 
@@ -383,7 +385,7 @@
 .activityDistribution {
   margin-bottom: 1.5rem;
   padding: 1rem;
-  background: #f7fafc;
+  background: var(--bg-secondary);
   border-radius: 12px;
 }
 
@@ -393,7 +395,7 @@
   gap: 0.5rem;
   margin: 0 0 1rem 0;
   font-size: 1rem;
-  color: #2d3748;
+  color: var(--text-primary);
 }
 
 .pieChart {
@@ -402,8 +404,8 @@
   margin: 0 auto 1rem;
   border-radius: 50%;
   background: conic-gradient(
-    #f093fb 0deg calc(var(--percentage) * 3.6deg),
-    #4facfe calc(var(--percentage) * 3.6deg) 360deg
+    #f093fb 0deg calc(var(--bg-content) * 3.6deg),
+    #4facfe calc(var(--bg-content) * 3.6deg) 360deg
   );
   position: relative;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
@@ -416,24 +418,24 @@
   transform: translate(-50%, -50%);
   width: 100px;
   height: 100px;
-  background: white;
+  background: var(--bg-primary);
   border-radius: 50%;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 8px var(--shadow-color);
 }
 
 .pieCenter span {
   font-size: 1.5rem;
   font-weight: 700;
-  color: #2d3748;
+  color: var(--text-primary);
 }
 
 .pieCenter small {
   font-size: 0.75rem;
-  color: #718096;
+  color: var(--text-secondary);
 }
 
 .pieLegend {
@@ -447,7 +449,7 @@
   align-items: center;
   gap: 0.5rem;
   font-size: 0.875rem;
-  color: #4a5568;
+  color: var(--text-secondary);
 }
 
 .legendDot {
@@ -476,7 +478,7 @@
 
 .hourMiniFill {
   width: 100%;
-  background: linear-gradient(180deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(180deg, var(--accent-color) 0%, var(--color-primary-dark) 100%);
   border-radius: 4px 4px 0 0;
   transition: all 0.3s ease;
 }
@@ -488,14 +490,14 @@
 .hourMiniBar span {
   margin-top: 0.25rem;
   font-size: 0.625rem;
-  color: #718096;
+  color: var(--text-secondary);
 }
 
 /* Типы событий */
 .eventTypes {
   margin-bottom: 1.5rem;
   padding: 1rem;
-  background: #f7fafc;
+  background: var(--bg-secondary);
   border-radius: 12px;
 }
 
@@ -505,7 +507,7 @@
   gap: 0.5rem;
   margin: 0 0 1rem 0;
   font-size: 1rem;
-  color: #2d3748;
+  color: var(--text-primary);
 }
 
 .eventTypesList {
@@ -523,21 +525,21 @@
 .eventTypeName {
   min-width: 120px;
   font-size: 0.875rem;
-  color: #4a5568;
+  color: var(--text-secondary);
   font-weight: 500;
 }
 
 .eventTypeBar {
   flex: 1;
   height: 24px;
-  background: #e2e8f0;
+  background: var(--border-color);
   border-radius: 12px;
   overflow: hidden;
 }
 
 .eventTypeBarFill {
   height: 100%;
-  background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(90deg, var(--accent-color) 0%, var(--color-primary-dark) 100%);
   border-radius: 12px;
   transition: width 0.6s ease;
 }
@@ -546,33 +548,33 @@
   min-width: 40px;
   text-align: right;
   font-weight: 700;
-  color: #2d3748;
+  color: var(--text-primary);
   font-size: 0.875rem;
 }
 
 /* Пустое состояние */
 .empty {
-  background: white;
+  background: var(--bg-primary);
   border-radius: 16px;
   padding: 4rem 2rem;
   text-align: center;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 4px 20px var(--shadow-color);
 }
 
 .empty svg {
-  color: #cbd5e0;
+  color: var(--border-color);
   margin-bottom: 1rem;
 }
 
 .empty h3 {
   font-size: 1.5rem;
   font-weight: 700;
-  color: #2d3748;
+  color: var(--text-primary);
   margin: 0 0 0.5rem 0;
 }
 
 .empty p {
-  color: #718096;
+  color: var(--text-secondary);
   margin: 0;
 }
 
@@ -622,11 +624,11 @@
 
 /* Панель выбора сотрудников */
 .employeeSelector {
-  background: white;
+  background: var(--bg-primary);
   border-radius: 16px;
   padding: 2rem;
   margin-bottom: 2rem;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 4px 20px var(--shadow-color);
 }
 
 .selectorHeader {
@@ -635,13 +637,13 @@
   align-items: center;
   margin-bottom: 1.5rem;
   padding-bottom: 1rem;
-  border-bottom: 2px solid #f7fafc;
+  border-bottom: 2px solid var(--bg-secondary);
 }
 
 .selectorHeader h3 {
   font-size: 1.25rem;
   font-weight: 700;
-  color: #2d3748;
+  color: var(--text-primary);
   margin: 0;
   display: flex;
   align-items: center;
@@ -668,7 +670,7 @@
   align-items: center;
   gap: 1rem;
   padding: 1rem;
-  background: #f7fafc;
+  background: var(--bg-secondary);
   border-radius: 12px;
   cursor: pointer;
   transition: all 0.3s ease;
@@ -676,13 +678,13 @@
 }
 
 .employeeItem:hover {
-  background: #edf2f7;
+  background: var(--bg-tertiary);
   transform: translateY(-2px);
 }
 
 .employeeItem.selected {
-  background: #e6f2ff;
-  border-color: #667eea;
+  background: rgba(var(--color-primary-rgb), 0.1);
+  border-color: var(--accent-color);
 }
 
 .checkbox {
@@ -695,71 +697,72 @@
 }
 
 .employeeItemAvatar {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  flex-shrink: 0;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent-color) 0%, var(--color-primary-dark) 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    flex-shrink: 0;
 }
 
 .employeeItemInfo {
-  flex: 1;min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
 }
 
 .employeeItemName {
-  font-weight: 600;
-  color: #2d3748;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+    font-weight: 600;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .employeeItemEmail {
-  font-size: 0.875rem;
-  color: #718096;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .selectorFooter {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding-top: 1rem;
-  border-top: 2px solid #f7fafc;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 1rem;
+    border-top: 2px solid var(--bg-secondary);
 }
 
 .selectorFooter span {
-  font-weight: 600;
-  color: #4a5568;
+    font-weight: 600;
+    color: var(--text-secondary);
 }
 
 @media (max-width: 768px) {
-  .employeeList {
-    grid-template-columns: 1fr;
-  }
+    .employeeList {
+        grid-template-columns: 1fr;
+    }
 
-  .selectorHeader {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 1rem;
-  }
+    .selectorHeader {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 1rem;
+    }
 
-  .selectorActions {
-    flex-direction: column;
-  }
+    .selectorActions {
+        flex-direction: column;
+    }
 
-  .selectorFooter {
-    flex-direction: column;
-    gap: 1rem;
-    align-items: stretch;
-  }
+    .selectorFooter {
+        flex-direction: column;
+        gap: 1rem;
+        align-items: stretch;
+    }
 }
