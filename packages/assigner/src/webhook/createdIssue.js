@@ -11,7 +11,7 @@ router.post('/created-issue', async (req, res) => {
         const assignmentGroupId =  issueData.issue.fields.customfield_18219?.[0]?.objectId || null
         await publishIssueCreated(issueData);
 
-        await new Promise(resolve => setTimeout(resolve, 30000));
+        await new Promise(resolve => setTimeout(resolve, 10000));
 
         await assignedServices.assignedIssue(issueData.issue.key, assignmentGroupId);
         res.status(200).json({success: true, message: 'Issue processed successfully'});
