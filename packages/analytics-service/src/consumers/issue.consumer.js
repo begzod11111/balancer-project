@@ -15,7 +15,9 @@ const TOPICS = {
 const issueConsumer = kafka.consumer({
   groupId: 'assigner-issueConsumer',
   sessionTimeout: 30000,
-  heartbeatInterval: 3000
+  heartbeatInterval: 3000,
+  autoCommit: true,
+  autoCommitInterval: 5000,
 });
 
 export async function runAssignerConsumer() {
@@ -44,13 +46,12 @@ export async function runAssignerConsumer() {
       for (const topic of Object.values(TOPICS)) {
           await issueConsumer.subscribe({
               topic,
-              fromBeginning: true
+              fromBeginning: false
           });
           console.log(`[Kafka Consumer] ✅ Успешно подписан на topic "${topic}"`);
       }
-    console.log('[Kafka Consumer] ✅ Успешно подписан на topic "issue_created"');
   } catch (error) {
-    console.error('[Kafka Consumer] ❌ Ошибка подписки на topic "issue_created":', error);
+    console.error('[Kafka Consumer] ❌ Ошибка подписки на topics:', error);
     throw error;
   }
 
